@@ -1,0 +1,77 @@
+# travis does not use tox because scipy takes long to install
+# with pip. It is better to use miniconda
+sudo: false
+
+language: python
+
+matrix:
+  fast_finish: true
+  include:
+    - python: 3.5
+      env:
+        - JOB: 'PY35'
+        - FULL_DEPS=true
+    - python: 3.6
+      env:
+        - JOB: 'PY36'
+        - FULL_DEPS=true
+    - python: 3.5
+      env:
+        - JOB: 'DOCS'
+        - FULL_DEPS=true
+    - python: 3.5
+      env:
+        - JOB: 'FLAKE8'
+        - FULL_DEPS=false
+
+cache: pip
+
+notifications:
+  email: false
+
+
+# miniconda recipe
+# http://conda.pydata.org/docs/travis.html#using-conda-with-travis-ci
+before_install:
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+install:
+  # Dependencies
+  - conda create -q -n plydata-test python=$TRAVIS_PYTHON_VERSION
+  - source activate plydata-test
+  - if [[ "$FULL_DEPS" ]]; then
+      conda install pandas;
+    fi
+  - if [[ "$JOB" == "PY35" ]] || [[ "$JOB" == "PY36" ]]; then
+      conda install pytest-cov;
+    elif [[ "$JOB" == "DOCS" ]]; then
+      pip install sphinx sphinx_bootstrap_theme;
+      python setup.py install;
+    elif [[ "$JOB" == "FLAKE8" ]]; then
+      pip install flake8;
+    fi
+  - pip install coveralls
+  # List all conda and pip packages
+  - conda list
+
+script:
+  - if [[ "$JOB" == "PY36" ]] || [[ "$JOB" == "PY36" ]]; then
+      coverage erase;
+      make test;
+    elif [[ "$JOB" == "DOCS" ]]; then
+      pushd doc;
+      sphinx-build -W -b html -d _build/doctrees . _build/html;
+      popd;
+    elif [[ "$JOB" == "FLAKE8" ]]; then
+      make lint;
+    fi
+
+after_success:
+  - coveralls --rcfile=.coveragerc

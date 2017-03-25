@@ -1,0 +1,16 @@
+# Configuration for coverage.py
+
+[run]
+branch = True
+source = plydata
+include = plydata/*
+omit =
+    setup.py
+    plydata/_version.py
+    plydata/eval.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:

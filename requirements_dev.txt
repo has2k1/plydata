@@ -1,0 +1,13 @@
+# Testing
+pytest-cov
+tox
+
+# Documentation
+sphinx
+
+# Release
+wheel
+
+# Linting
+pep8
+flake8
