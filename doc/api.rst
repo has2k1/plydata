@@ -21,4 +21,5 @@ Single table verbs
    sample_frac
    sample_n
    select
+   transmute
    unique

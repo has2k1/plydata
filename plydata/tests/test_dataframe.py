@@ -3,8 +3,8 @@ import re
 import pandas as pd
 import numpy as np
 
-from plydata import (mutate, sample_n, sample_frac, select, rename,
-                     distinct, arrange)
+from plydata import (mutate, transmute, sample_n, sample_frac, select,
+                     rename, distinct, arrange)
 
 
 def test_mutate():
@@ -29,6 +29,30 @@ def test_mutate():
     assert all(df['x_sq'] == x**2)
     assert all(df['x_cumsum'] == np.cumsum(x))
     assert all(df['y'] == y)
+
+
+def test_transmute():
+    x = np.array([1, 2, 3])
+    y = np.array([4, 5, 6])
+    df = pd.DataFrame({'x': x})
+
+    # No args
+    result = df >> transmute()
+    assert len(result.columns) == 0
+
+    # All types of args
+    result = df >> transmute(('x*2', 'x*2'),
+                             ('x*3', 'x*3'),
+                             x_sq='x**2',
+                             x_cumsum='np.cumsum(x)',
+                             y=y)
+
+    assert len(result.columns) == 5
+    assert all(result['x*2'] == x*2)
+    assert all(result['x*3'] == x*3)
+    assert all(result['x_sq'] == x**2)
+    assert all(result['x_cumsum'] == np.cumsum(x))
+    assert all(result['y'] == y)
 
 
 def test_sample_n():

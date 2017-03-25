@@ -21,6 +21,24 @@ class verb_methods:
             self.data[col] = value
         return self.data
 
+    def transmute(self):
+        d = {}
+        for col, expr in zip(self.new_columns, self.expressions):
+            if isinstance(expr, str):
+                value = self.env.eval(expr, inner_namespace=self.data)
+            elif len(self.data) == len(value):
+                value = expr
+            else:
+                raise ValueError("Unknown type")
+            d[col] = value
+
+        if d:
+            data = pd.DataFrame(d)
+        else:
+            data = pd.DataFrame(index=self.data.index)
+
+        return data
+
     def sample_n(self):
         return self.data.sample(**self.kwargs)
 

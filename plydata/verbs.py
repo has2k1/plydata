@@ -5,8 +5,8 @@ import itertools
 
 from .operators import DataOperator
 
-__all__ = ['mutate', 'sample_n', 'sample_frac', 'select', 'rename',
-           'distinct', 'unique', 'arrange']
+__all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
+           'rename', 'distinct', 'unique', 'arrange']
 
 
 class mutate(DataOperator):
@@ -51,6 +51,40 @@ class mutate(DataOperator):
             exprs.append(col)
         self.new_columns = itertools.chain(cols, kwargs.keys())
         self.expressions = itertools.chain(exprs, kwargs.values())
+
+
+class transmute(mutate):
+    """
+    Create DataFrame with columns
+
+    Similar to :class:`mutate`, but it drops the existing columns.
+
+    Parameters
+    ----------
+    args : tuples, optional
+        ``(name, expression)`` pairs. This should be used
+        when the *name* is not a valid python variable name.
+        The expression should be of type :class:`str` or an
+        *interable* with the same number of elements as the
+        dataframe.
+    kwargs : dict, optional
+        ``{name: expression}`` pairs.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': [1, 2, 3]})
+    >>> df >> transmute(x_sq='x**2')
+       x_sq
+    0     1
+    1     4
+    2     9
+    >>> df >> transmute(('x*2', 'x*2'), ('x*3', 'x*3'), x_cubed='x**3')
+       x*2  x*3  x_cubed
+    0    2    3        1
+    1    4    6        8
+    2    6    9       27
+    """
 
 
 class sample_n(DataOperator):
