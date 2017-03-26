@@ -4,7 +4,9 @@ import pandas as pd
 import numpy as np
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
-                     rename, distinct, arrange)
+                     rename, distinct, arrange, group_by)
+
+from plydata.grouped_datatypes import GroupedDataFrame
 
 
 def test_mutate():
@@ -164,3 +166,65 @@ def test_arrange():
 
     result = df >> arrange('np.sin(y)')
     assert result.index.equals(I([4, 3, 5, 2, 0, 1]))
+
+
+def test_group_by():
+    df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
+                       'y': [1, 2, 3, 4, 5, 6, 5]})
+    result = df >> group_by('x')
+    assert isinstance(result, GroupedDataFrame)
+    assert result.plydata_groups == ['x']
+
+    result = df >> group_by('x-1', xsq='x**2')
+    assert 'x-1' in result
+    assert 'xsq' in result
+    assert isinstance(result, GroupedDataFrame)
+
+
+class TestGroupedDataFrame:
+    # The verbs should not drop the columns that are grouped on
+
+    df = pd.DataFrame({
+        'x': [1, 5, 2, 2, 4, 0, 4],
+        'y': [1, 2, 3, 4, 5, 6, 5]
+    }) >> group_by('x')
+
+    def test_mutate(self):
+        result = self.df.copy() >> mutate(z='2*x')
+        assert isinstance(result, GroupedDataFrame)
+
+    def test_transmute(self):
+        result = self.df.copy() >> transmute(z='2*x')
+        assert 'x' in result
+        assert 'z' in result
+        assert isinstance(result, GroupedDataFrame)
+
+    def test_sample_n(self):
+        result = self.df >> sample_n(5)
+        assert 'x' in result
+        assert isinstance(result, GroupedDataFrame)
+
+    def test_sample_frac(self):
+        result = self.df >> sample_frac(0.25)
+        assert 'x' in result
+        assert isinstance(result, GroupedDataFrame)
+
+    def test_select(self):
+        result = self.df >> select('y')
+        assert 'x' in result
+        assert isinstance(result, GroupedDataFrame)
+
+    def test_rename(self):
+        result = self.df >> rename(y='z')
+        assert 'x' in result
+        assert 'z' in result
+        assert 'y' not in result
+        assert isinstance(result, GroupedDataFrame)
+
+    def test_distinct(self):
+        result = self.df >> distinct()
+        assert isinstance(result, GroupedDataFrame)
+
+    def test_arrange(self):
+        result = self.df >> mutate(z='np.sin(x)') >> arrange('z')
+        assert isinstance(result, GroupedDataFrame)

@@ -16,6 +16,7 @@ Single table verbs
 
    arrange
    distinct
+   group_by
    mutate
    rename
    sample_frac

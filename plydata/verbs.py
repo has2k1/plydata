@@ -3,10 +3,11 @@ Verb Initializations
 """
 import itertools
 
+from .eval import EvalEnvironment
 from .operators import DataOperator
 
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
-           'rename', 'distinct', 'unique', 'arrange']
+           'rename', 'distinct', 'unique', 'arrange', 'group_by']
 
 
 class mutate(DataOperator):
@@ -445,6 +446,78 @@ class arrange(DataOperator):
     def __init__(self, *args):
         super().__init__(*args)
         self.expressions = [x for x in args]
+
+
+class group_by(mutate):
+    """
+    Group dataframe by one or more columns/variables
+
+    Parameters
+    ----------
+    args : strs, tuples, optional
+        Expressions or ``(name, expression)`` pairs. This should
+        be used when the *name* is not a valid python variable
+        name. The expression should be of type :class:`str` or
+        an *interable* with the same number of elements as the
+        dataframe.
+    kwargs : dict, optional
+        ``{name: expression}`` pairs.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
+    ...                    'y': [1, 2, 3, 4, 5, 6, 5]})
+    >>> df >> group_by('x')
+    groups: ['x']
+    <BLANKLINE>
+       x  y
+    0  1  1
+    1  5  2
+    2  2  3
+    3  2  4
+    4  4  5
+    5  0  6
+    6  4  5
+
+    Like :meth:`mutate`, :meth:`group_by` creates any
+    missing columns.
+
+    >>> df >> group_by('y-1', xplus1='x+1')
+    groups: ['y-1', 'xplus1']
+    <BLANKLINE>
+       x  y  y-1  xplus1
+    0  1  1    0       2
+    1  5  2    1       6
+    2  2  3    2       3
+    3  2  4    3       3
+    4  4  5    4       5
+    5  0  6    5       1
+    6  4  5    4       5
+
+    Columns that are grouped on remain in the dataframe after any
+    verb operations that do not use the group information. For
+    example:
+
+    >>> df >> group_by('y-1', xplus1='x+1') >> select('y')
+    groups: ['y-1', 'xplus1']
+    <BLANKLINE>
+       y  y-1  xplus1
+    0  1    0       2
+    1  2    1       6
+    2  3    2       3
+    3  4    3       3
+    4  5    4       5
+    5  6    5       1
+    6  5    4       5
+    """
+    groups = None
+
+    def __init__(self, *args, **kwargs):
+        self.env = EvalEnvironment.capture(1)
+        super().__init__(*args, **kwargs)
+        self.new_columns = list(self.new_columns)
+        self.groups = list(self.new_columns)
 
 
 class summarise(DataOperator):

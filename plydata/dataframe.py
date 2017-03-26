@@ -7,6 +7,7 @@ import re
 import numpy as np
 import pandas as pd
 
+from .grouped_datatypes import GroupedDataFrame
 from .utils import hasattrs
 
 
@@ -23,20 +24,14 @@ def mutate(verb):
 
 
 def transmute(verb):
-    d = {}
+    data = _get_base_dataframe(verb.data)
     for col, expr in zip(verb.new_columns, verb.expressions):
         if isinstance(expr, str):
-            value = verb.env.eval(expr, inner_namespace=verb.data)
-        elif len(verb.data) == len(value):
-            value = expr
+            data[col] = verb.env.eval(expr, inner_namespace=verb.data)
+        elif len(verb.data) == len(expr):
+            data[col] = expr
         else:
             raise ValueError("Unknown type")
-        d[col] = value
-
-    if d:
-        data = pd.DataFrame(d)
-    else:
-        data = pd.DataFrame(index=verb.data.index)
 
     return data
 
@@ -52,8 +47,9 @@ def sample_frac(verb):
 def select(verb):
     kw = verb.kwargs
     columns = verb.data.columns
+    groups = _get_groups(verb)
     c0 = np.array([False]*len(columns))
-    c1 = c2 = c3 = c4 = c5 = c0
+    c1 = c2 = c3 = c4 = c5 = c6 = c0
 
     if verb.args:
         c1 = [x in set(verb.args) for x in columns]
@@ -78,7 +74,10 @@ def select(verb):
         c5 = [isinstance(x, str) and bool(pattern.match(x))
               for x in columns]
 
-    cond = np.asarray(c1) | c2 | c3 | c4 | c5
+    if groups:
+        c6 = [x in set(groups) for x in columns]
+
+    cond = np.logical_or.reduce((c1, c2, c3, c4, c5, c6))
 
     if kw['drop']:
         cond = ~cond
@@ -102,7 +101,6 @@ def distinct(verb):
 
 
 def arrange(verb):
-    data = verb.data
     name_gen = ('col_{}'.format(x) for x in range(100))
     columns = []
     d = {}
@@ -112,8 +110,39 @@ def arrange(verb):
 
     if columns:
         df = pd.DataFrame(d).sort_values(by=columns)
-        data = data.loc[df.index, :]
+        data = verb.data.loc[df.index, :]
         if data.is_copy:
             data = data.copy()
 
     return data
+
+
+def group_by(verb):
+    data = GroupedDataFrame(verb.data)
+    data.plydata_groups = verb.groups
+    mutate(verb)
+    return data
+
+
+# Helper functions
+
+def _get_groups(verb):
+    """
+    Return groups
+    """
+    try:
+        return verb.data.plydata_groups
+    except AttributeError:
+        return []
+
+
+def _get_base_dataframe(df):
+    """
+    Remove all columns other than those grouped on
+    """
+    if isinstance(df, GroupedDataFrame):
+        base_df = GroupedDataFrame(df.loc[:, df.plydata_groups])
+        base_df.plydata_groups = list(df.plydata_groups)
+    else:
+        base_df = pd.DataFrame(index=df.index)
+    return base_df

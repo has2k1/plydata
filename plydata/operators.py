@@ -3,9 +3,11 @@ from importlib import import_module
 import pandas as pd
 
 from .eval import EvalEnvironment
+from .grouped_datatypes import GroupedDataFrame
 
 type_lookup = {
     pd.DataFrame: import_module('.dataframe', __package__),
+    GroupedDataFrame: import_module('.dataframe', __package__),
     dict: import_module('.dict', __package__)
 }
 
