@@ -30,6 +30,10 @@ def test_mutate():
     assert all(df['x_cumsum'] == np.cumsum(x))
     assert all(df['y'] == y)
 
+    result = df >> mutate('x*4')
+    assert len(result.columns) == 7
+    assert all(result['x*4'] == x*4)
+
 
 def test_transmute():
     x = np.array([1, 2, 3])
@@ -53,6 +57,10 @@ def test_transmute():
     assert all(result['x_sq'] == x**2)
     assert all(result['x_cumsum'] == np.cumsum(x))
     assert all(result['y'] == y)
+
+    result = df >> transmute('x*4')
+    assert len(result.columns) == 1
+    assert all(result['x*4'] == x*4)
 
 
 def test_sample_n():

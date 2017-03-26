@@ -15,11 +15,11 @@ class mutate(DataOperator):
 
     Parameters
     ----------
-    args : tuples, optional
-        ``(name, expression)`` pairs. This should be used
-        when the *name* is not a valid python variable name.
-        The expression should be of type :class:`str` or an
-        *interable* with the same number of elements as the
+    args : strs, tuples, optional
+        Expressions or ``(name, expression)`` pairs. This should
+        be used when the *name* is not a valid python variable
+        name. The expression should be of type :class:`str` or
+        an *interable* with the same number of elements as the
         dataframe.
     kwargs : dict, optional
         ``{name: expression}`` pairs.
@@ -38,6 +38,11 @@ class mutate(DataOperator):
     0  1     1    2    3        1
     1  2     4    4    6        8
     2  3     9    6    9       27
+    >>> df >> mutate('x*4')
+       x  x_sq  x*2  x*3  x_cubed  x*4
+    0  1     1    2    3        1    4
+    1  2     4    4    6        8    8
+    2  3     9    6    9       27   12
     """
     new_columns = None
     expressions = None  # Expressions to create the new columns
@@ -46,7 +51,11 @@ class mutate(DataOperator):
         super().__init__(*args, **kwargs)
         cols = []
         exprs = []
-        for col, expr in args:
+        for arg in args:
+            if isinstance(arg, str):
+                col = expr = arg
+            else:
+                col, expr = arg
             cols.append(col)
             exprs.append(col)
         self.new_columns = itertools.chain(cols, kwargs.keys())
@@ -61,12 +70,15 @@ class transmute(mutate):
 
     Parameters
     ----------
-    args : tuples, optional
-        ``(name, expression)`` pairs. This should be used
-        when the *name* is not a valid python variable name.
-        The expression should be of type :class:`str` or an
-        *interable* with the same number of elements as the
+    args : strs, tuples, optional
+        Expressions or ``(name, expression)`` pairs. This should
+        be used when the *name* is not a valid python variable
+        name. The expression should be of type :class:`str` or
+        an *interable* with the same number of elements as the
         dataframe.
+    kwargs : dict, optional
+        ``{name: expression}`` pairs.
+
     kwargs : dict, optional
         ``{name: expression}`` pairs.
 
@@ -84,6 +96,11 @@ class transmute(mutate):
     0    2    3        1
     1    4    6        8
     2    6    9       27
+    >>> df >> transmute('x*4')
+       x*4
+    0    4
+    1    8
+    2   12
     """
 
 
@@ -428,6 +445,14 @@ class arrange(DataOperator):
     def __init__(self, *args):
         super().__init__(*args)
         self.expressions = [x for x in args]
+
+
+class summarise(DataOperator):
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+# Multiple Table Verbs
 
 
 # Aliases
