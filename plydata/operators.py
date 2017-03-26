@@ -52,13 +52,13 @@ class DataOperator:
             self.data = other
 
         module = module_for_datatype(self.data)
-        verb_method = getattr(module.verb_methods, verb)
-        return verb_method(self)
+        verb_function = getattr(module, verb)
+        return verb_function(self)
 
     def __call__(self, data):
         # This is an undocumented feature, it allows for
         # verb(*args, **kwargs)(df)
         verb = self.__class__.__name__
         module = module_for_datatype(data)
-        verb_method = getattr(module.verb_methods, verb)
-        return verb_method(self)
+        verb_function = getattr(module, verb)
+        return verb_function(self)

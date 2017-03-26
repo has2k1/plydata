@@ -1,17 +1,17 @@
 # This module is a stub to show that the dispatch we use
 # works for multiple data type sources.
 
+"""
+Verb implementations for a :class:`dict`
+"""
 
-class verb_methods:
-    """
-    Verb implementations for a :class:`dict`
-    """
-    def mutate(self):
-        env = self.env.with_outer_namespace(self.data)
-        for col, expr in zip(self.new_columns, self.expressions):
-            if isinstance(expr, str):
-                value = env.eval(expr)
-            else:
-                value = expr
-            self.data[col] = value
-        return self.data
+
+def mutate(verb):
+    env = verb.env.with_outer_namespace(verb.data)
+    for col, expr in zip(verb.new_columns, verb.expressions):
+        if isinstance(expr, str):
+            value = env.eval(expr)
+        else:
+            value = expr
+        verb.data[col] = value
+    return verb.data
