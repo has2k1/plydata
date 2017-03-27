@@ -52,7 +52,7 @@ install:
   - if [[ "$JOB" == "PY35" ]] || [[ "$JOB" == "PY36" ]]; then
       conda install pytest-cov;
     elif [[ "$JOB" == "DOCS" ]]; then
-      pip install sphinx sphinx_bootstrap_theme;
+      pip install sphinx;
       python setup.py install;
     elif [[ "$JOB" == "FLAKE8" ]]; then
       pip install flake8;

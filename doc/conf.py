@@ -14,7 +14,7 @@
 
 import sys
 import os
-import sphinx_bootstrap_theme
+# import sphinx_bootstrap_theme
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -25,7 +25,12 @@ sys.path.insert(0, os.path.abspath('.'))
 if on_rtd:
     import mock
     sys.path.insert(0, os.path.abspath('..'))
-    MOCK_MODULES = []
+    MOCK_MODULES = [
+        'pandas',
+        'pandas.core',
+        'pandas.core.common',
+        'pandas.api',
+        'pandas.api.types']
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = mock.Mock()
 
@@ -132,18 +137,22 @@ suppress_warnings = ['image.nonlocal_uri']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-# html_theme = 'sphinx_rtd_theme'
-# https://github.com/ryan-roemer/sphinx-bootstrap-theme
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_theme = 'theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+# https://github.com/ryan-roemer/sphinx-bootstrap-theme
+# Bootswatch (http://bootswatch.com/) theme.
+html_theme_options = {
+    'navbar_title': 'plydata',
+    'globaltoc_depth': 2,
+    'globaltoc_includehidden': "true",
+}
+
 
 # Add any paths that contain custom themes here, relative to this directory.
-# html_theme_path = []
+html_theme_path = ['.']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -164,7 +173,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied

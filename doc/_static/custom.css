@@ -5,20 +5,21 @@
  * sphinx_bootstrap_theme does not insert this
  * file last.
  */
-
-table.table {
+table.table, table.longtable {
    border: 1px solid #DDD;
    border-collapse: collapse;
+}
+
+table.table {
    width: initial !important;
 }
 
 table.longtable {
-   border: 1px solid #DDD;
-   border-collapse: collapse;
    width: 100% !important;
 }
 
-table.table td, table.table th {
+table.table td,
+table.table th {
    border-left: 1px solid #DDD !important;
 }
 
@@ -26,12 +27,13 @@ table.field-list {
    border: none;
 }
 
-table.field-list td, table.field-list th{
+table.field-list td,
+table.field-list th{
    border-left: none !important;
 }
 
 tr.row-even td {
-   background-color: #f3f6f6;
+   background-color: #F0F6F6;
 }
 
 
@@ -40,15 +42,24 @@ tr.row-even td {
 table.dataframe {
    margin: 0 0 1em 0;
    color: #000;
+   font-family: Ubuntu, Tahoma, "Helvetica Neue", Helvetica, Arial, sans-serif;
    border-collapse: collapse;
+}
+
+table.dataframe,
+table.dataframe tr,
+table.dataframe th,
+table.dataframe td {
    border: 1px solid #DDD;
 }
 
-table.dataframe th, table.dataframe td {
+table.dataframe th,
+table.dataframe td {
    padding: .25em .5em;
 }
 
-table.dataframe thead th, table.dataframe tfoot th {
+table.dataframe thead th,
+table.dataframe tfoot th {
    color: #333;
    text-align: left;
    background-color: #fff;
@@ -60,19 +71,27 @@ table.dataframe thead th {
    border-bottom: 2px solid #DDD;
 }
 
+table.dataframe tbody th,
+table.dataframe thead tr th:first-child {
+   border-right: 2px solid #DDD;
+}
+
+table.dataframe tbody th {
+   text-align: right;
+}
+
 table.dataframe tfoot th {
    font-weight: normal;
    font-size: 1em;
    border-top: 2px solid #DDD;
 }
 
-table.dataframe tbody th, table.dataframe tbody td, table.dataframe thead th {
+table.dataframe tbody th,
+table.dataframe tbody td,
+table.dataframe thead th {
    font-size: .95em;
-   /* border: 1px solid #FFFFFF; */
-   border-left: 1px solid #DDD;
 }
 
-
 table.dataframe tbody tr:nth-child(odd) {
-   background: #F3F6F6;
+   background: #F0F6F6;
 }
