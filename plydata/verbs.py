@@ -7,7 +7,8 @@ from .eval import EvalEnvironment
 from .operators import DataOperator
 
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
-           'rename', 'distinct', 'unique', 'arrange', 'group_by']
+           'rename', 'distinct', 'unique', 'arrange', 'group_by',
+           'summarize', 'summarise']
 
 
 class mutate(DataOperator):
@@ -520,9 +521,64 @@ class group_by(mutate):
         self.groups = list(self.new_columns)
 
 
-class summarise(DataOperator):
+class summarize(DataOperator):
+    """
+    Summarise multiple values to a single value.
+
+    Parameters
+    ----------
+    args : strs, tuples, optional
+        Expressions or ``(name, expression)`` pairs. This should
+        be used when the *name* is not a valid python variable
+        name. The expression should be of type :class:`str` or
+        an *interable* with the same number of elements as the
+        dataframe.
+    kwargs : dict, optional
+        ``{name: expression}`` pairs.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
+    ...                    'y': [1, 2, 3, 4, 5, 6, 5],
+    ...                    'z': [1, 3, 3, 4, 5, 5, 5]})
+
+    Can take only positional, only keyword arguments or both.
+
+    >>> df >> summarize('np.sum(x)', max='np.max(x)')
+       np.sum(x)  max
+    0         18    5
+
+    When summarizing after a :class:`group_by` operation
+    the group columns are retained.
+
+    >>> df >> group_by('y', 'z') >> summarize(mean_x='np.mean(x)')
+       y  z  mean_x
+    0  1  1     1.0
+    1  2  3     5.0
+    2  3  3     2.0
+    3  4  4     2.0
+    4  5  5     4.0
+    5  6  5     0.0
+    """
+    new_columns = None
+    epressions = None  # Expressions to create the summary columns
+
     def __init__(self, *args, **kwargs):
-        pass
+        self.env = EvalEnvironment.capture(1)
+        cols = []
+        exprs = []
+        for arg in args:
+            if isinstance(arg, str):
+                col = expr = arg
+            else:
+                col, expr = arg
+            cols.append(col)
+            exprs.append(col)
+
+        self.new_columns = list(itertools.chain(cols, kwargs.keys()))
+        self.expressions = list(itertools.chain(exprs, kwargs.values()))
 
 
 # Multiple Table Verbs
@@ -530,3 +586,4 @@ class summarise(DataOperator):
 
 # Aliases
 unique = distinct
+summarise = summarize

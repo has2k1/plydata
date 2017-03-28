@@ -136,6 +136,48 @@ def group_by(verb):
     return data
 
 
+def summarize(verb):
+    def _summarize(df, group_info=None):
+        """
+        Helper
+
+        group_info is a tuple of (groups, group_values)
+        where the groups are the names of the columns grouped upon,
+        and the group_values are the respective value (as returned by
+        groupby.__iter__).
+        """
+        if group_info:
+            # The columns in the output dataframe should be ordered
+            # first with the groups, then the new columns
+            data = pd.DataFrame(data=[group_info[1]],
+                                columns=group_info[0],
+                                index=[0])
+        else:
+            data = pd.DataFrame(index=[0])
+
+        for col, expr in zip(verb.new_columns, verb.expressions):
+            if isinstance(expr, str):
+                value = verb.env.eval(expr, inner_namespace=df)
+            else:
+                value = expr
+            data[col] = value
+
+        return data
+
+    if isinstance(verb.data, GroupedDataFrame):
+        groups = verb.data.plydata_groups
+        dfs = []
+        for gdata, gdf in verb.data.groupby(groups):
+            if not isinstance(gdata, tuple):
+                gdata = (gdata,)
+            dfs.append(_summarize(gdf, (groups, gdata)))
+        data = pd.concat(dfs, axis=0, ignore_index=True)
+    else:
+        data = _summarize(verb.data)
+
+    return data
+
+
 # Helper functions
 
 def _get_groups(verb):

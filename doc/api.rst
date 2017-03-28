@@ -22,5 +22,6 @@ Single table verbs
    sample_frac
    sample_n
    select
+   summarize
    transmute
    unique

@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
-                     rename, distinct, arrange, group_by)
+                     rename, distinct, arrange, group_by, summarize)
 
 from plydata.grouped_datatypes import GroupedDataFrame
 
@@ -250,3 +250,23 @@ class TestGroupedDataFrame:
     def test_arrange(self):
         result = self.df >> mutate(z='np.sin(x)') >> arrange('z')
         assert isinstance(result, GroupedDataFrame)
+
+
+def test_summarize():
+    df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
+                       'y': [1, 2, 3, 4, 5, 6, 5],
+                       'z': [1, 3, 3, 4, 5, 5, 5]})
+
+    result = df >> summarize('np.sum(x)', max='np.max(x)')
+    assert result.loc[0, 'max'] == np.max(df['x'])
+    assert result.loc[0, 'np.sum(x)'] == np.sum(df['x'])
+
+    result = df >> group_by('y', 'z') >> summarize(mean_x='np.mean(x)')
+    assert 'y' in result
+    assert 'z' in result
+    assert all(result['mean_x'] == [1, 5, 2, 2, 4, 0])
+
+    # Branches
+    result = df >> group_by('y') >> summarize('np.sum(z)', constant=1)
+    assert 'y' in result
+    assert result.loc[0, 'constant'] == 1
