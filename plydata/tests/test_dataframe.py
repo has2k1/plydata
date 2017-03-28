@@ -2,6 +2,7 @@ import re
 
 import pandas as pd
 import numpy as np
+import pytest
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by)
@@ -36,6 +37,13 @@ def test_mutate():
     assert len(result.columns) == 7
     assert all(result['x*4'] == x*4)
 
+    # Branches
+    with pytest.raises(ValueError):
+        df >> mutate(z=[1, 2, 3, 4])
+
+    with pytest.raises(TypeError):
+        df >> mutate(z=object())
+
 
 def test_transmute():
     x = np.array([1, 2, 3])
@@ -63,6 +71,13 @@ def test_transmute():
     result = df >> transmute('x*4')
     assert len(result.columns) == 1
     assert all(result['x*4'] == x*4)
+
+    # Branches
+    with pytest.raises(ValueError):
+        df >> transmute(z=[1, 2, 3, 4])
+
+    with pytest.raises(TypeError):
+        df >> transmute(z=object())
 
 
 def test_sample_n():
@@ -166,6 +181,13 @@ def test_arrange():
 
     result = df >> arrange('np.sin(y)')
     assert result.index.equals(I([4, 3, 5, 2, 0, 1]))
+
+    # Branches
+    result = df >> arrange()
+    assert result is df
+
+    result = df >> arrange('x') >> arrange('y')  # already sorted
+    assert result.index.equals(df.index)
 
 
 def test_group_by():

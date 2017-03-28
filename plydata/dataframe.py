@@ -15,10 +15,15 @@ def mutate(verb):
     for col, expr in zip(verb.new_columns, verb.expressions):
         if isinstance(expr, str):
             value = verb.env.eval(expr, inner_namespace=verb.data)
-        elif len(verb.data) == len(value):
-            value = expr
+        elif hasattr(expr, '__len__'):
+            if len(verb.data) == len(expr):
+                value = expr
+            else:
+                msg = "value not equal to length of dataframe"
+                raise ValueError(msg)
         else:
-            raise ValueError("Unknown type")
+            msg = "Cannot handle expression of type `{}`"
+            raise TypeError(msg.format(type(expr)))
         verb.data[col] = value
     return verb.data
 
@@ -28,10 +33,15 @@ def transmute(verb):
     for col, expr in zip(verb.new_columns, verb.expressions):
         if isinstance(expr, str):
             data[col] = verb.env.eval(expr, inner_namespace=verb.data)
-        elif len(verb.data) == len(expr):
-            data[col] = expr
+        elif hasattr(expr, '__len__'):
+            if len(verb.data) == len(expr):
+                data[col] = expr
+            else:
+                msg = "value not equal to length of dataframe"
+                raise ValueError(msg)
         else:
-            raise ValueError("Unknown type")
+            msg = "Cannot handle expression of type `{}`"
+            raise TypeError(msg.format(type(expr)))
 
     return data
 
@@ -113,6 +123,8 @@ def arrange(verb):
         data = verb.data.loc[df.index, :]
         if data.is_copy:
             data = data.copy()
+    else:
+        data = verb.data
 
     return data
 
