@@ -270,3 +270,42 @@ def test_summarize():
     result = df >> group_by('y') >> summarize('np.sum(z)', constant=1)
     assert 'y' in result
     assert result.loc[0, 'constant'] == 1
+
+
+class TestAggregateFunctions:
+    df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
+                       'y': [0, 0, 1, 1, 2, 3]})
+
+    def test_no_groups(self):
+        result = self.df >> summarize('min(x)')
+        assert result.loc[0, 'min(x)'] == 0
+
+        result = self.df >> summarize('first(x)')
+        assert result.loc[0, 'first(x)'] == 0
+
+        result = self.df >> summarize('last(x)')
+        assert result.loc[0, 'last(x)'] == 5
+
+        result = self.df >> summarize('nth(y, 4)')
+        assert result.loc[0, 'nth(y, 4)'] == 2
+
+        result = self.df >> summarize('n_distinct(y)')
+        assert result.loc[0, 'n_distinct(y)'] == 4
+
+        result = self.df >> summarize('n()')
+        assert result.loc[0, 'n()'] == 6
+
+        # should not conflict
+        n = 123
+        result = self.df >> summarize('n()')
+        assert result.loc[0, 'n()'] == 6
+        assert n == 123
+
+    def test_groups(self):
+        result = self.df >> group_by('y') >> summarize('mean(x)')
+        assert all(result['mean(x)'] == [0.5, 2.5, 4, 5])
+
+        n = 123
+        result = self.df >> group_by('y') >> summarize('n()')
+        assert all(result['n()'] == [2, 2, 1, 1])
+        assert n == 123

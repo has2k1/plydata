@@ -1,0 +1,30 @@
+import pytest
+from plydata.utils import hasattrs, temporary_key
+
+
+def test_hasattrs():
+    class klass:
+        pass
+
+    obj = klass()
+    obj.a = 'a'
+    obj.b = 'b'
+
+    assert hasattrs(obj, ('a',))
+    assert hasattrs(obj, ('a', 'b'))
+    assert not hasattrs(obj, ('a', 'b', 'c'))
+
+
+def test_temporary_key():
+    d = {'one': 1, 'two': 2}
+
+    with temporary_key(d, 'three', 3):
+        assert 'three' in d
+    assert 'three' not in d
+
+    # The context does not suppress exceptions
+    with pytest.raises(Exception):
+        with temporary_key(d, 'four', 4):
+            assert 'four' in d
+            raise Exception()
+    assert 'four' not in d

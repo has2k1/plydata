@@ -561,6 +561,58 @@ class summarize(DataOperator):
     3  4  4     2.0
     4  5  5     4.0
     5  6  5     0.0
+
+    .. rubric:: Aggregate Functions
+
+    When summarizing the following functions can be used, they take
+    an array and return a *single* number.
+
+    - ``min(x)`` - Alias of :func:`numpy.min`.
+    - ``max(x)`` - Alias of :func:`numpy.max`.
+    - ``sum(x)`` - Alias of :func:`numpy.sum`.
+    - ``cumsum(x)`` - Alias of :func:`numpy.cumsum`.
+    - ``mean(x)`` - Alias of :func:`numpy.mean`.
+    - ``median(x)`` - Alias of :func:`numpy.median`.
+    - ``std(x)`` - Alias of :func:`numpy.std`.
+    - ``first(x)`` - First element of ``x``.
+    - ``last(x)`` - Last element of ``x``.
+    - ``nth(x, n)`` - *nth* value of ``x`` or :obj:`numpy.nan`.
+    - ``n_distinct(x)`` - Number of distint elements in ``x``.
+    - ``n_unique(x)`` - Alias of ``n_distinct``.
+    - ``n()`` - Number of elements in current group.
+
+    The aliases of the Numpy functions save you from typing 3 or 5 key
+    strokes and you get better column names. i.e ``min(x)`` instead of
+    ``np.min(x)`` or ``numpy.min(x)`` if you have Numpy imported.
+
+    >>> df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
+    ...                    'y': [0, 0, 1, 1, 2, 3]})
+    >>> df >> summarize('min(x)', 'max(x)', 'mean(x)', 'sum(x)',
+    ...                 'first(x)', 'last(x)', 'nth(x, 3)')
+       min(x)  max(x)  mean(x)  sum(x)  first(x)  last(x)  nth(x, 3)
+    0       0       5      2.5      15         0        5          3
+
+    Summarizing groups with aggregate functions
+
+    >>> df >> group_by('y') >> summarize('mean(x)')
+       y  mean(x)
+    0  0      0.5
+    1  1      2.5
+    2  2      4.0
+    3  3      5.0
+
+    >>> df >> group_by('y') >> summarize(y_count='n()')
+       y  y_count
+    0  0        2
+    1  1        2
+    2  2        1
+    3  3        1
+
+    You can use ``n()`` when there are no groups.
+
+    >>> df >> summarize('n()')
+       n()
+    0    6
     """
     new_columns = None
     epressions = None  # Expressions to create the summary columns

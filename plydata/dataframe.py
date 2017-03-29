@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .grouped_datatypes import GroupedDataFrame
-from .utils import hasattrs
+from .utils import hasattrs, temporary_key
 
 
 def mutate(verb):
@@ -137,6 +137,8 @@ def group_by(verb):
 
 
 def summarize(verb):
+    env = verb.env.with_outer_namespace(_aggregate_functions)
+
     def _summarize(df, group_info=None):
         """
         Helper
@@ -146,6 +148,17 @@ def summarize(verb):
         and the group_values are the respective value (as returned by
         groupby.__iter__).
         """
+        # We create an extra aggregate function that the user can
+        # reference with the name `n`. As n is a common variable, it
+        # may conflict with another `n` in the users namespace. To
+        # avoid this we replace `n()` with `_plydata_internal_func()`.
+        # We put that function in the namespace and remove it before
+        # we exit.
+        nfunc_name = '_plydata_internal_func'
+
+        def nfunc():
+            return len(df)
+
         if group_info:
             # The columns in the output dataframe should be ordered
             # first with the groups, then the new columns
@@ -157,7 +170,9 @@ def summarize(verb):
 
         for col, expr in zip(verb.new_columns, verb.expressions):
             if isinstance(expr, str):
-                value = verb.env.eval(expr, inner_namespace=df)
+                expr = re.sub('(?<!\w)n(?=\(\))', nfunc_name, expr)
+                with temporary_key(_aggregate_functions, nfunc_name, nfunc):
+                    value = env.eval(expr, inner_namespace=df)
             else:
                 value = expr
             data[col] = value
@@ -200,3 +215,40 @@ def _get_base_dataframe(df):
     else:
         base_df = pd.DataFrame(index=df.index)
     return base_df
+
+
+# Aggregations functions
+
+def _nth(arr, n):
+    """
+    Return the nth value of array
+
+    If it is missing return NaN
+    """
+    try:
+        return arr.iloc[n]
+    except KeyError:
+        raise np.nan
+
+
+def _n_distinct(arr):
+    """
+    Number of unique values in array
+    """
+    return len(np.unique(arr))
+
+
+_aggregate_functions = {
+    'min': np.min,
+    'max': np.max,
+    'sum': np.sum,
+    'cumsum': np.cumsum,
+    'mean': np.mean,
+    'median': np.median,
+    'std': np.std,
+    'first': lambda x: _nth(x, 0),
+    'last': lambda x: _nth(x, -1),
+    'nth': _nth,
+    'n_distinct': _n_distinct,
+    'n_unique': _n_distinct,
+}
