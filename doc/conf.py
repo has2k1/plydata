@@ -121,6 +121,7 @@ exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+highlight_language = 'python3'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -322,3 +323,7 @@ intersphinx_mapping = {
 # -- Extension configuration ----------------------------------------------
 autodoc_member_order = 'bysource'
 autosummary_generate = True
+
+
+def setup(app):
+    app.add_javascript('copybutton.js')
