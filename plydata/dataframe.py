@@ -148,15 +148,9 @@ def summarize(verb):
         and the group_values are the respective value (as returned by
         groupby.__iter__).
         """
-        # We create an extra aggregate function that the user can
-        # reference with the name `n`. As n is a common variable, it
-        # may conflict with another `n` in the users namespace. To
-        # avoid this we replace `n()` with `_plydata_internal_func()`.
-        # We put that function in the namespace and remove it before
-        # we exit.
-        nfunc_name = '_plydata_internal_func'
-
-        def nfunc():
+        # Extra aggregate function that the user references with
+        # the name `{n}`. It returns the length of the dataframe.
+        def _plydata_n():
             return len(df)
 
         if group_info:
@@ -170,8 +164,9 @@ def summarize(verb):
 
         for col, expr in zip(verb.new_columns, verb.expressions):
             if isinstance(expr, str):
-                expr = re.sub('(?<!\w)n(?=\(\))', nfunc_name, expr)
-                with temporary_key(_aggregate_functions, nfunc_name, nfunc):
+                expr = expr.format(n='_plydata_n()')
+                with temporary_key(_aggregate_functions,
+                                   '_plydata_n', _plydata_n):
                     value = env.eval(expr, inner_namespace=df)
             else:
                 value = expr

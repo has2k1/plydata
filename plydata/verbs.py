@@ -567,8 +567,8 @@ class summarize(DataOperator):
     When summarizing the following functions can be used, they take
     an array and return a *single* number.
 
-    - ``min(x)`` - Alias of :func:`numpy.min`.
-    - ``max(x)`` - Alias of :func:`numpy.max`.
+    - ``min(x)`` - Alias of :func:`numpy.amin` (a.k.a ``numpy.min``).
+    - ``max(x)`` - Alias of :func:`numpy.amax` (a.k.a ``numpy.max``).
     - ``sum(x)`` - Alias of :func:`numpy.sum`.
     - ``cumsum(x)`` - Alias of :func:`numpy.cumsum`.
     - ``mean(x)`` - Alias of :func:`numpy.mean`.
@@ -576,10 +576,11 @@ class summarize(DataOperator):
     - ``std(x)`` - Alias of :func:`numpy.std`.
     - ``first(x)`` - First element of ``x``.
     - ``last(x)`` - Last element of ``x``.
-    - ``nth(x, n)`` - *nth* value of ``x`` or :obj:`numpy.nan`.
+    - ``nth(x, n)`` - *nth* value of ``x`` or ``numpy.nan``.
     - ``n_distinct(x)`` - Number of distint elements in ``x``.
     - ``n_unique(x)`` - Alias of ``n_distinct``.
-    - ``n()`` - Number of elements in current group.
+    - ``{n}`` - Number of elements in current group. A special
+      function is created and substituted in place of ``{n}``.
 
     The aliases of the Numpy functions save you from typing 3 or 5 key
     strokes and you get better column names. i.e ``min(x)`` instead of
@@ -601,17 +602,17 @@ class summarize(DataOperator):
     2  2      4.0
     3  3      5.0
 
-    >>> df >> group_by('y') >> summarize(y_count='n()')
+    >>> df >> group_by('y') >> summarize(y_count='{n}')
        y  y_count
     0  0        2
     1  1        2
     2  2        1
     3  3        1
 
-    You can use ``n()`` when there are no groups.
+    You can use ``{n}`` even when there are no groups.
 
-    >>> df >> summarize('n()')
-       n()
+    >>> df >> summarize('{n}')
+       {n}
     0    6
     """
     new_columns = None

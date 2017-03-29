@@ -292,20 +292,12 @@ class TestAggregateFunctions:
         result = self.df >> summarize('n_distinct(y)')
         assert result.loc[0, 'n_distinct(y)'] == 4
 
-        result = self.df >> summarize('n()')
-        assert result.loc[0, 'n()'] == 6
-
-        # should not conflict
-        n = 123
-        result = self.df >> summarize('n()')
-        assert result.loc[0, 'n()'] == 6
-        assert n == 123
+        result = self.df >> summarize('{n}')
+        assert result.loc[0, '{n}'] == 6
 
     def test_groups(self):
         result = self.df >> group_by('y') >> summarize('mean(x)')
         assert all(result['mean(x)'] == [0.5, 2.5, 4, 5])
 
-        n = 123
-        result = self.df >> group_by('y') >> summarize('n()')
-        assert all(result['n()'] == [2, 2, 1, 1])
-        assert n == 123
+        result = self.df >> group_by('y') >> summarize('{n}')
+        assert all(result['{n}'] == [2, 2, 1, 1])
