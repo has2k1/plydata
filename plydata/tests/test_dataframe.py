@@ -322,3 +322,25 @@ def test_query():
                        'y': [0, 0, 1, 1, 2, 3]})
     result = df >> query('x % 2 == 0')
     assert all(result.loc[:, 'x'] == [0, 2, 4])
+
+
+def test_data_as_first_argument():
+    def equals(df1, df2):
+        return df1.equals(df2)
+
+    df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
+                       'y': [0, 0, 1, 1, 2, 3]})
+
+    assert equals(mutate(df.copy(), 'x*2'), df.copy() >> mutate('x*2'))
+    assert equals(transmute(df, 'x*2'), df >> transmute('x*2'))
+    assert len(sample_n(df, 5)) == len(df >> sample_n(5))
+    assert len(sample_frac(df, .3)) == len(df >> sample_frac(.3))
+    assert equals(select(df, 'x'), df >> select('x'))
+    assert equals(rename(df.copy(), x='z'), df.copy() >> rename(x='z'))
+    assert equals(distinct(df), df >> distinct())
+    assert equals(arrange(df, 'np.sin(x)'), df >> arrange('np.sin(x)'))
+    assert equals(group_by(df, 'x'), df >> group_by('x'))
+    assert equals(ungroup(group_by(df, 'x')),
+                  df >> group_by('x') >> ungroup())
+    assert equals(summarize(df, 'sum(x)'), df >> summarize('sum(x)'))
+    assert equals(query(df, 'x % 2'), df >> query('x % 2'))

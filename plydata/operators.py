@@ -1,10 +1,10 @@
-from contextlib import suppress
 from importlib import import_module
 
 import pandas as pd
 
 from .eval import EvalEnvironment
 from .grouped_datatypes import GroupedDataFrame
+from .utils import temporary_attr
 
 type_lookup = {
     pd.DataFrame: import_module('.dataframe', __package__),
@@ -13,55 +13,92 @@ type_lookup = {
 }
 
 
-def module_for_datatype(data):
+# We use this for "single dispatch" instead of maybe
+# functools.singledispatch because when piping the datatype
+# is not known when the verb class is called.
+def get_verb_function(data, verb):
     """
-    Return module that implements the verbs for given type of data
+    Return function that implements the verb for given data type
     """
-    with suppress(KeyError):
-        return type_lookup[type(data)]
+    try:
+        module = type_lookup[type(data)]
+    except KeyError:
+        # Some guess work for subclasses
+        for type_, mod in type_lookup.items():
+            if isinstance(data, type_):
+                module = mod
+                break
+    try:
+        return getattr(module, verb)
+    except (NameError, AttributeError):
+        msg = "Data source of type '{}' is not supported."
+        raise TypeError(msg.format(type(data)))
 
-    # Some guess work for subclasses
-    for type_, mod in type_lookup.items():
-        if isinstance(data, type_):
-            return mod
 
-    msg = "Data source of type '{}' is not supported."
-    raise TypeError(msg.format(type(data)))
+# Note: An alternate implementation would be to use a decorator
+# for the verb classes. The decorator would return a function
+# that checks the first argument, logic similar to the one used
+# here. The problem with that is that functions are not
+# subclassable, and doing the decoration manually at the end of
+# the file. The we would have declared classes but exported
+# functions, unless we change the names of the classes.
+class OptionalSingleDataFrameArgument(type):
+    """
+    Metaclass for optional dataframe as first argument
+
+    Makes it possible to do both::
+
+        data >> verb(z='x+1')
+        verb(data, z='x+1')
+    """
+    def __call__(cls, *args, **kwargs):
+        # When we have data we can proceed with the computation
+        if len(args) and isinstance(args[0], pd.DataFrame):
+            return args[0] >> super().__call__(*args[1:], **kwargs)
+        else:
+            return super().__call__(*args, **kwargs)
 
 
-class DataOperator:
+class DataOperator(metaclass=OptionalSingleDataFrameArgument):
     """
     Base class for all verbs that operate on data
     """
+    data = None
     env = None
 
-    def __init__(self, *args, **kwargs):
-        # Prevent duplicate captures of the
-        # same environment
+    def set_env_from_verb_init(self):
+        """
+        Capture users enviroment
+
+        Should be called from direct subclasses of this class
+        """
+        # Prevent capturing of wrong environment for when
+        # the verb class inherits and calls superclass init
         if not self.env:
-            self.env = EvalEnvironment.capture(2)
+            # 0 - local environment
+            # 1 - verb init environment
+            # 2 - metaclass.__call__ environment
+            # 3 - user environment
+            self.env = EvalEnvironment.capture(3)
 
     def __rrshift__(self, other):
         """
         Overload the >> operator
         """
-        # This method relies on a Python 3 only feature, where
-        # we can call an uninstantiated cls.method with any
-        # correct no. of parameters. Freedom!
-        verb = self.__class__.__name__
-        if isinstance(other, DataOperator):
-            self.data = other.data
-        else:
-            self.data = other
+        if self.data is None:
+            if isinstance(other, (pd.DataFrame, dict)):
+                self.data = other
+            else:
+                msg = "Unknown type of data {}"
+                raise TypeError(msg.format(type(other)))
 
-        module = module_for_datatype(self.data)
-        verb_function = getattr(module, verb)
-        return verb_function(self)
+        func = get_verb_function(self.data, self.__class__.__name__)
+        return func(self)
 
     def __call__(self, data):
         # This is an undocumented feature, it allows for
         # verb(*args, **kwargs)(df)
-        verb = self.__class__.__name__
-        module = module_for_datatype(data)
-        verb_function = getattr(module, verb)
-        return verb_function(self)
+        func = get_verb_function(data, self.__class__.__name__)
+        with temporary_attr(self, 'data', data):
+            result = func(self)
+        return result

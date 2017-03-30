@@ -3,7 +3,6 @@ Verb Initializations
 """
 import itertools
 
-from .eval import EvalEnvironment
 from .operators import DataOperator
 
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
@@ -17,6 +16,8 @@ class mutate(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -50,7 +51,7 @@ class mutate(DataOperator):
     expressions = None  # Expressions to create the new columns
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        self.set_env_from_verb_init()
         cols = []
         exprs = []
         for arg in args:
@@ -72,6 +73,8 @@ class transmute(mutate):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -112,6 +115,8 @@ class sample_n(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     n : int, optional
         Number of items from axis to return.
     replace : boolean, optional
@@ -162,6 +167,8 @@ class sample_frac(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     frac : float, optional
         Fraction of axis items to return. Cannot be used with `n`.
     replace : boolean, optional
@@ -203,7 +210,6 @@ class sample_frac(DataOperator):
 
     def __init__(self, frac=None, replace=False, weights=None,
                  random_state=None, axis=None):
-
         self.kwargs = dict(
             frac=frac, replace=replace, weights=weights,
             random_state=random_state, axis=axis)
@@ -215,6 +221,8 @@ class select(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     args : tuple, optional
         Names of columns in dataframe. Normally, they are strings.
     startswith : str, optional
@@ -270,6 +278,8 @@ class rename(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     args : tuple, optional
         A single positional argument that holds
         ``{'old_name': 'new_name'}`` pairs. This is useful if the
@@ -311,6 +321,8 @@ class distinct(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     columns : list-like, optional
         Column names to use when determining uniqueness.
     keep : {'first', 'last', False}, optional
@@ -376,7 +388,7 @@ class distinct(DataOperator):
     expressions = None  # Expressions to create the new columns
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        self.set_env_from_verb_init()
         if len(args) == 1:
             if isinstance(args[0], str):
                 self.keep = args[0]
@@ -408,6 +420,8 @@ class arrange(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     args : tuple
         Columns/expressions to sort by.
 
@@ -445,7 +459,7 @@ class arrange(DataOperator):
     expressions = None
 
     def __init__(self, *args):
-        super().__init__(*args)
+        self.set_env_from_verb_init()
         self.expressions = [x for x in args]
 
 
@@ -455,6 +469,8 @@ class group_by(mutate):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -512,7 +528,7 @@ class group_by(mutate):
     groups = None
 
     def __init__(self, *args, **kwargs):
-        self.env = EvalEnvironment.capture(1)
+        self.set_env_from_verb_init()
         super().__init__(*args, **kwargs)
         self.new_columns = list(self.new_columns)
         self.groups = list(self.new_columns)
@@ -521,6 +537,11 @@ class group_by(mutate):
 class ungroup(DataOperator):
     """
     Remove the grouping variables for dataframe
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
 
     Examples
     --------
@@ -549,6 +570,8 @@ class summarize(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -641,7 +664,7 @@ class summarize(DataOperator):
     epressions = None  # Expressions to create the summary columns
 
     def __init__(self, *args, **kwargs):
-        self.env = EvalEnvironment.capture(1)
+        self.set_env_from_verb_init()
         cols = []
         exprs = []
         for arg in args:
@@ -662,6 +685,8 @@ class query(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
     expr : str
         The query string to evaluate.  You can refer to variables
         in the environment by prefixing them with an '@' character

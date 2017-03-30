@@ -38,3 +38,11 @@ class GroupedDataFrame(pd.DataFrame):
         </table>
         """.format(''.join(td_gen))
         return group_html + super().to_html(*args, **kwargs)
+
+    def equals(self, other):
+        try:
+            same_groups = self.plydata_groups == other.plydata_groups
+        except AttributeError:
+            same_groups = False
+
+        return same_groups and super().equals(other)

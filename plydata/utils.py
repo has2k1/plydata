@@ -30,3 +30,27 @@ def temporary_key(d, key, value):
         yield d
     finally:
         del d[key]
+
+
+@contextmanager
+def temporary_attr(obj, name, value):
+    """
+    Context manager that removes key from dictionary on closing
+
+    The dictionary will hold the key for the duration of
+    the context.
+
+    Parameters
+    ----------
+    obj : object
+        Object onto which to add a temporary attribute.
+    name : str
+        Name of attribute to add to ``obj``.
+    value : object
+        Value of ``attr``.
+    """
+    setattr(obj, name, value)
+    try:
+        yield obj
+    finally:
+        delattr(obj, name)
