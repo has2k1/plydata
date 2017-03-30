@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
-                     rename, distinct, arrange, group_by, summarize,
-                     query)
+                     rename, distinct, arrange, group_by, ungroup,
+                     summarize, query)
 
 from plydata.grouped_datatypes import GroupedDataFrame
 
@@ -202,6 +202,14 @@ def test_group_by():
     assert 'x-1' in result
     assert 'xsq' in result
     assert isinstance(result, GroupedDataFrame)
+
+
+def test_ungroup():
+    df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
+                       'y': [1, 2, 3, 4, 5, 6, 5]})
+
+    result = df >> group_by('x') >> ungroup()
+    assert not isinstance(result, GroupedDataFrame)
 
 
 class TestGroupedDataFrame:

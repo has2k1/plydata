@@ -136,6 +136,10 @@ def group_by(verb):
     return data
 
 
+def ungroup(verb):
+    return pd.DataFrame(verb.data)
+
+
 def summarize(verb):
     env = verb.env.with_outer_namespace(_aggregate_functions)
 

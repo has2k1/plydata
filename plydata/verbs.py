@@ -8,7 +8,7 @@ from .operators import DataOperator
 
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
-           'summarize', 'summarise', 'query']
+           'ungroup', 'summarize', 'summarise', 'query']
 
 
 class mutate(DataOperator):
@@ -471,7 +471,6 @@ class group_by(mutate):
     ...                    'y': [1, 2, 3, 4, 5, 6, 5]})
     >>> df >> group_by('x')
     groups: ['x']
-    <BLANKLINE>
        x  y
     0  1  1
     1  5  2
@@ -486,7 +485,6 @@ class group_by(mutate):
 
     >>> df >> group_by('y-1', xplus1='x+1')
     groups: ['y-1', 'xplus1']
-    <BLANKLINE>
        x  y  y-1  xplus1
     0  1  1    0       2
     1  5  2    1       6
@@ -502,7 +500,6 @@ class group_by(mutate):
 
     >>> df >> group_by('y-1', xplus1='x+1') >> select('y')
     groups: ['y-1', 'xplus1']
-    <BLANKLINE>
        y  y-1  xplus1
     0  1    0       2
     1  2    1       6
@@ -519,6 +516,31 @@ class group_by(mutate):
         super().__init__(*args, **kwargs)
         self.new_columns = list(self.new_columns)
         self.groups = list(self.new_columns)
+
+
+class ungroup(DataOperator):
+    """
+    Remove the grouping variables for dataframe
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': [1, 2, 3],
+    ...                    'y': [1, 2, 3]})
+    >>> df >> group_by('x')
+    groups: ['x']
+       x  y
+    0  1  1
+    1  2  2
+    2  3  3
+    >>> df >> group_by('x') >> ungroup()
+       x  y
+    0  1  1
+    1  2  2
+    2  3  3
+    """
+    def __init__(self):
+        pass
 
 
 class summarize(DataOperator):

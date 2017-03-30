@@ -19,7 +19,7 @@ class GroupedDataFrame(pd.DataFrame):
         return GroupedDataFrame
 
     def __str__(self):
-        s = 'groups: {}\n\n{}'.format(
+        s = 'groups: {}\n{}'.format(
             self.plydata_groups,
             super().__str__())
         return s

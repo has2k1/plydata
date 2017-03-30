@@ -25,4 +25,5 @@ Single table verbs
    select
    summarize
    transmute
+   ungroup
    unique
