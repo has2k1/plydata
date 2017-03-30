@@ -94,7 +94,7 @@ def select(verb):
 
     data = verb.data.loc[:, cond]
     if data.is_copy:
-        data = data.copy()
+        data.is_copy = None
 
     return data
 
@@ -122,7 +122,7 @@ def arrange(verb):
         df = pd.DataFrame(d).sort_values(by=columns)
         data = verb.data.loc[df.index, :]
         if data.is_copy:
-            data = data.copy()
+            data.is_copy = None
     else:
         data = verb.data
 
@@ -185,6 +185,13 @@ def summarize(verb):
     else:
         data = _summarize(verb.data)
 
+    return data
+
+
+def query(verb):
+    data = verb.data.query(verb.expression, **verb.kwargs)
+    if data.is_copy:
+        data.is_copy = None
     return data
 
 

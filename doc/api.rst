@@ -18,6 +18,7 @@ Single table verbs
    distinct
    group_by
    mutate
+   query
    rename
    sample_frac
    sample_n

@@ -14,7 +14,6 @@
 
 import sys
 import os
-# import sphinx_bootstrap_theme
 
 on_rtd = os.environ.get('READTHEDOCS') == 'True'
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -317,6 +316,7 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/', None),
     'numpy': ('http://docs.scipy.org/doc/numpy', None),
+    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
 }
 
 

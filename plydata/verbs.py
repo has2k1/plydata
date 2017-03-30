@@ -8,7 +8,7 @@ from .operators import DataOperator
 
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
-           'summarize', 'summarise']
+           'summarize', 'summarise', 'query']
 
 
 class mutate(DataOperator):
@@ -523,7 +523,7 @@ class group_by(mutate):
 
 class summarize(DataOperator):
     """
-    Summarise multiple values to a single value.
+    Summarise multiple values to a single value
 
     Parameters
     ----------
@@ -632,6 +632,54 @@ class summarize(DataOperator):
 
         self.new_columns = list(itertools.chain(cols, kwargs.keys()))
         self.expressions = list(itertools.chain(exprs, kwargs.values()))
+
+
+class query(DataOperator):
+    """
+    Return rows with matching conditions
+
+    Parameters
+    ----------
+    expr : str
+        The query string to evaluate.  You can refer to variables
+        in the environment by prefixing them with an '@' character
+        like ``@a + b``.
+    kwargs : dict
+        See the documentation for :func:`pandas.eval` for complete
+        details on the keyword arguments accepted by
+        :meth:`pandas.DataFrame.query`.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
+    ...                    'y': [0, 0, 1, 1, 2, 3]})
+    >>> df >> query('x % 2 == 0')
+       x  y
+    0  0  0
+    2  2  1
+    4  4  2
+
+    >>> df >> query('x % 2 == 0 & y > 0')
+       x  y
+    2  2  1
+    4  4  2
+
+    By default, Bitwise operators ``&`` and ``|`` have the same
+    precedence as the booleans ``and`` and ``or``.
+
+    >>> df >> query('x % 2 == 0 and y > 0')
+       x  y
+    2  2  1
+    4  4  2
+
+    For more information see :meth:`pandas.DataFrame.query`.
+    """
+    expression = None
+
+    def __init__(self, expr, **kwargs):
+        self.expression = expr
+        self.kwargs = kwargs
 
 
 # Multiple Table Verbs

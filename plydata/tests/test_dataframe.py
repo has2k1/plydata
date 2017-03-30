@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
-                     rename, distinct, arrange, group_by, summarize)
+                     rename, distinct, arrange, group_by, summarize,
+                     query)
 
 from plydata.grouped_datatypes import GroupedDataFrame
 
@@ -251,6 +252,11 @@ class TestGroupedDataFrame:
         result = self.df >> mutate(z='np.sin(x)') >> arrange('z')
         assert isinstance(result, GroupedDataFrame)
 
+    def test_query(self):
+        result = self.df >> query('x % 2 == 0')
+        assert 'x' in result
+        assert isinstance(result, GroupedDataFrame)
+
 
 def test_summarize():
     df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
@@ -301,3 +307,10 @@ class TestAggregateFunctions:
 
         result = self.df >> group_by('y') >> summarize('{n}')
         assert all(result['{n}'] == [2, 2, 1, 1])
+
+
+def test_query():
+    df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
+                       'y': [0, 0, 1, 1, 2, 3]})
+    result = df >> query('x % 2 == 0')
+    assert all(result.loc[:, 'x'] == [0, 2, 4])
