@@ -12,37 +12,17 @@ from .utils import hasattrs, temporary_key
 
 
 def mutate(verb):
-    for col, expr in zip(verb.new_columns, verb.expressions):
-        if isinstance(expr, str):
-            value = verb.env.eval(expr, inner_namespace=verb.data)
-        elif hasattr(expr, '__len__'):
-            if len(verb.data) == len(expr):
-                value = expr
-            else:
-                msg = "value not equal to length of dataframe"
-                raise ValueError(msg)
-        else:
-            msg = "Cannot handle expression of type `{}`"
-            raise TypeError(msg.format(type(expr)))
-        verb.data[col] = value
+    new_data = _evaluate_expressions(verb)
+    for col in new_data:
+        verb.data[col] = new_data[col]
     return verb.data
 
 
 def transmute(verb):
     data = _get_base_dataframe(verb.data)
-    for col, expr in zip(verb.new_columns, verb.expressions):
-        if isinstance(expr, str):
-            data[col] = verb.env.eval(expr, inner_namespace=verb.data)
-        elif hasattr(expr, '__len__'):
-            if len(verb.data) == len(expr):
-                data[col] = expr
-            else:
-                msg = "value not equal to length of dataframe"
-                raise ValueError(msg)
-        else:
-            msg = "Cannot handle expression of type `{}`"
-            raise TypeError(msg.format(type(expr)))
-
+    new_data = _evaluate_expressions(verb)
+    for col in new_data:
+        data[col] = new_data[col]
     return data
 
 
@@ -221,6 +201,27 @@ def _get_base_dataframe(df):
     else:
         base_df = pd.DataFrame(index=df.index)
     return base_df
+
+
+def _evaluate_expressions(verb):
+    """
+    Evaluate Expressions and return the columns in a new dataframe
+    """
+    data = pd.DataFrame(index=verb.data.index)
+    for col, expr in zip(verb.new_columns, verb.expressions):
+        if isinstance(expr, str):
+            data[col] = verb.env.eval(expr, inner_namespace=verb.data)
+        elif hasattr(expr, '__len__'):
+            if len(verb.data) == len(expr):
+                data[col] = expr
+            else:
+                msg = "value not equal to length of dataframe"
+                raise ValueError(msg)
+        else:
+            msg = "Cannot handle expression of type `{}`"
+            raise TypeError(msg.format(type(expr)))
+
+    return data
 
 
 # Aggregations functions
