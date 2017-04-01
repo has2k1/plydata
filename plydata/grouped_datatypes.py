@@ -14,6 +14,11 @@ class GroupedDataFrame(pd.DataFrame):
 
     plydata_groups = None
 
+    def __init__(self, data=None, groups=None, **kwargs):
+        super().__init__(data=data, **kwargs)
+        if groups:
+            self.plydata_groups = list(groups)
+
     @property
     def _constructor(self):
         return GroupedDataFrame

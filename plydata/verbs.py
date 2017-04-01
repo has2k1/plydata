@@ -46,6 +46,11 @@ class mutate(DataOperator):
     0  1     1    2    3        1    4
     1  2     4    4    6        8    8
     2  3     9    6    9       27   12
+
+    Note
+    ----
+    :class:`mutate` adds columns the original dataframe. To avoid this
+    effect, use a copy of the dataframe.
     """
     new_columns = None
     expressions = None  # Expressions to create the new columns
@@ -306,6 +311,10 @@ class rename(DataOperator):
     0     1    1     1        1
     1     2    2     2        2
     2     3    3     3        3
+
+    See Also
+    --------
+    :meth:`pandas.DataFrame.rename`
     """
     lookup = None
 
@@ -524,6 +533,12 @@ class group_by(mutate):
     4  5    4       5
     5  6    5       1
     6  5    4       5
+
+    Note
+    ----
+    When :class:`group_by` creates new columns to be grouped upon,
+    they are added to the original dataframe. To avoid this effect,
+    use a copy of the dataframe.
     """
     groups = None
 
@@ -560,8 +575,6 @@ class ungroup(DataOperator):
     1  2  2
     2  3  3
     """
-    def __init__(self):
-        pass
 
 
 class summarize(DataOperator):

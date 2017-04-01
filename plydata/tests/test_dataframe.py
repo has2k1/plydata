@@ -344,3 +344,58 @@ def test_data_as_first_argument():
                   df >> group_by('x') >> ungroup())
     assert equals(summarize(df, 'sum(x)'), df >> summarize('sum(x)'))
     assert equals(query(df, 'x % 2'), df >> query('x % 2'))
+
+
+def test_data_mutability():
+    # These tests affirm that we know the consequences of the verbs.
+    # A test in the Mutable section should not fail without a change
+    # in implementation. That change should be triggered when Pandas
+    # implements a consistent copy-on-write policy.
+    #
+    # When a test in the mutable section fails, it is bad news. The
+    # should be no memory usage gains by reusing the original data,
+    # except for the case of `rename`.
+    df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
+                       'y': [0, 0, 1, 1, 2, 3]})
+
+    # Mutable
+    df2 = df.copy()
+    df2 >> mutate(z='x**2')
+    assert 'z' in df2
+
+    df2 = df.copy()
+    df2 >> group_by(z='x**2')
+    assert 'z' in df2
+
+    # Not mutable
+    df2 = df.copy()
+    df2 >> transmute(z='x**2')
+    assert 'z' not in df2
+
+    df2 >> sample_n(3) >> mutate(z='x**2')
+    assert 'z' not in df2
+
+    df2 >> sample_frac(.5) >> mutate(z='x**2')
+    assert 'z' not in df2
+
+    df2 >> select('x') >> mutate(z='x**2')
+    assert 'z' not in df2
+
+    df2 >> select('x', 'y') >> mutate(z='x**2')
+    assert 'z' not in df2
+
+    # dataframe.rename has copy-on-write (if copy=False) that affects
+    # only the new frame. This creates possibility for "action at a
+    # distance" effects on the new frame when the original is modified
+    result = df2 >> rename(z='x')
+    df2['y'] = 3
+    result['x'] = 4
+    assert 'z' not in df2
+    assert df2.loc[0, 'y'] != 4
+    assert result.loc[0, 'x'] != 3
+
+    df2 >> arrange('x') >> mutate(z='x**2')
+    assert 'z' not in df2
+
+    df2 >> query('x%2') >> mutate(z='x**2')
+    assert 'z' not in df2

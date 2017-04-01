@@ -92,15 +92,13 @@ def distinct(verb):
 
 def arrange(verb):
     name_gen = ('col_{}'.format(x) for x in range(100))
-    columns = []
-    d = {}
+    df = pd.DataFrame(index=verb.data.index)
     for col, expr in zip(name_gen, verb.expressions):
-        d[col] = verb.env.eval(expr, inner_namespace=verb.data)
-        columns.append(col)
+        df[col] = verb.env.eval(expr, inner_namespace=verb.data)
 
-    if columns:
-        df = pd.DataFrame(d).sort_values(by=columns)
-        data = verb.data.loc[df.index, :]
+    if len(df.columns):
+        sorted_index = df.sort_values(by=list(df.columns)).index
+        data = verb.data.loc[sorted_index, :]
         if data.is_copy:
             data.is_copy = None
     else:
@@ -110,10 +108,8 @@ def arrange(verb):
 
 
 def group_by(verb):
-    data = GroupedDataFrame(verb.data)
-    data.plydata_groups = verb.groups
-    mutate(verb)
-    return data
+    verb.data = GroupedDataFrame(verb.data, verb.groups)
+    return mutate(verb)
 
 
 def ungroup(verb):
@@ -196,8 +192,9 @@ def _get_base_dataframe(df):
     Remove all columns other than those grouped on
     """
     if isinstance(df, GroupedDataFrame):
-        base_df = GroupedDataFrame(df.loc[:, df.plydata_groups])
-        base_df.plydata_groups = list(df.plydata_groups)
+        base_df = GroupedDataFrame(
+            df.loc[:, df.plydata_groups], df.plydata_groups,
+            copy=True)
     else:
         base_df = pd.DataFrame(index=df.index)
     return base_df
