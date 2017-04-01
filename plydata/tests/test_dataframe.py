@@ -6,7 +6,7 @@ import pytest
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
-                     summarize, query)
+                     group_indices, summarize, query)
 
 from plydata.grouped_datatypes import GroupedDataFrame
 
@@ -212,6 +212,17 @@ def test_ungroup():
     assert not isinstance(result, GroupedDataFrame)
 
 
+def test_group_indices():
+    df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
+                       'y': [1, 2, 3, 4, 5, 6, 5]})
+
+    results = df >> group_by('x') >> group_indices()
+    assert all(results == [1, 4, 2, 2, 3, 0, 3])
+
+    results = df >> group_indices('y % 2')
+    assert all(results == [1, 0, 1, 0, 1, 0, 1])
+
+
 class TestGroupedDataFrame:
     # The verbs should not drop the columns that are grouped on
 
@@ -398,4 +409,7 @@ def test_data_mutability():
     assert 'z' not in df2
 
     df2 >> query('x%2') >> mutate(z='x**2')
+    assert 'z' not in df2
+
+    df2 >> group_indices(z='x%2')
     assert 'z' not in df2

@@ -17,6 +17,7 @@ Single table verbs
    arrange
    distinct
    group_by
+   group_indices
    mutate
    query
    rename

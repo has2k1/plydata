@@ -3,6 +3,7 @@ Verb implementations for a :class:`pandas.DataFrame`
 """
 
 import re
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -114,6 +115,26 @@ def group_by(verb):
 
 def ungroup(verb):
     return pd.DataFrame(verb.data)
+
+
+def group_indices(verb):
+    data = verb.data
+    groups = verb.groups
+    if isinstance(data, GroupedDataFrame):
+        if groups:
+            msg = "GroupedDataFrame ignored extra groups {}"
+            warnings.warn(msg.format(groups))
+        else:
+            groups = data.plydata_groups
+    else:
+        data = transmute(verb)
+
+    indices_dict = data.groupby(groups).indices
+    indices = -np.ones(len(data), dtype=int)
+    for i, (_, idx) in enumerate(sorted(indices_dict.items())):
+        indices[idx] = i
+
+    return indices
 
 
 def summarize(verb):

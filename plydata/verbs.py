@@ -7,7 +7,8 @@ from .operators import DataOperator
 
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
-           'ungroup', 'summarize', 'summarise', 'query']
+           'ungroup', 'group_indices', 'summarize', 'summarise',
+           'query']
 
 
 class mutate(DataOperator):
@@ -574,6 +575,57 @@ class ungroup(DataOperator):
     0  1  1
     1  2  2
     2  3  3
+    """
+
+
+class group_indices(group_by):
+    """
+    Generate a unique id for each group
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
+    args : strs, tuples, optional
+        Expressions or ``(name, expression)`` pairs. This should
+        be used when the *name* is not a valid python variable
+        name. The expression should be of type :class:`str` or
+        an *interable* with the same number of elements as the
+        dataframe. As this verb returns an array, the tuples have
+        no added benefit over strings.
+    kwargs : dict, optional
+        ``{name: expression}`` pairs. As this verb returns an
+        array, keyword arguments have no added benefit over
+        :class:`str` positional arguments.
+
+    Returns
+    -------
+    out : numpy.array
+        Ids for each group
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
+    ...                    'y': [1, 2, 3, 4, 5, 6, 5]})
+    >>> df >> group_by('x')
+    groups: ['x']
+       x  y
+    0  1  1
+    1  5  2
+    2  2  3
+    3  2  4
+    4  4  5
+    5  0  6
+    6  4  5
+    >>> df >> group_by('x') >> group_indices()
+    array([1, 4, 2, 2, 3, 0, 3])
+
+    You can pass the group column(s) as parameters to
+    :class:`group_indices`
+
+    >>> df >> group_indices('x*2')
+    array([1, 4, 2, 2, 3, 0, 3])
     """
 
 
