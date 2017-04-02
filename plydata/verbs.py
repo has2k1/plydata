@@ -8,7 +8,7 @@ from .operators import DataOperator
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
-           'query']
+           'query', 'do']
 
 
 class mutate(DataOperator):
@@ -792,6 +792,104 @@ class query(DataOperator):
     def __init__(self, expr, **kwargs):
         self.expression = expr
         self.kwargs = kwargs
+
+
+class do(DataOperator):
+    """
+    Do arbitrary operations on a dataframe
+
+    Considering the *split-apply-combine* data manipulation
+    strategy, :class:`do` gives a window into which to place
+    the complex *apply* actions, and also control over the form of
+    results when they are combined. This allows
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
+    args : function, optional
+        A single function to apply to each group. *The
+        function should accept a dataframe and return a
+        dataframe*.
+    kwargs : dict, optional
+        ``{name: function}`` pairs. *The function should
+        accept a dataframe and return an array*. The function
+        computes a column called ``name``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({'x': [1, 2, 2, 3],
+    ...                    'y': [2, 3, 4, 3],
+    ...                    'z': list('aabb')})
+
+    Define a function that uses numpy to do a least squares fit.
+    It takes input from a dataframe and output is a dataframe.
+    ``gdf`` is a dataframe that contains only rows from the current
+    group.
+
+    >>> def least_squares(gdf):
+    ...     X = np.vstack([gdf.x, np.ones(len(gdf))]).T
+    ...     (m, c), _, _, _ = np.linalg.lstsq(X, gdf.y)
+    ...     return pd.DataFrame({'slope': [m], 'intercept': c})
+
+    Define functions that take x and y values and compute the
+    intercept and slope.
+
+    >>> def slope(x, y):
+    ...     return np.diff(y)[0] / np.diff(x)[0]
+    ...
+    >>> def intercept(x, y):
+    ...     return y.values[0] - slope(x, y) * x.values[0]
+
+    Demonstrating do
+
+    >>> df >> group_by('z') >> do(least_squares)
+       z  intercept  slope
+    0  a        1.0    1.0
+    1  b        6.0   -1.0
+
+    We can get the same result, by passing separate functions
+    that calculate the columns independently.
+
+    >>> df2 = df >> group_by('z') >> do(
+    ...     slope=lambda gdf: slope(gdf.x, gdf.y),
+    ...     intercept=lambda gdf: intercept(gdf.x, gdf.y))
+    >>> df2[['z', 'intercept', 'slope']]  # Ordered the same as above
+       z  intercept  slope
+    0  a        1.0    1.0
+    1  b        6.0   -1.0
+
+    The functions need not return numerical values. Pandas columns can
+    hold any type of object. You could store result objects from more
+    complicated models. Each model would be linked to a group. Notice
+    that the group columns (``z`` in the above cases) are included in
+    the result.
+
+    Note
+    ----
+    You cannot have both a position argument and keyword
+    arguments.
+    """
+    single_function = None
+    columns = None
+    functions = None
+
+    def __init__(self, *args, **kwargs):
+        if args and kwargs:
+            raise ValueError(
+                "Unexpected positional and keyword arguments.")
+
+        if len(args) > 1:
+            raise ValueError(
+                "Got more than one positional argument.")
+
+        if args:
+            self.single_function = args[0]
+        else:
+            self.columns = list(kwargs.keys())
+            self.functions = list(kwargs.values())
 
 
 # Multiple Table Verbs

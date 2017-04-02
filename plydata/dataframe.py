@@ -162,6 +162,13 @@ def query(verb):
     return data
 
 
+def do(verb):
+    if verb.single_function:
+        return _do_single_function(verb)
+    else:
+        return _do_functions(verb)
+
+
 # Helper functions
 
 def _get_groups(verb):
@@ -222,7 +229,7 @@ def _eval_summarize_expressions(expressions, columns, env, gdf):
         same group.
 
     This excutes an *apply* part of the *split-apply-combine*
-    data manipulation paradigm. Callers of the function do
+    data manipulation strategy. Callers of the function do
     the *split* and the *combine*.
 
     A peak into the function
@@ -300,6 +307,85 @@ def _eval_summarize_expressions(expressions, columns, env, gdf):
             data.insert(i, col, gdf[col].iloc[0])
 
     return data
+
+
+def _eval_do_single_function(function, gdf):
+    """
+    Evaluate an expression to create a dataframe.
+
+    Similar to :func:`_eval_summarize_expressions`, but for the
+    ``do`` operation.
+    """
+    data = function(gdf)
+
+    # Add the grouped-on columns
+    if isinstance(gdf, GroupedDataFrame):
+        for i, col in enumerate(gdf.plydata_groups):
+            data.insert(i, col, gdf[col].iloc[0])
+
+    return data
+
+
+def _eval_do_functions(functions, columns, gdf):
+    """
+    Evaluate functions to create a dataframe.
+
+    Similar to :func:`_eval_summarize_expressions`, but for the
+    ``do`` operation.
+    """
+    for col, func in zip(columns, functions):
+        value = np.asarray(func(gdf))
+
+        try:
+            data[col] = value
+        except NameError:
+            try:
+                n = len(value)
+            except TypeError:
+                n = 1
+            data = pd.DataFrame({col: value}, index=range(n))
+
+    # Add the grouped-on columns
+    if isinstance(gdf, GroupedDataFrame):
+        for i, col in enumerate(gdf.plydata_groups):
+            data.insert(i, col, gdf[col].iloc[0])
+
+    return data
+
+
+def _do_single_function(verb):
+    func = verb.single_function
+    data = verb.data
+
+    try:
+        grouper = data.groupby(data.plydata_groups)
+    except AttributeError:
+        data = _eval_do_single_function(func, data)
+    else:
+        dfs = [_eval_do_single_function(func, gdf)
+               for _, gdf in grouper]
+        data = pd.concat(dfs, axis=0, ignore_index=True)
+
+    return data
+
+
+def _do_functions(verb):
+    cols = verb.columns
+    funcs = verb.functions
+    data = verb.data
+
+    try:
+        grouper = data.groupby(data.plydata_groups)
+    except AttributeError:
+        data = _eval_do_functions(funcs, cols, data)
+    else:
+        dfs = [_eval_do_functions(funcs, cols, gdf)
+               for _, gdf in grouper]
+        data = pd.concat(dfs, axis=0, ignore_index=True)
+
+    return data
+
+
 # Aggregations functions
 
 def _nth(arr, n):

@@ -3,10 +3,11 @@ import re
 import pandas as pd
 import numpy as np
 import pytest
+import numpy.testing as npt
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
-                     group_indices, summarize, query)
+                     group_indices, summarize, query, do)
 
 from plydata.grouped_datatypes import GroupedDataFrame
 
@@ -335,6 +336,32 @@ def test_query():
     assert all(result.loc[:, 'x'] == [0, 2, 4])
 
 
+def test_do():
+    df = pd.DataFrame({'x': [1, 2, 2, 3],
+                       'y': [2, 3, 4, 3],
+                       'z': list('aabb')})
+
+    def least_squares(gdf):
+        X = np.vstack([gdf.x, np.ones(len(gdf))]).T
+        (m, c), _, _, _ = np.linalg.lstsq(X, gdf.y)
+        return pd.DataFrame({'slope': [m], 'intercept': c})
+
+    def slope(x, y):
+        return np.diff(y)[0] / np.diff(x)[0]
+
+    def intercept(x, y):
+        return y.values[0] - slope(x, y) * x.values[0]
+
+    df1 = df >> group_by('z') >> do(least_squares)
+    df2 = df >> group_by('z') >> do(
+        slope=lambda gdf: slope(gdf.x, gdf.y),
+        intercept=lambda gdf: intercept(gdf.x, gdf.y))
+
+    npt.assert_array_equal(df1['z'],  df2['z'])
+    npt.assert_array_almost_equal(df1['intercept'],  df2['intercept'])
+    npt.assert_array_almost_equal(df1['slope'],  df2['slope'])
+
+
 def test_data_as_first_argument():
     def equals(df1, df2):
         return df1.equals(df2)
@@ -355,6 +382,12 @@ def test_data_as_first_argument():
                   df >> group_by('x') >> ungroup())
     assert equals(summarize(df, 'sum(x)'), df >> summarize('sum(x)'))
     assert equals(query(df, 'x % 2'), df >> query('x % 2'))
+
+    def xsum(gdf):
+        return [gdf['x'].sum()]
+
+    assert equals(do(group_by(df, 'y'), xsum=xsum),
+                  df >> group_by('y') >> do(xsum=xsum))
 
 
 def test_data_mutability():

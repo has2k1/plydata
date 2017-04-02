@@ -16,6 +16,7 @@ Single table verbs
 
    arrange
    distinct
+   do
    group_by
    group_indices
    mutate
