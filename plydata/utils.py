@@ -1,5 +1,7 @@
 from contextlib import contextmanager
 
+from .eval import EvalEnvironment
+
 
 def hasattrs(obj, names):
     """
@@ -54,3 +56,12 @@ def temporary_attr(obj, name, value):
         yield obj
     finally:
         delattr(obj, name)
+
+
+def get_empty_env():
+    """
+    Return an empty environment
+
+    This is for testing or documentation purposes
+    """
+    return EvalEnvironment(namespaces={})

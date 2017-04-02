@@ -138,53 +138,19 @@ def group_indices(verb):
 
 
 def summarize(verb):
-    env = verb.env.with_outer_namespace(_aggregate_functions)
+    env = verb.env
+    cols = verb.new_columns
+    exprs = verb.expressions
+    data = verb.data
 
-    def _summarize(df, group_info=None):
-        """
-        Helper
-
-        group_info is a tuple of (groups, group_values)
-        where the groups are the names of the columns grouped upon,
-        and the group_values are the respective value (as returned by
-        groupby.__iter__).
-        """
-        # Extra aggregate function that the user references with
-        # the name `{n}`. It returns the length of the dataframe.
-        def _plydata_n():
-            return len(df)
-
-        if group_info:
-            # The columns in the output dataframe should be ordered
-            # first with the groups, then the new columns
-            data = pd.DataFrame(data=[group_info[1]],
-                                columns=group_info[0],
-                                index=[0])
-        else:
-            data = pd.DataFrame(index=[0])
-
-        for col, expr in zip(verb.new_columns, verb.expressions):
-            if isinstance(expr, str):
-                expr = expr.format(n='_plydata_n()')
-                with temporary_key(_aggregate_functions,
-                                   '_plydata_n', _plydata_n):
-                    value = env.eval(expr, inner_namespace=df)
-            else:
-                value = expr
-            data[col] = value
-
-        return data
-
-    if isinstance(verb.data, GroupedDataFrame):
-        groups = verb.data.plydata_groups
-        dfs = []
-        for gdata, gdf in verb.data.groupby(groups):
-            if not isinstance(gdata, tuple):
-                gdata = (gdata,)
-            dfs.append(_summarize(gdf, (groups, gdata)))
-        data = pd.concat(dfs, axis=0, ignore_index=True)
+    try:
+        grouper = data.groupby(data.plydata_groups)
+    except AttributeError:
+        data = _eval_summarize_expressions(exprs, cols, env, data)
     else:
-        data = _summarize(verb.data)
+        dfs = [_eval_summarize_expressions(exprs, cols, env, gdf)
+               for _, gdf in grouper]
+        data = pd.concat(dfs, axis=0, ignore_index=True)
 
     return data
 
@@ -242,6 +208,98 @@ def _evaluate_expressions(verb):
     return data
 
 
+def _eval_summarize_expressions(expressions, columns, env, gdf):
+    """
+    Evaluate expressions to create a dataframe.
+
+    Parameters
+    ----------
+    expressions : list of str
+    columns : list of str
+    env : environment
+    gdf : dataframe
+        Dataframe where all items are assumed to belong to the
+        same group.
+
+    This excutes an *apply* part of the *split-apply-combine*
+    data manipulation paradigm. Callers of the function do
+    the *split* and the *combine*.
+
+    A peak into the function
+
+    >>> import pandas as pd
+    >>> from .utils import get_empty_env
+
+    A Dataframe with many groups
+
+    >>> df = GroupedDataFrame(
+    ...     {'x': list('aabbcc'),
+    ...      'y': [0, 1, 2, 3, 4, 5]
+    ...      }, groups=['x'])
+
+    Do a groupby and obtain a dataframe with a single group,
+    (i.e. the *split*)
+
+    >>> grouper = df.groupby(df.plydata_groups)
+    >>> group = 'b'      # The group we want to evalualte
+    >>> gdf = grouper.get_group(group)
+    >>> gdf
+    groups: ['x']
+      x  y
+    2 b  2
+    3 b  3
+
+    Create the other parameters
+
+    >>> env = get_empty_env()
+    >>> columns = ['ysq', 'ycubed']
+    >>> expressions = ['y**2', 'y**3']
+
+    Finally, the *apply*
+
+    >>> _eval_summarize_expressions(expressions, columns, env, gdf)
+       x  ysq  ycubed
+    0  b    4       8
+    1  b    9      27
+
+    The caller does the *combine*, for one or more of these
+    results.
+    """
+    env = env.with_outer_namespace(_aggregate_functions)
+
+    # Extra aggregate function that the user references with
+    # the name `{n}`. It returns the length of the dataframe.
+    def _plydata_n():
+        return len(gdf)
+
+    for col, expr in zip(columns, expressions):
+        if isinstance(expr, str):
+            expr = expr.format(n='_plydata_n()')
+            with temporary_key(_aggregate_functions,
+                               '_plydata_n', _plydata_n):
+                value = env.eval(expr, inner_namespace=gdf)
+        else:
+            value = expr
+
+        # Non-consecutive 0-n pd.series indices create gaps with
+        # nans when inserted into a dataframe
+        value = np.asarray(value)
+
+        try:
+            data[col] = value
+        except NameError:
+            try:
+                n = len(value)
+            except TypeError:
+                n = 1
+            data = pd.DataFrame({col: value}, index=range(n))
+
+    # Add the grouped-on columns
+    if isinstance(gdf, GroupedDataFrame):
+        for i, col in enumerate(gdf.plydata_groups):
+            data.insert(i, col, gdf[col].iloc[0])
+
+    return data
 # Aggregations functions
 
 def _nth(arr, n):
