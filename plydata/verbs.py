@@ -38,20 +38,20 @@ class mutate(DataOperator):
     1  2     4
     2  3     9
     >>> df >> mutate(('x*2', 'x*2'), ('x*3', 'x*3'), x_cubed='x**3')
-       x  x_sq  x*2  x*3  x_cubed
-    0  1     1    2    3        1
-    1  2     4    4    6        8
-    2  3     9    6    9       27
+       x  x*2  x*3  x_cubed
+    0  1    2    3        1
+    1  2    4    6        8
+    2  3    6    9       27
     >>> df >> mutate('x*4')
-       x  x_sq  x*2  x*3  x_cubed  x*4
-    0  1     1    2    3        1    4
-    1  2     4    4    6        8    8
-    2  3     9    6    9       27   12
+       x  x*4
+    0  1    4
+    1  2    8
+    2  3   12
 
     Note
     ----
-    :class:`mutate` adds columns the original dataframe. To avoid this
-    effect, use a copy of the dataframe.
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`mutate` will modify the original dataframe.
     """
     new_columns = None
     expressions = None  # Expressions to create the new columns
@@ -313,9 +313,10 @@ class rename(DataOperator):
     1     2    2     2        2
     2     3    3     3        3
 
-    See Also
-    --------
-    :meth:`pandas.DataFrame.rename`
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`rename` will modify the original dataframe.
     """
     lookup = None
 
@@ -537,9 +538,8 @@ class group_by(mutate):
 
     Note
     ----
-    When :class:`group_by` creates new columns to be grouped upon,
-    they are added to the original dataframe. To avoid this effect,
-    use a copy of the dataframe.
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`group_by` will modify the original dataframe.
     """
     groups = None
 

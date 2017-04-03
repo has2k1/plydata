@@ -9,14 +9,20 @@ import numpy as np
 import pandas as pd
 
 from .grouped_datatypes import GroupedDataFrame
+from .options import get_option
 from .utils import hasattrs, temporary_key
 
 
 def mutate(verb):
+    if get_option('modify_input_data'):
+        data = verb.data
+    else:
+        data = verb.data.copy()
+
     new_data = _evaluate_expressions(verb)
     for col in new_data:
-        verb.data[col] = new_data[col]
-    return verb.data
+        data[col] = new_data[col]
+    return data
 
 
 def transmute(verb):
@@ -81,14 +87,18 @@ def select(verb):
 
 
 def rename(verb):
-    return verb.data.rename(columns=verb.lookup)
+    inplace = get_option('modify_input_data')
+    data = verb.data.rename(columns=verb.lookup, inplace=inplace)
+    return verb.data if inplace else data
 
 
 def distinct(verb):
     if hasattrs(verb, ('new_columns', 'expressions')):
-        mutate(verb)
-    return verb.data.drop_duplicates(subset=verb.columns,
-                                     keep=verb.keep)
+        data = mutate(verb)
+    else:
+        data = verb.data
+    return data.drop_duplicates(subset=verb.columns,
+                                keep=verb.keep)
 
 
 def arrange(verb):
@@ -109,7 +119,8 @@ def arrange(verb):
 
 
 def group_by(verb):
-    verb.data = GroupedDataFrame(verb.data, verb.groups)
+    copy = not get_option('modify_input_data')
+    verb.data = GroupedDataFrame(verb.data, verb.groups, copy=copy)
     return mutate(verb)
 
 

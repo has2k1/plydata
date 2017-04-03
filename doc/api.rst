@@ -29,3 +29,18 @@ Single table verbs
    transmute
    ungroup
    unique
+
+
+Options
+=======
+
+.. currentmodule:: plydata.options
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   modify_input_data
+   get_option
+   set_option

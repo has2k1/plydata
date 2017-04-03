@@ -9,6 +9,7 @@ from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do)
 
+from plydata.options import set_option
 from plydata.grouped_datatypes import GroupedDataFrame
 
 
@@ -18,25 +19,26 @@ def test_mutate():
     df = pd.DataFrame({'x': x})
 
     # No args
-    df >> mutate()
-    assert len(df.columns) == 1
+    df2 = df >> mutate()
+    assert len(df2.columns) == 1
 
     # All types of args
-    df >> mutate(('x*2', 'x*2'),
-                 ('x*3', 'x*3'),
-                 x_sq='x**2',
-                 x_cumsum='np.cumsum(x)',
-                 y=y)
+    df2 = df >> mutate(
+        ('x*2', 'x*2'),
+        ('x*3', 'x*3'),
+        x_sq='x**2',
+        x_cumsum='np.cumsum(x)',
+        y=y)
 
-    assert len(df.columns) == 6
-    assert all(df['x*2'] == x*2)
-    assert all(df['x*3'] == x*3)
-    assert all(df['x_sq'] == x**2)
-    assert all(df['x_cumsum'] == np.cumsum(x))
-    assert all(df['y'] == y)
+    assert len(df2.columns) == 6
+    assert all(df2['x*2'] == x*2)
+    assert all(df2['x*3'] == x*3)
+    assert all(df2['x_sq'] == x**2)
+    assert all(df2['x_cumsum'] == np.cumsum(x))
+    assert all(df2['y'] == y)
 
     result = df >> mutate('x*4')
-    assert len(result.columns) == 7
+    assert len(result.columns) == 2
     assert all(result['x*4'] == x*4)
 
     # Branches
@@ -402,7 +404,15 @@ def test_data_mutability():
     df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
                        'y': [0, 0, 1, 1, 2, 3]})
 
-    # Mutable
+    # Default to not mutable
+    df >> mutate(z='x**2')
+    assert 'z' not in df
+
+    df >> group_by(z='x**2')
+    assert 'z' not in df
+
+    set_option('modify_input_data', True)
+
     df2 = df.copy()
     df2 >> mutate(z='x**2')
     assert 'z' in df2
@@ -437,6 +447,7 @@ def test_data_mutability():
     assert 'z' not in df2
     assert df2.loc[0, 'y'] != 4
     assert result.loc[0, 'x'] != 3
+    assert result is df2
 
     df2 >> arrange('x') >> mutate(z='x**2')
     assert 'z' not in df2
