@@ -7,7 +7,8 @@ import numpy.testing as npt
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
-                     group_indices, summarize, query, do, head, tail)
+                     group_indices, summarize, query, do, head, tail,
+                     inner_join, outer_join, left_join, right_join)
 
 from plydata.options import set_option
 from plydata.grouped_datatypes import GroupedDataFrame
@@ -494,3 +495,37 @@ def test_data_mutability():
 
     df2 >> group_indices(z='x%2')
     assert 'z' not in df2
+
+
+def test_joins():
+    cols = {'one', 'two', 'three', 'four'}
+
+    df1 = pd.DataFrame({
+        'col1': ['one', 'two', 'three'],
+        'col2': [1, 2, 3]
+    })
+
+    df2 = pd.DataFrame({
+        'col1': ['one', 'four', 'three'],
+        'col2': [1, 4, 3]
+    })
+
+    idf = inner_join(df1, df2, on='col1')
+    odf = outer_join(df1, df2, on='col1')
+    ldf = left_join(df1, df2, on='col1')
+    rdf = right_join(df1, df2, on='col1')
+
+    # Pandas does all the heavy lifting, simple tests
+    # are enough
+    assert set(idf['col1']) & cols == {'one', 'three'}
+    assert set(odf['col1']) & cols == cols
+    assert set(ldf['col1']) & cols == {'one', 'two', 'three'}
+    assert set(rdf['col1']) & cols == {'one', 'four', 'three'}
+
+    # Preserves group of x frame
+    result = inner_join(df1 >> group_by('col1'), df2, on='col1')
+    assert isinstance(result, GroupedDataFrame)
+    assert result.plydata_groups == ['col1']
+
+    result = inner_join(df2, df1 >> group_by('col1'), on='col1')
+    assert not isinstance(result, GroupedDataFrame)

@@ -204,6 +204,22 @@ def tail(verb):
     return data
 
 
+def inner_join(verb):
+    return _join(verb, 'inner')
+
+
+def outer_join(verb):
+    return _join(verb, 'outer')
+
+
+def left_join(verb):
+    return _join(verb, 'left')
+
+
+def right_join(verb):
+    return _join(verb, 'right')
+
+
 # Helper functions
 
 def _get_groups(verb):
@@ -424,6 +440,19 @@ def _do_functions(verb):
         data = pd.concat(dfs, axis=0, ignore_index=True)
         data.plydata_groups = list(groups)
 
+    return data
+
+
+def _join(verb, how):
+    """
+    Join helper
+    """
+    data = pd.merge(verb.x, verb.y, how=how, on=verb.on,
+                    suffixes=verb.suffixes)
+
+    # Preserve x groups
+    if isinstance(verb.x, GroupedDataFrame):
+        data.plydata_groups = list(verb.x.plydata_groups)
     return data
 
 

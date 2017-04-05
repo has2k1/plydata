@@ -102,3 +102,25 @@ class DataOperator(metaclass=OptionalSingleDataFrameArgument):
         with temporary_attr(self, 'data', data):
             result = func(self)
         return result
+
+
+class DoubleDataDispatch(type):
+    """
+    Metaclass for single dispatch of double data verbs
+
+    Makes it possible to do::
+
+        verb(data1, data2)
+
+    and have the same verb work for different types of data
+    """
+    def __call__(cls, *args, **kwargs):
+        verb = super().__call__(*args, **kwargs)
+        func = get_verb_function(args[0], cls.__name__)
+        return func(verb)
+
+
+class DoubleDataOperator(metaclass=DoubleDataDispatch):
+    """
+    Base class for all verbs that operate two dataframes
+    """

@@ -33,6 +33,19 @@ Single table verbs
    unique
 
 
+Two table verbs
+===============
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   inner_join
+   left_join
+   outer_join
+   right_join
+
 Options
 =======
 
