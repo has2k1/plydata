@@ -354,14 +354,24 @@ def test_do():
     def intercept(x, y):
         return y.values[0] - slope(x, y) * x.values[0]
 
+    def reuse_gdf_func(gdf):
+        gdf['c'] = 0
+        return gdf
+
     df1 = df >> group_by('z') >> do(least_squares)
     df2 = df >> group_by('z') >> do(
         slope=lambda gdf: slope(gdf.x, gdf.y),
         intercept=lambda gdf: intercept(gdf.x, gdf.y))
 
+    assert df1.plydata_groups == ['z']
+    assert df2.plydata_groups == ['z']
+
     npt.assert_array_equal(df1['z'],  df2['z'])
     npt.assert_array_almost_equal(df1['intercept'],  df2['intercept'])
     npt.assert_array_almost_equal(df1['slope'],  df2['slope'])
+
+    result = df >> group_by('z') >> do(reuse_gdf_func)
+    assert result.loc[0, 'c'] == 0
 
 
 def test_head():

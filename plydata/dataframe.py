@@ -351,12 +351,14 @@ def _eval_do_single_function(function, gdf):
     Similar to :func:`_eval_summarize_expressions`, but for the
     ``do`` operation.
     """
+    gdf.is_copy = None
     data = function(gdf)
 
     # Add the grouped-on columns
     if isinstance(gdf, GroupedDataFrame):
         for i, col in enumerate(gdf.plydata_groups):
-            data.insert(i, col, gdf[col].iloc[0])
+            if col not in data:
+                data.insert(i, col, gdf[col].iloc[0])
 
     return data
 
@@ -368,6 +370,7 @@ def _eval_do_functions(functions, columns, gdf):
     Similar to :func:`_eval_summarize_expressions`, but for the
     ``do`` operation.
     """
+    gdf.is_copy = None
     for col, func in zip(columns, functions):
         value = np.asarray(func(gdf))
 
@@ -383,7 +386,8 @@ def _eval_do_functions(functions, columns, gdf):
     # Add the grouped-on columns
     if isinstance(gdf, GroupedDataFrame):
         for i, col in enumerate(gdf.plydata_groups):
-            data.insert(i, col, gdf[col].iloc[0])
+            if col not in data:
+                data.insert(i, col, gdf[col].iloc[0])
 
     return data
 
@@ -393,13 +397,14 @@ def _do_single_function(verb):
     data = verb.data
 
     try:
-        grouper = data.groupby(data.plydata_groups)
+        groups = data.plydata_groups
     except AttributeError:
         data = _eval_do_single_function(func, data)
     else:
         dfs = [_eval_do_single_function(func, gdf)
-               for _, gdf in grouper]
+               for _, gdf in data.groupby(groups)]
         data = pd.concat(dfs, axis=0, ignore_index=True)
+        data.plydata_groups = list(groups)
 
     return data
 
@@ -410,13 +415,14 @@ def _do_functions(verb):
     data = verb.data
 
     try:
-        grouper = data.groupby(data.plydata_groups)
+        groups = data.plydata_groups
     except AttributeError:
         data = _eval_do_functions(funcs, cols, data)
     else:
         dfs = [_eval_do_functions(funcs, cols, gdf)
-               for _, gdf in grouper]
+               for _, gdf in data.groupby(groups)]
         data = pd.concat(dfs, axis=0, ignore_index=True)
+        data.plydata_groups = list(groups)
 
     return data
 
