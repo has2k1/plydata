@@ -147,7 +147,8 @@ html_theme = 'theme'
 html_theme_options = {
     'navbar_title': 'plydata',
     'globaltoc_depth': 2,
-    'globaltoc_includehidden': "true",
+    'globaltoc_includehidden': 'true',
+    'source_link_position': 'footer',
 }
 
 
