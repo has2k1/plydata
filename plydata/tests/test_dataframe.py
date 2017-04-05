@@ -7,7 +7,7 @@ import numpy.testing as npt
 
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
-                     group_indices, summarize, query, do)
+                     group_indices, summarize, query, do, head, tail)
 
 from plydata.options import set_option
 from plydata.grouped_datatypes import GroupedDataFrame
@@ -364,6 +364,30 @@ def test_do():
     npt.assert_array_almost_equal(df1['slope'],  df2['slope'])
 
 
+def test_head():
+    df = pd.DataFrame({
+        'x': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        'y': list('aaaabbcddd')})
+
+    result = df >> head(2)
+    assert len(result) == 2
+
+    result = df >> group_by('y') >> head(2)
+    assert len(result) == 7
+
+
+def test_tail():
+    df = pd.DataFrame({
+        'x': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        'y': list('aaaabbcddd')})
+
+    result = df >> tail(2)
+    assert len(result) == 2
+
+    result = df >> group_by('y') >> tail(2)
+    assert len(result) == 7
+
+
 def test_data_as_first_argument():
     def equals(df1, df2):
         return df1.equals(df2)
@@ -390,6 +414,9 @@ def test_data_as_first_argument():
 
     assert equals(do(group_by(df, 'y'), xsum=xsum),
                   df >> group_by('y') >> do(xsum=xsum))
+
+    assert len(head(df, 4) == 4)
+    assert len(tail(df, 4) == 4)
 
 
 def test_data_mutability():

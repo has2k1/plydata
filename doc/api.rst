@@ -19,6 +19,7 @@ Single table verbs
    do
    group_by
    group_indices
+   head
    mutate
    query
    rename
@@ -26,6 +27,7 @@ Single table verbs
    sample_n
    select
    summarize
+   tail
    transmute
    ungroup
    unique

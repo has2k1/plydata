@@ -8,7 +8,7 @@ from .operators import DataOperator
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
-           'query', 'do']
+           'query', 'do', 'head', 'tail']
 
 
 class mutate(DataOperator):
@@ -891,6 +891,85 @@ class do(DataOperator):
             self.columns = list(kwargs.keys())
             self.functions = list(kwargs.values())
 
+
+class head(DataOperator):
+    """
+    Select the top n rows
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
+    n : int, optional
+        Number of rows to return. If the ``data`` is grouped,
+        then number of rows per group. Default is 5.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    ...     'y': list('aaaabbcddd') })
+    >>> df >> head(2)
+       x  y
+    0  1  a
+    1  2  a
+
+    Grouped dataframe
+
+    >>> df >> group_by('y') >> head(2)
+    groups: ['y']
+       x  y
+    0  1  a
+    1  2  a
+    2  5  b
+    3  6  b
+    4  7  c
+    5  8  d
+    6  9  d
+    """
+    def __init__(self, n=5):
+        self.n = n
+
+
+class tail(DataOperator):
+    """
+    Select the bottom n rows
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
+    n : int, optional
+        Number of rows to return. If the ``data`` is grouped,
+        then number of rows per group. Default is 5.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    ...     'y': list('aaaabbcddd') })
+    >>> df >> tail(2)
+        x  y
+    8   9  d
+    9  10  d
+
+    Grouped dataframe
+
+    >>> df >> group_by('y') >> tail(2)
+    groups: ['y']
+        x  y
+    0   3  a
+    1   4  a
+    2   5  b
+    3   6  b
+    4   7  c
+    5   9  d
+    6  10  d
+    """
+    def __init__(self, n=5):
+        self.n = n
 
 # Multiple Table Verbs
 

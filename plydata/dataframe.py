@@ -180,6 +180,30 @@ def do(verb):
         return _do_functions(verb)
 
 
+def head(verb):
+    if isinstance(verb.data, GroupedDataFrame):
+        grouper = verb.data.groupby(verb.data.plydata_groups)
+        dfs = [gdf.head(verb.n) for _, gdf in grouper]
+        data = pd.concat(dfs, axis=0, ignore_index=True)
+        data.plydata_groups = list(verb.data.plydata_groups)
+    else:
+        data = verb.data.head(verb.n)
+
+    return data
+
+
+def tail(verb):
+    if isinstance(verb.data, GroupedDataFrame):
+        grouper = verb.data.groupby(verb.data.plydata_groups)
+        dfs = [gdf.tail(verb.n) for _, gdf in grouper]
+        data = pd.concat(dfs, axis=0, ignore_index=True)
+        data.plydata_groups = list(verb.data.plydata_groups)
+    else:
+        data = verb.data.tail(verb.n)
+
+    return data
+
+
 # Helper functions
 
 def _get_groups(verb):
