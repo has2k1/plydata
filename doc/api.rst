@@ -15,6 +15,7 @@ Single table verbs
    :template: main.rst
 
    arrange
+   count
    distinct
    do
    group_by

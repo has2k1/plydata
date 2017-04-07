@@ -222,6 +222,13 @@ def tally(verb):
     return data
 
 
+def count(verb):
+    if (not isinstance(verb.data, GroupedDataFrame) and
+            verb.groups):
+        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
+    return tally(verb)
+
+
 def inner_join(verb):
     verb.kwargs['how'] = 'inner'
     return _join(verb)

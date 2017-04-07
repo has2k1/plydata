@@ -8,9 +8,9 @@ from .operators import DataOperator, DoubleDataOperator
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
-           'query', 'do', 'head', 'tail', 'tally', 'inner_join',
-           'outer_join', 'left_join', 'right_join', 'full_join',
-           'anti_join', 'semi_join']
+           'query', 'do', 'head', 'tail', 'tally', 'count',
+           'inner_join', 'outer_join', 'left_join', 'right_join',
+           'full_join', 'anti_join', 'semi_join']
 
 
 class mutate(DataOperator):
@@ -976,7 +976,7 @@ class tail(DataOperator):
 
 class tally(DataOperator):
     """
-    Tally observatinos by group
+    Tally observations by group
 
     ``tally`` is a convenient wrapper for summarise that will
     either call ``n`` or ``sum(n)`` depending on whether you're
@@ -1043,6 +1043,88 @@ class tally(DataOperator):
 
     def __init__(self, weights=None, sort=False):
         self.set_env_from_verb_init()
+        self.weights = weights
+        self.sort = sort
+
+
+class count(DataOperator):
+    """
+    Count observations by group
+
+    ``count`` is a convenient wrapper for summarise that will
+    either call n or sum(n) depending on whether you’re
+    tallying for the first time, or re-tallying. Similar to
+    :class:`tally`, but it does the :class:`group_by` for you.
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
+    *args : str, list
+        Columns to group by.
+    weights : str or array-like, optional
+        Weight of each row in the group.
+    sort : bool, optional
+        If ``True``, sort the resulting data in descending
+        order.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [1, 2, 3, 4, 5, 6],
+    ...     'y': ['a', 'b', 'a', 'b', 'a', 'b'],
+    ...     'w': [1, 2, 1, 2, 1, 2]})
+
+    Without groups it is one large group
+
+    >>> df >> count()
+       n
+    0  6
+
+    Sum of the weights
+
+    >>> df >> count(weights='w')
+        n
+    0   9
+
+    With groups
+
+    >>> df >> count('y')
+       y  n
+    0  a  3
+    1  b  3
+
+    With groups and weights
+
+    >>> df >> count('y', weights='w')
+       y  n
+    0  a  3
+    1  b  6
+
+    Applying the weights to a column
+
+    >>> df >> count('y', weights='x*w')
+       y  n
+    0  a  9
+    1  b 24
+
+    You can do that with :class:`summarize`
+
+    >>> df >> group_by('y') >> summarize(n='sum(x*w)')
+       y  n
+    0  a  9
+    1  b 24
+    """
+
+    def __init__(self, *args, weights=None, sort=False):
+        self.set_env_from_verb_init()
+        if len(args) == 1:
+            self.groups = [args[0]]
+        elif len(args) > 1:
+            self.groups = list(args)
+        else:
+            self.groups = []
         self.weights = weights
         self.sort = sort
 
