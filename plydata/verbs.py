@@ -9,7 +9,7 @@ __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'inner_join', 'outer_join',
-           'left_join', 'right_join', 'full_join']
+           'left_join', 'right_join', 'full_join', 'anti_join']
 
 
 class mutate(DataOperator):
@@ -1153,6 +1153,51 @@ class right_join(_join):
     Groups are ignored for the purpose of joining, but the result
     preserves the grouping of x.
     """
+
+
+class anti_join(_join):
+    """
+    Join and keep rows only found in left frame
+
+    Also keeps just the columns in the left frame. An ``anti_join``
+    is analogous to a set difference.
+
+    Parameters
+    ----------
+    x : dataframe
+        Left dataframe
+    y : dataframe
+        Right dataframe
+    on : str or tuple or list
+        Columns on which to join
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df1 = pd.DataFrame({
+    ...     'col1': ['one', 'two', 'three'],
+    ...     'col2': [1, 2, 3]
+    ... })
+    ...
+    >>> df2 = pd.DataFrame({
+    ...     'col1': ['one', 'four', 'three'],
+    ...     'col2': [1, 4, 3]
+    ... })
+    ...
+    >>> anti_join(df1, df2, on='col1')
+        col1  col2
+    1    two     2
+
+    Note
+    ----
+    Groups are ignored for the purpose of joining, but the result
+    preserves the grouping of x.
+    """
+
+    def __init__(self, x, y, on=None):
+        self.x = x
+        self.y = y
+        self.kwargs = dict(on=on)
 
 
 # Aliases

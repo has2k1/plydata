@@ -41,6 +41,7 @@ Two table verbs
    :nosignatures:
    :template: main.rst
 
+   anti_join
    full_join
    inner_join
    left_join

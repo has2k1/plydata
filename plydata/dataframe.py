@@ -224,6 +224,16 @@ def right_join(verb):
     return _join(verb)
 
 
+def anti_join(verb):
+    verb.kwargs['how'] = 'left'
+    verb.kwargs['suffixes'] = ('', '_y')
+    verb.kwargs['indicator'] = '_plydata_merge'
+    df = _join(verb)
+    data = df.query('_plydata_merge=="left_only"')[verb.x.columns]
+    data.is_copy = None
+    return data
+
+
 # Helper functions
 
 def _get_groups(verb):
