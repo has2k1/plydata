@@ -8,9 +8,9 @@ from .operators import DataOperator, DoubleDataOperator
 __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
-           'query', 'do', 'head', 'tail', 'inner_join', 'outer_join',
-           'left_join', 'right_join', 'full_join', 'anti_join',
-           'semi_join']
+           'query', 'do', 'head', 'tail', 'tally', 'inner_join',
+           'outer_join', 'left_join', 'right_join', 'full_join',
+           'anti_join', 'semi_join']
 
 
 class mutate(DataOperator):
@@ -973,6 +973,78 @@ class tail(DataOperator):
     def __init__(self, n=5):
         self.n = n
 
+
+class tally(DataOperator):
+    """
+    Tally observatinos by group
+
+    ``tally`` is a convenient wrapper for summarise that will
+    either call ``n`` or ``sum(n)`` depending on whether you're
+    tallying for the first time, or re-tallying.
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
+    weights : str or array-like, optional
+        Weight of each row in the group.
+    sort : bool, optional
+        If ``True``, sort the resulting data in descending
+        order.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [1, 2, 3, 4, 5, 6],
+    ...     'y': ['a', 'b', 'a', 'b', 'a', 'b'],
+    ...     'w': [1, 2, 1, 2, 1, 2]})
+
+    Without groups it is one large group
+
+    >>> df >> tally()
+       n
+    0  6
+
+    Sum of the weights
+
+    >>> df >> tally('w')
+        n
+    0   9
+
+    With groups
+
+    >>> df >> group_by('y') >> tally()
+       y  n
+    0  a  3
+    1  b  3
+
+    With groups and weights
+
+    >>> df >> group_by('y') >> tally('w')
+       y  n
+    0  a  3
+    1  b  6
+
+    Applying the weights to a column
+
+    >>> df >> group_by('y') >> tally('x*w')
+       y  n
+    0  a  9
+    1  b 24
+
+    You can do that with :class:`summarize`
+
+    >>> df >> group_by('y') >> summarize(n='sum(x*w)')
+       y  n
+    0  a  9
+    1  b 24
+    """
+
+    def __init__(self, weights=None, sort=False):
+        self.set_env_from_verb_init()
+        self.weights = weights
+        self.sort = sort
 
 # Multiple Table Verbs
 

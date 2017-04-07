@@ -28,6 +28,7 @@ Single table verbs
    select
    summarize
    tail
+   tally
    transmute
    ungroup
    unique

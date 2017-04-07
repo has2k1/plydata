@@ -204,6 +204,24 @@ def tail(verb):
     return data
 
 
+def tally(verb):
+    # Prepare for summarize
+    verb.new_columns = ['n']
+    if verb.weights:
+        if isinstance(verb.weights, str):
+            verb.weights = 'sum({})'.format(verb.weights)
+        verb.expressions = [verb.weights]
+    else:
+        verb.expressions = ['{n}']
+
+    data = summarize(verb)
+    if verb.sort:
+        data = data.sort_values(by='n')
+        data.reset_index(drop=True, inplace=True)
+
+    return data
+
+
 def inner_join(verb):
     verb.kwargs['how'] = 'inner'
     return _join(verb)

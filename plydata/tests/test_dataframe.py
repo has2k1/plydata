@@ -8,6 +8,7 @@ import numpy.testing as npt
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
+                     tally,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
 
@@ -400,6 +401,25 @@ def test_tail():
     assert len(result) == 7
 
 
+def test_tally():
+    df = pd.DataFrame({
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': ['a', 'b', 'a', 'b', 'a', 'b'],
+        'w': [1, 2, 1, 2, 1, 2]})
+
+    result = df >> tally()
+    assert result.loc[0, 'n'] == 6
+
+    result = df >> group_by('y') >> tally()
+    assert result.loc[:, 'n'].tolist() == [3, 3]
+
+    result = df >> group_by('y') >> tally('w')
+    assert result.loc[:, 'n'].tolist() == [3, 6]
+
+    result2 = df >> group_by('y') >> summarize(n='sum(w)')
+    assert result.equals(result2)
+
+
 def test_data_as_first_argument():
     def equals(df1, df2):
         return df1.equals(df2)
@@ -420,6 +440,7 @@ def test_data_as_first_argument():
                   df >> group_by('x') >> ungroup())
     assert equals(summarize(df, 'sum(x)'), df >> summarize('sum(x)'))
     assert equals(query(df, 'x % 2'), df >> query('x % 2'))
+    assert equals(tally(df, 'x'), df >> tally('x'))
 
     def xsum(gdf):
         return [gdf['x'].sum()]
