@@ -9,7 +9,8 @@ __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'inner_join', 'outer_join',
-           'left_join', 'right_join', 'full_join', 'anti_join']
+           'left_join', 'right_join', 'full_join', 'anti_join',
+           'semi_join']
 
 
 class mutate(DataOperator):
@@ -1198,6 +1199,60 @@ class anti_join(_join):
         self.x = x
         self.y = y
         self.kwargs = dict(on=on)
+
+
+class semi_join(_join):
+    """
+    Join and keep columns only found in left frame & no duplicate rows
+
+    A semi join differs from an inner join because an inner
+    join will return one row of left frame for each matching row of
+    the right, where a semi join will never duplicate rows of the
+    left frame.
+
+    Parameters
+    ----------
+    x : dataframe
+        Left dataframe
+    y : dataframe
+        Right dataframe
+    on : str or tuple or list
+        Columns on which to join
+    suffixes : 2-length sequence
+        Suffix to apply to overlapping column names in the left and
+        right side, respectively.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df1 = pd.DataFrame({
+    ...     'col1': ['one', 'two', 'three'],
+    ...     'col2': [1, 2, 3]
+    ... })
+    ...
+    >>> df2 = pd.DataFrame({
+    ...     'col1': ['one', 'four', 'three', 'three'],
+    ...     'col2': [1, 4, 3, 3]
+    ... })
+    ...
+    >>> semi_join(df1, df2, on='col1')
+        col1  col2
+    0    one     1
+    2  three     3
+
+    Compared to an :class:`inner_join`
+
+    >>> inner_join(df1, df2, on='col1')
+        col1  col2_x  col2_y
+    0    one       1       1
+    1  three       3       3
+    2  three       3       3
+
+    Note
+    ----
+    Groups are ignored for the purpose of joining, but the result
+    preserves the grouping of x.
+    """
 
 
 # Aliases

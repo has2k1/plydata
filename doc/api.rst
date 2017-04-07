@@ -47,6 +47,7 @@ Two table verbs
    left_join
    outer_join
    right_join
+   semi_join
 
 Options
 =======

@@ -234,6 +234,17 @@ def anti_join(verb):
     return data
 
 
+def semi_join(verb):
+    verb.kwargs['how'] = 'left'
+    verb.kwargs['suffixes'] = ('', '_y')
+    verb.kwargs['indicator'] = '_plydata_merge'
+    df = _join(verb)
+    data = df.query('_plydata_merge=="both"')[verb.x.columns]
+    data.is_copy = None
+    data.drop_duplicates(inplace=True)
+    return data
+
+
 # Helper functions
 
 def _get_groups(verb):

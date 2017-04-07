@@ -9,7 +9,7 @@ from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
                      inner_join, outer_join, left_join, right_join,
-                     anti_join)
+                     anti_join, semi_join)
 
 from plydata.options import set_option
 from plydata.grouped_datatypes import GroupedDataFrame
@@ -516,6 +516,7 @@ def test_joins():
     ldf = left_join(df1, df2, on='col1')
     rdf = right_join(df1, df2, on='col1')
     adf = anti_join(df1, df2, on='col1')
+    sdf = semi_join(df1, df2, on='col1')
 
     # Pandas does all the heavy lifting, simple tests
     # are enough
@@ -524,6 +525,8 @@ def test_joins():
     assert set(ldf['col1']) & cols == {'one', 'two', 'three'}
     assert set(rdf['col1']) & cols == {'one', 'four', 'three'}
     assert set(adf['col1']) & cols == {'two'}
+    assert set(sdf['col1']) & cols == {'one', 'three'}
+    assert set(sdf.columns) == {'col1', 'col2'}
 
     # Preserves group of x frame
     result = inner_join(df1 >> group_by('col1'), df2, on='col1')
