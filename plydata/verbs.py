@@ -9,7 +9,7 @@ __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'inner_join', 'outer_join',
-           'left_join', 'right_join']
+           'left_join', 'right_join', 'full_join']
 
 
 class mutate(DataOperator):
@@ -1159,3 +1159,4 @@ class right_join(_join):
 # Aliases
 unique = distinct
 summarise = summarize
+full_join = outer_join
