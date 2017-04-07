@@ -205,19 +205,23 @@ def tail(verb):
 
 
 def inner_join(verb):
-    return _join(verb, 'inner')
+    verb.kwargs['how'] = 'inner'
+    return _join(verb)
 
 
 def outer_join(verb):
-    return _join(verb, 'outer')
+    verb.kwargs['how'] = 'outer'
+    return _join(verb)
 
 
 def left_join(verb):
-    return _join(verb, 'left')
+    verb.kwargs['how'] = 'left'
+    return _join(verb)
 
 
 def right_join(verb):
-    return _join(verb, 'right')
+    verb.kwargs['how'] = 'right'
+    return _join(verb)
 
 
 # Helper functions
@@ -443,12 +447,11 @@ def _do_functions(verb):
     return data
 
 
-def _join(verb, how):
+def _join(verb):
     """
     Join helper
     """
-    data = pd.merge(verb.x, verb.y, how=how, on=verb.on,
-                    suffixes=verb.suffixes)
+    data = pd.merge(verb.x, verb.y, **verb.kwargs)
 
     # Preserve x groups
     if isinstance(verb.x, GroupedDataFrame):

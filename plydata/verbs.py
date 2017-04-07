@@ -984,8 +984,7 @@ class _join(DoubleDataOperator):
     def __init__(self, x, y, on=None, suffixes=('_x', '_y')):
         self.x = x
         self.y = y
-        self.on = on
-        self.suffixes = suffixes
+        self.kwargs = dict(on=on, suffixes=suffixes)
 
 
 class inner_join(_join):
