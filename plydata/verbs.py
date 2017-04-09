@@ -290,10 +290,10 @@ class rename(DataOperator):
         Useful when not using the ``rrshift`` operator.
     args : tuple, optional
         A single positional argument that holds
-        ``{'old_name': 'new_name'}`` pairs. This is useful if the
+        ``{'new_name': 'old_name'}`` pairs. This is useful if the
         *old_name* is not a valid python variable name.
     kwargs : dict, optional
-        ``{old_name: 'new_name'}`` pairs. If all the columns to be
+        ``{new_name: 'old_name'}`` pairs. If all the columns to be
         renamed are valid python variable names, then they
         can be specified as keyword arguments.
 
@@ -304,12 +304,12 @@ class rename(DataOperator):
     >>> x = np.array([1, 2, 3])
     >>> df = pd.DataFrame({'bell': x, 'whistle': x,
     ...                    'nail': x, 'tail': x})
-    >>> df >> rename(bell='gong', nail='pin')
+    >>> df >> rename(gong='bell', pin='nail')
        gong  pin  tail  whistle
     0     1    1     1        1
     1     2    2     2        2
     2     3    3     3        3
-    >>> df >> rename({'tail': 'flap'}, nail='pin')
+    >>> df >> rename({'flap': 'tail'}, pin='nail')
        bell  pin  flap  whistle
     0     1    1     1        1
     1     2    2     2        2
@@ -324,8 +324,8 @@ class rename(DataOperator):
 
     def __init__(self, *args, **kwargs):
         lookup = args[0] if len(args) else {}
-        self.lookup = lookup.copy()
-        self.lookup.update(kwargs)
+        self.lookup = {v: k for k, v in lookup.items()}
+        self.lookup.update({v: k for k, v in kwargs.items()})
 
 
 class distinct(DataOperator):

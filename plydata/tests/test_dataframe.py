@@ -140,12 +140,12 @@ def test_select():
 def test_rename():
     x = np.array([1, 2, 3])
     df = pd.DataFrame({'bell': x, 'whistle': x, 'nail': x, 'tail': x})
-    result = df >> rename(bell='gong', nail='pin')
+    result = df >> rename(gong='bell', pin='nail')
     assert len(result.columns) == 4
     assert 'gong' in result.columns
     assert 'pin' in result.columns
 
-    result = df >> rename({'tail': 'flap'}, nail='pin')
+    result = df >> rename({'flap': 'tail'}, pin='nail')
     assert len(result.columns) == 4
     assert 'flap' in result.columns
     assert 'pin' in result.columns
@@ -263,7 +263,7 @@ class TestGroupedDataFrame:
         assert isinstance(result, GroupedDataFrame)
 
     def test_rename(self):
-        result = self.df >> rename(y='z')
+        result = self.df >> rename(z='y')
         assert 'x' in result
         assert 'z' in result
         assert 'y' not in result
@@ -451,7 +451,7 @@ def test_data_as_first_argument():
     assert len(sample_n(df, 5)) == len(df >> sample_n(5))
     assert len(sample_frac(df, .3)) == len(df >> sample_frac(.3))
     assert equals(select(df, 'x'), df >> select('x'))
-    assert equals(rename(df.copy(), x='z'), df.copy() >> rename(x='z'))
+    assert equals(rename(df.copy(), z='x'), df.copy() >> rename(z='x'))
     assert equals(distinct(df), df >> distinct())
     assert equals(arrange(df, 'np.sin(x)'), df >> arrange('np.sin(x)'))
     assert equals(group_by(df, 'x'), df >> group_by('x'))
@@ -520,7 +520,7 @@ def test_data_mutability():
     # dataframe.rename has copy-on-write (if copy=False) that affects
     # only the new frame. This creates possibility for "action at a
     # distance" effects on the new frame when the original is modified
-    result = df2 >> rename(z='x')
+    result = df2 >> rename(x='z')
     df2['y'] = 3
     result['x'] = 4
     assert 'z' not in df2
