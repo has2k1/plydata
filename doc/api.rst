@@ -16,6 +16,7 @@ Single table verbs
 
    arrange
    count
+   create
    define
    distinct
    do

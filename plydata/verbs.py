@@ -5,11 +5,11 @@ import itertools
 
 from .operators import DataOperator, DoubleDataOperator
 
-__all__ = ['define', 'transmute', 'sample_n', 'sample_frac', 'select',
+__all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'tally', 'count',
-           'modify_where', 'mutate',
+           'modify_where', 'mutate', 'transmute',
            'inner_join', 'outer_join', 'left_join', 'right_join',
            'full_join', 'anti_join', 'semi_join']
 
@@ -74,7 +74,7 @@ class define(DataOperator):
         self.expressions = itertools.chain(exprs, kwargs.values())
 
 
-class transmute(define):
+class create(define):
     """
     Create DataFrame with columns
 
@@ -100,17 +100,17 @@ class transmute(define):
     --------
     >>> import pandas as pd
     >>> df = pd.DataFrame({'x': [1, 2, 3]})
-    >>> df >> transmute(x_sq='x**2')
+    >>> df >> create(x_sq='x**2')
        x_sq
     0     1
     1     4
     2     9
-    >>> df >> transmute(('x*2', 'x*2'), ('x*3', 'x*3'), x_cubed='x**3')
+    >>> df >> create(('x*2', 'x*2'), ('x*3', 'x*3'), x_cubed='x**3')
        x*2  x*3  x_cubed
     0    2    3        1
     1    4    6        8
     2    6    9       27
-    >>> df >> transmute('x*4')
+    >>> df >> create('x*4')
        x*4
     0    4
     1    8
@@ -1479,6 +1479,7 @@ class semi_join(_join):
 
 # Aliases
 mutate = define
+transmute = create
 unique = distinct
 summarise = summarize
 full_join = outer_join

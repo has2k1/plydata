@@ -25,7 +25,7 @@ def define(verb):
     return data
 
 
-def transmute(verb):
+def create(verb):
     data = _get_base_dataframe(verb.data)
     new_data = _evaluate_expressions(verb)
     for col in new_data:
@@ -138,7 +138,7 @@ def group_indices(verb):
         else:
             groups = data.plydata_groups
     else:
-        data = transmute(verb)
+        data = create(verb)
 
     indices_dict = data.groupby(groups).indices
     indices = -np.ones(len(data), dtype=int)

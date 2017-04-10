@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import numpy.testing as npt
 
-from plydata import (define, transmute, sample_n, sample_frac, select,
+from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
                      tally, count, modify_where,
@@ -50,22 +50,22 @@ def test_define():
         df >> define(z=[1, 2, 3, 4])
 
 
-def test_transmute():
+def test_create():
     x = np.array([1, 2, 3])
     y = np.array([4, 5, 6])
     df = pd.DataFrame({'x': x})
 
     # No args
-    result = df >> transmute()
+    result = df >> create()
     assert len(result.columns) == 0
 
     # All types of args
-    result = df >> transmute(('x*2', 'x*2'),
-                             ('x*3', 'x*3'),
-                             x_sq='x**2',
-                             x_cumsum='np.cumsum(x)',
-                             y=y,
-                             w=9)
+    result = df >> create(('x*2', 'x*2'),
+                          ('x*3', 'x*3'),
+                          x_sq='x**2',
+                          x_cumsum='np.cumsum(x)',
+                          y=y,
+                          w=9)
 
     assert len(result.columns) == 6
     assert all(result['x*2'] == x*2)
@@ -75,13 +75,13 @@ def test_transmute():
     assert all(result['y'] == y)
     assert all(result['w'] == 9)
 
-    result = df >> transmute('x*4')
+    result = df >> create('x*4')
     assert len(result.columns) == 1
     assert all(result['x*4'] == x*4)
 
     # Branches
     with pytest.raises(ValueError):
-        df >> transmute(z=[1, 2, 3, 4])
+        df >> create(z=[1, 2, 3, 4])
 
 
 def test_sample_n():
@@ -238,8 +238,8 @@ class TestGroupedDataFrame:
         result = self.df.copy() >> define(z='2*x')
         assert isinstance(result, GroupedDataFrame)
 
-    def test_transmute(self):
-        result = self.df.copy() >> transmute(z='2*x')
+    def test_create(self):
+        result = self.df.copy() >> create(z='2*x')
         assert 'x' in result
         assert 'z' in result
         assert isinstance(result, GroupedDataFrame)
@@ -461,7 +461,7 @@ def test_data_as_first_argument():
                        'y': [0, 0, 1, 1, 2, 3]})
 
     assert equals(define(df.copy(), 'x*2'), df.copy() >> define('x*2'))
-    assert equals(transmute(df, 'x*2'), df >> transmute('x*2'))
+    assert equals(create(df, 'x*2'), df >> create('x*2'))
     assert len(sample_n(df, 5)) == len(df >> sample_n(5))
     assert len(sample_frac(df, .3)) == len(df >> sample_frac(.3))
     assert equals(select(df, 'x'), df >> select('x'))
@@ -525,7 +525,7 @@ def test_data_mutability():
 
     # Not mutable
     df2 = df.copy()
-    df2 >> transmute(z='x**2')
+    df2 >> create(z='x**2')
     assert 'z' not in df2
 
     df2 >> sample_n(3) >> define(z='x**2')
