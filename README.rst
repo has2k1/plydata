@@ -20,6 +20,7 @@ We expect to support *sqlite* and maybe *postgresql* and *mysql*.
 
 Installation
 ============
+plydata **only** supports Python 3.
 
 **Official version**
 

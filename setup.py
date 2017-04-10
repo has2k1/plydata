@@ -72,7 +72,7 @@ if __name__ == '__main__':
           classifiers=[
               'Intended Audience :: Science/Research',
               'License :: OSI Approved :: BSD License',
-              'Programming Language :: Python :: 3',
-              'Topic :: Scientific/Engineering :: Visualization',
+              'Programming Language :: Python :: 3 :: Only',
+              'Topic :: Scientific/Engineering :: Information Analysis'
           ],
           )

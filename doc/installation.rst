@@ -1,7 +1,8 @@
 Installation
 ============
 
-plydata can be can be installed in a couple of ways, depending on purpose.
+plydata **only** supports Python 3. It can be can be installed in a
+couple of ways, depending on purpose.
 
 Official release installation
 -----------------------------
