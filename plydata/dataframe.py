@@ -323,15 +323,8 @@ def _evaluate_expressions(verb):
     for col, expr in zip(verb.new_columns, verb.expressions):
         if isinstance(expr, str):
             data[col] = verb.env.eval(expr, inner_namespace=verb.data)
-        elif hasattr(expr, '__len__'):
-            if len(verb.data) == len(expr):
-                data[col] = expr
-            else:
-                msg = "value not equal to length of dataframe"
-                raise ValueError(msg)
         else:
-            msg = "Cannot handle expression of type `{}`"
-            raise TypeError(msg.format(type(expr)))
+            data[col] = expr
 
     return data
 

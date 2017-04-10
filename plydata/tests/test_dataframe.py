@@ -31,25 +31,23 @@ def test_mutate():
         ('x*3', 'x*3'),
         x_sq='x**2',
         x_cumsum='np.cumsum(x)',
-        y=y)
+        y=y,
+        w=9)
 
-    assert len(df2.columns) == 6
+    assert len(df2.columns) == 7
     assert all(df2['x*2'] == x*2)
     assert all(df2['x*3'] == x*3)
     assert all(df2['x_sq'] == x**2)
     assert all(df2['x_cumsum'] == np.cumsum(x))
     assert all(df2['y'] == y)
+    assert all(df2['w'] == 9)
 
     result = df >> mutate('x*4')
     assert len(result.columns) == 2
-    assert all(result['x*4'] == x*4)
 
     # Branches
     with pytest.raises(ValueError):
         df >> mutate(z=[1, 2, 3, 4])
-
-    with pytest.raises(TypeError):
-        df >> mutate(z=object())
 
 
 def test_transmute():
@@ -66,14 +64,16 @@ def test_transmute():
                              ('x*3', 'x*3'),
                              x_sq='x**2',
                              x_cumsum='np.cumsum(x)',
-                             y=y)
+                             y=y,
+                             w=9)
 
-    assert len(result.columns) == 5
+    assert len(result.columns) == 6
     assert all(result['x*2'] == x*2)
     assert all(result['x*3'] == x*3)
     assert all(result['x_sq'] == x**2)
     assert all(result['x_cumsum'] == np.cumsum(x))
     assert all(result['y'] == y)
+    assert all(result['w'] == 9)
 
     result = df >> transmute('x*4')
     assert len(result.columns) == 1
@@ -82,9 +82,6 @@ def test_transmute():
     # Branches
     with pytest.raises(ValueError):
         df >> transmute(z=[1, 2, 3, 4])
-
-    with pytest.raises(TypeError):
-        df >> transmute(z=object())
 
 
 def test_sample_n():
