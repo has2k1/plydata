@@ -52,6 +52,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
+    'sphinx.ext.autosectionlabel',
 
     'sphinxext.inline_code_highlight',
 ]
@@ -149,6 +150,10 @@ html_theme_options = {
     'globaltoc_depth': 2,
     'globaltoc_includehidden': 'true',
     'source_link_position': 'footer',
+    'navbar_sidebarrel': False,
+    'navbar_links': [
+        ('API', 'api'),
+    ],
 }
 
 

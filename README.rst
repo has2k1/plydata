@@ -1,5 +1,5 @@
 #######
-PlyData
+plydata
 #######
 
 =================    =================
@@ -10,13 +10,13 @@ Coverage             |coverage|_
 Documentation        |Documentation|_
 =================    =================
 
-PlyData makes common data manipulation tasks easy. It provides a small
-grammar to manipulate data. It is based on Hadley Wickhams `dplyr`_.
-Currently, the only supported data store is the pandas dataframe, but
-support for other data stores is not ruled out. We expect to support
-`sqlite` in the future. Support for `mysql` and `postgresql` *may* also
-be added.
+plydata is a library that provides a grammar for data manipulation.
+The grammar consists of verbs that can be applied to pandas
+dataframes or database tables. It is based on the R package
+`dplyr`_. plydata uses the `>>` operator as a pipe symbol.
 
+At present the only supported data store is the *pandas* dataframe.
+We expect to support *sqlite* and maybe *postgresql* and *mysql*.
 
 Installation
 ============
@@ -35,6 +35,59 @@ Installation
    $ pip install git+https://github.com/has2k1/plydata.git@master
 
 
+Example
+-------
+
+.. code-block:: python
+
+    import pandas as pd
+    from plydata import mutate, query, modify_where
+
+    df = pd.DataFrame({
+        'x': [0, 1, 2, 3],
+        'y': ['zero', 'one', 'two', 'three']})
+
+    df >> mutate(z='x')
+    """
+       x      y  z
+    0  0   zero  0
+    1  1    one  1
+    2  2    two  2
+    3  3  three  3
+    """
+
+    df >> mutate(z=0) >> modify_where('x > 1', z=1)
+    """
+       x      y  z
+    0  0   zero  0
+    1  1    one  0
+    2  2    two  1
+    3  3  three  1
+    """
+
+    # You can pass the dataframe as the # first argument
+    query(df, 'x > 1')  # same as `df >> query('x > 2')`
+    """
+       x      y
+    2  2    two
+    3  3  three
+    """
+
+What about dplython or pandas-ply?
+----------------------------------
+
+`dplython`_ and `pandas-ply`_ are two other packages that have a similar
+objective to plydata. The big difference is plydata does not use
+a placeholder variable (`X`) as a stand-in for the dataframe. For example:
+
+.. code-block:: python
+
+    diamonds >> select(X.carat, X.cut, X.price)  # dplython
+
+    diamonds >> select('carat', 'cut', 'price')  # plydata
+    select(diamonds, 'carat', 'cut', 'price')    # plydata
+
+For more, see the documentation_.
 
 .. |release| image:: https://img.shields.io/pypi/v/plydata.svg
 .. _release: https://pypi.python.org/pypi/plydata
@@ -51,4 +104,7 @@ Installation
 .. |documentation| image:: https://readthedocs.org/projects/plydata/badge/?version=latest
 .. _documentation: https://readthedocs.org/projects/plydata/?badge=latest
 
-.. _`dplyr`: http://github.com/hadley/dplyr
+.. _dplyr: http://github.com/hadley/dplyr
+.. _pandas-ply: https://github.com/coursera/pandas-ply
+.. _dplython: https://github.com/dodger487/dplython
+
