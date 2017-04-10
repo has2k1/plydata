@@ -8,7 +8,7 @@ import numpy.testing as npt
 from plydata import (mutate, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
-                     tally, count,
+                     tally, count, modify_where,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
 
@@ -439,6 +439,23 @@ def test_count():
     assert result.equals(result2)
 
 
+def test_modify_where():
+    df = pd.DataFrame({
+        'x': [0, 1, 2, 3, 4, 5],
+        'y': [0, 1, 2, 3, 4, 5],
+        'z': [0, 1, 2, 3, 4, 5]})
+
+    result = df >> modify_where('x%2 == 0', y='y*10', z=4)
+    assert result.loc[[0, 2, 4], 'y'].tolist() == [0, 20, 40]
+    assert result.loc[[0, 2, 4], 'z'].tolist() == [4, 4, 4]
+
+    result2 = df >> modify_where('x%2 == 0', ('y', 'y*10'), ('z', 4))
+    assert result.equals(result2)
+
+    with pytest.raises(KeyError):
+        df >> modify_where('x < 2', w=1)
+
+
 def test_data_as_first_argument():
     def equals(df1, df2):
         return df1.equals(df2)
@@ -460,6 +477,8 @@ def test_data_as_first_argument():
     assert equals(summarize(df, 'sum(x)'), df >> summarize('sum(x)'))
     assert equals(query(df, 'x % 2'), df >> query('x % 2'))
     assert equals(tally(df, 'x'), df >> tally('x'))
+    assert equals(modify_where(df, 'x<3', y=10),
+                  df >> modify_where('x<3', y=10))
 
     def xsum(gdf):
         return [gdf['x'].sum()]
@@ -490,6 +509,9 @@ def test_data_mutability():
     df >> group_by(z='x**2')
     assert 'z' not in df
 
+    df >> modify_where('x<3', y=9)
+    assert df.loc[0, 'y'] != 9
+
     set_option('modify_input_data', True)
 
     df2 = df.copy()
@@ -499,6 +521,10 @@ def test_data_mutability():
     df2 = df.copy()
     df2 >> group_by(z='x**2')
     assert 'z' in df2
+
+    df2 = df.copy()
+    df2 >> modify_where('x<3', y=9)
+    assert df2.loc[0, 'y'] == 9
 
     # Not mutable
     df2 = df.copy()

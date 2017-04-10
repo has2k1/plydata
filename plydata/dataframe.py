@@ -229,6 +229,26 @@ def count(verb):
     return tally(verb)
 
 
+def modify_where(verb):
+    if get_option('modify_input_data'):
+        data = verb.data
+    else:
+        data = verb.data.copy()
+    idx = data.query(verb.where).index
+    qdf = data.loc[idx, :]
+
+    for col, expr in zip(verb.columns, verb.expressions):
+        # Do not create new columns, mutate does that
+        if col not in data:
+            raise KeyError("Column '{}' not in dataframe".format(col))
+        if isinstance(expr, str):
+            data.loc[idx, col] = verb.env.eval(expr, inner_namespace=qdf)
+        else:
+            data.loc[idx, col] = expr
+
+    return data
+
+
 def inner_join(verb):
     verb.kwargs['how'] = 'inner'
     return _join(verb)

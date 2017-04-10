@@ -9,6 +9,7 @@ __all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'tally', 'count',
+           'modify_where',
            'inner_join', 'outer_join', 'left_join', 'right_join',
            'full_join', 'anti_join', 'semi_join']
 
@@ -1127,6 +1128,73 @@ class count(DataOperator):
             self.groups = []
         self.weights = weights
         self.sort = sort
+
+
+class modify_where(DataOperator):
+    """
+    Modify columns from of selected rows
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``rrshift`` operator.
+    where : str
+        The query to evaluate and find the rows to be modified.
+    args : tuple, optional
+        A single positional argument that holds
+        ``('column', expression)`` pairs. This is useful if
+        the *column* is not a valid python variable name.
+    kwargs : dict, optional
+        ``{column: expression}`` pairs. If all the columns to
+        be adjusted are valid python variable names, then they
+        can be specified as keyword arguments.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [0, 1, 2, 3, 4, 5],
+    ...     'y': [0, 1, 2, 3, 4, 5],
+    ...     'z': [0, 1, 2, 3, 4, 5]
+    ... })
+    >>> df >> modify_where('x%2 == 0', y='y*10', z='x-y')
+       x   y  z
+    0  0   0  0
+    1  1   1  1
+    2  2  20  0
+    3  3   3  3
+    4  4  40  0
+    5  5   5  5
+
+    Compared that to::
+
+        idx = df['x'] % 2 == 0
+        df.loc[idx, 'z'] = df.loc[idx, 'x'] - df.loc[idx, 'y']
+        df.loc[idx, 'y'] = df.loc[idx, 'y'] * 10
+
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`modify_where` will modify the original dataframe.
+    """
+
+    def __init__(self, where, *args, **kwargs):
+        self.set_env_from_verb_init()
+        self.where = where
+        cols = []
+        exprs = []
+        for arg in args:
+            try:
+                col, expr = arg
+            except (TypeError, ValueError):
+                raise ValueError(
+                    "Positional arguments must be a tuple of 2")
+            cols.append(col)
+            exprs.append(expr)
+
+        self.columns = itertools.chain(cols, kwargs.keys())
+        self.expressions = itertools.chain(exprs, kwargs.values())
+
 
 # Multiple Table Verbs
 

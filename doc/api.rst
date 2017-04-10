@@ -22,6 +22,7 @@ Single table verbs
    group_indices
    head
    mutate
+   modify_where
    query
    rename
    sample_frac
