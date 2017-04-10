@@ -13,7 +13,7 @@ from .options import get_option
 from .utils import hasattrs, temporary_key
 
 
-def mutate(verb):
+def define(verb):
     if get_option('modify_input_data'):
         data = verb.data
     else:
@@ -94,7 +94,7 @@ def rename(verb):
 
 def distinct(verb):
     if hasattrs(verb, ('new_columns', 'expressions')):
-        data = mutate(verb)
+        data = define(verb)
     else:
         data = verb.data
     return data.drop_duplicates(subset=verb.columns,
@@ -121,7 +121,7 @@ def arrange(verb):
 def group_by(verb):
     copy = not get_option('modify_input_data')
     verb.data = GroupedDataFrame(verb.data, verb.groups, copy=copy)
-    return mutate(verb)
+    return define(verb)
 
 
 def ungroup(verb):
@@ -238,7 +238,7 @@ def modify_where(verb):
     qdf = data.loc[idx, :]
 
     for col, expr in zip(verb.columns, verb.expressions):
-        # Do not create new columns, mutate does that
+        # Do not create new columns, define does that
         if col not in data:
             raise KeyError("Column '{}' not in dataframe".format(col))
         if isinstance(expr, str):

@@ -1,19 +1,19 @@
 import numpy as np
 
-from plydata import mutate
+from plydata import define
 
 
-def test_mutate():
+def test_define():
     x = np.array([1, 2, 3])
     y = np.array([4, 5, 6])
     d = {'x': x}
 
     # No args
-    d >> mutate()
+    d >> define()
     assert len(d) == 1
 
     # All types of args
-    d >> mutate(('x*2', 'x*2'),
+    d >> define(('x*2', 'x*2'),
                 ('x*3', 'x*3'),
                 x_sq='x**2',
                 x_cumsum='np.cumsum(x)',

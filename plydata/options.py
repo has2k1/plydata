@@ -15,12 +15,12 @@ PlyData Options
 #:
 #:     df = pd.DataFrame({'x': [1, 2, 3]})
 #:
-#:     df >> mutate(y='x+1')
+#:     df >> define(y='x+1')
 #:     'y' in df  # False
 #:
 #:     set_option('modify_input_data', True)
 #:
-#:     df >> mutate(y='x+1')
+#:     df >> define(y='x+1')
 #:     'y' in df  # True
 modify_input_data = False
 

@@ -6,7 +6,7 @@ Verb implementations for a :class:`dict`
 """
 
 
-def mutate(verb):
+def define(verb):
     env = verb.env.with_outer_namespace(verb.data)
     for col, expr in zip(verb.new_columns, verb.expressions):
         if isinstance(expr, str):

@@ -22,13 +22,13 @@ three different ways.
    df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5]})
 
    # Piping
-   df >> mutate(w='x%2', y='x+1', z='x+2.5') >> arrange('w')
+   df >> define(w='x%2', y='x+1', z='x+2.5') >> arrange('w')
 
    # Composing
-   arrange(mutate(df, w='x%2', y='x+1', z='x+2.5'), 'w')
+   arrange(define(df, w='x%2', y='x+1', z='x+2.5'), 'w')
 
    # Currying
-   arrange('w')(mutate(w='x%2', y='x+1', z='x+2.5')(df))
+   arrange('w')(define(w='x%2', y='x+1', z='x+2.5')(df))
 
 Although *composing* is the normal way calls are invoked, since data
 manipulation often involves consecutive function calls, the

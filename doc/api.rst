@@ -16,13 +16,14 @@ Single table verbs
 
    arrange
    count
+   define
    distinct
    do
    group_by
    group_indices
    head
-   mutate
    modify_where
+   mutate
    query
    rename
    sample_frac

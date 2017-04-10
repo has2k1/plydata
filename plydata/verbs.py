@@ -5,16 +5,16 @@ import itertools
 
 from .operators import DataOperator, DoubleDataOperator
 
-__all__ = ['mutate', 'transmute', 'sample_n', 'sample_frac', 'select',
+__all__ = ['define', 'transmute', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'tally', 'count',
-           'modify_where',
+           'modify_where', 'mutate',
            'inner_join', 'outer_join', 'left_join', 'right_join',
            'full_join', 'anti_join', 'semi_join']
 
 
-class mutate(DataOperator):
+class define(DataOperator):
     """
     Add column to DataFrame
 
@@ -35,17 +35,17 @@ class mutate(DataOperator):
     --------
     >>> import pandas as pd
     >>> df = pd.DataFrame({'x': [1, 2, 3]})
-    >>> df >> mutate(x_sq='x**2')
+    >>> df >> define(x_sq='x**2')
        x  x_sq
     0  1     1
     1  2     4
     2  3     9
-    >>> df >> mutate(('x*2', 'x*2'), ('x*3', 'x*3'), x_cubed='x**3')
+    >>> df >> define(('x*2', 'x*2'), ('x*3', 'x*3'), x_cubed='x**3')
        x  x*2  x*3  x_cubed
     0  1    2    3        1
     1  2    4    6        8
     2  3    6    9       27
-    >>> df >> mutate('x*4')
+    >>> df >> define('x*4')
        x  x*4
     0  1    4
     1  2    8
@@ -54,7 +54,7 @@ class mutate(DataOperator):
     Note
     ----
     If :obj:`plydata.options.modify_input_data` is ``True``,
-    :class:`mutate` will modify the original dataframe.
+    :class:`define` will modify the original dataframe.
     """
     new_columns = None
     expressions = None  # Expressions to create the new columns
@@ -74,11 +74,11 @@ class mutate(DataOperator):
         self.expressions = itertools.chain(exprs, kwargs.values())
 
 
-class transmute(mutate):
+class transmute(define):
     """
     Create DataFrame with columns
 
-    Similar to :class:`mutate`, but it drops the existing columns.
+    Similar to :class:`define`, but it drops the existing columns.
 
     Parameters
     ----------
@@ -388,7 +388,7 @@ class distinct(DataOperator):
     3  3  4  1
     4  4  5  0
     6  5  6  1
-    >>> df >> mutate(z='x%2') >> distinct(['x', 'z'])
+    >>> df >> define(z='x%2') >> distinct(['x', 'z'])
        x  y  z
     0  1  1  1
     2  2  3  0
@@ -413,7 +413,7 @@ class distinct(DataOperator):
         elif len(args) > 2:
             raise Exception("Too many positional arguments.")
 
-        # Mutate
+        # define
         if kwargs:
             if self.columns is None:
                 self.columns = []
@@ -477,7 +477,7 @@ class arrange(DataOperator):
         self.expressions = [x for x in args]
 
 
-class group_by(mutate):
+class group_by(define):
     """
     Group dataframe by one or more columns/variables
 
@@ -510,7 +510,7 @@ class group_by(mutate):
     5  0  6
     6  4  5
 
-    Like :meth:`mutate`, :meth:`group_by` creates any
+    Like :meth:`define`, :meth:`group_by` creates any
     missing columns.
 
     >>> df >> group_by('y-1', xplus1='x+1')
@@ -1478,6 +1478,7 @@ class semi_join(_join):
 
 
 # Aliases
+mutate = define
 unique = distinct
 summarise = summarize
 full_join = outer_join

@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import numpy.testing as npt
 
-from plydata import (mutate, transmute, sample_n, sample_frac, select,
+from plydata import (define, transmute, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
                      tally, count, modify_where,
@@ -16,17 +16,17 @@ from plydata.options import set_option
 from plydata.grouped_datatypes import GroupedDataFrame
 
 
-def test_mutate():
+def test_define():
     x = np.array([1, 2, 3])
     y = np.array([4, 5, 6])
     df = pd.DataFrame({'x': x})
 
     # No args
-    df2 = df >> mutate()
+    df2 = df >> define()
     assert len(df2.columns) == 1
 
     # All types of args
-    df2 = df >> mutate(
+    df2 = df >> define(
         ('x*2', 'x*2'),
         ('x*3', 'x*3'),
         x_sq='x**2',
@@ -42,12 +42,12 @@ def test_mutate():
     assert all(df2['y'] == y)
     assert all(df2['w'] == 9)
 
-    result = df >> mutate('x*4')
+    result = df >> define('x*4')
     assert len(result.columns) == 2
 
     # Branches
     with pytest.raises(ValueError):
-        df >> mutate(z=[1, 2, 3, 4])
+        df >> define(z=[1, 2, 3, 4])
 
 
 def test_transmute():
@@ -166,7 +166,7 @@ def test_distinct():
     result = df >> distinct(z='x%2')
     assert result.index.equals(I([0, 2]))
 
-    result1 = df >> mutate(z='x%2') >> distinct(['x', 'z'])
+    result1 = df >> define(z='x%2') >> distinct(['x', 'z'])
     result2 = df >> distinct(['x'], z='x%2')
     assert result1.equals(result2)
 
@@ -234,8 +234,8 @@ class TestGroupedDataFrame:
         'y': [1, 2, 3, 4, 5, 6, 5]
     }) >> group_by('x')
 
-    def test_mutate(self):
-        result = self.df.copy() >> mutate(z='2*x')
+    def test_define(self):
+        result = self.df.copy() >> define(z='2*x')
         assert isinstance(result, GroupedDataFrame)
 
     def test_transmute(self):
@@ -271,7 +271,7 @@ class TestGroupedDataFrame:
         assert isinstance(result, GroupedDataFrame)
 
     def test_arrange(self):
-        result = self.df >> mutate(z='np.sin(x)') >> arrange('z')
+        result = self.df >> define(z='np.sin(x)') >> arrange('z')
         assert isinstance(result, GroupedDataFrame)
 
     def test_query(self):
@@ -460,7 +460,7 @@ def test_data_as_first_argument():
     df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
                        'y': [0, 0, 1, 1, 2, 3]})
 
-    assert equals(mutate(df.copy(), 'x*2'), df.copy() >> mutate('x*2'))
+    assert equals(define(df.copy(), 'x*2'), df.copy() >> define('x*2'))
     assert equals(transmute(df, 'x*2'), df >> transmute('x*2'))
     assert len(sample_n(df, 5)) == len(df >> sample_n(5))
     assert len(sample_frac(df, .3)) == len(df >> sample_frac(.3))
@@ -500,7 +500,7 @@ def test_data_mutability():
                        'y': [0, 0, 1, 1, 2, 3]})
 
     # Default to not mutable
-    df >> mutate(z='x**2')
+    df >> define(z='x**2')
     assert 'z' not in df
 
     df >> group_by(z='x**2')
@@ -512,7 +512,7 @@ def test_data_mutability():
     set_option('modify_input_data', True)
 
     df2 = df.copy()
-    df2 >> mutate(z='x**2')
+    df2 >> define(z='x**2')
     assert 'z' in df2
 
     df2 = df.copy()
@@ -528,16 +528,16 @@ def test_data_mutability():
     df2 >> transmute(z='x**2')
     assert 'z' not in df2
 
-    df2 >> sample_n(3) >> mutate(z='x**2')
+    df2 >> sample_n(3) >> define(z='x**2')
     assert 'z' not in df2
 
-    df2 >> sample_frac(.5) >> mutate(z='x**2')
+    df2 >> sample_frac(.5) >> define(z='x**2')
     assert 'z' not in df2
 
-    df2 >> select('x') >> mutate(z='x**2')
+    df2 >> select('x') >> define(z='x**2')
     assert 'z' not in df2
 
-    df2 >> select('x', 'y') >> mutate(z='x**2')
+    df2 >> select('x', 'y') >> define(z='x**2')
     assert 'z' not in df2
 
     # dataframe.rename has copy-on-write (if copy=False) that affects
@@ -551,10 +551,10 @@ def test_data_mutability():
     assert result.loc[0, 'x'] != 3
     assert result is df2
 
-    df2 >> arrange('x') >> mutate(z='x**2')
+    df2 >> arrange('x') >> define(z='x**2')
     assert 'z' not in df2
 
-    df2 >> query('x%2') >> mutate(z='x**2')
+    df2 >> query('x%2') >> define(z='x**2')
     assert 'z' not in df2
 
     df2 >> group_indices(z='x%2')

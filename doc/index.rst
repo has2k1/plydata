@@ -16,13 +16,13 @@ Example
 .. code-block:: python
 
     import pandas as pd
-    from plydata import mutate, query, modify_where
+    from plydata import define, query, modify_where
 
     df = pd.DataFrame({
         'x': [0, 1, 2, 3],
         'y': ['zero', 'one', 'two', 'three']})
 
-    df >> mutate(z='x')
+    df >> define(z='x')
     """
        x      y  z
     0  0   zero  0
@@ -31,7 +31,7 @@ Example
     3  3  three  3
     """
 
-    df >> mutate(z=0) >> modify_where('x > 1', z=1)
+    df >> define(z=0) >> modify_where('x > 1', z=1)
     """
        x      y  z
     0  0   zero  0
