@@ -21,7 +21,7 @@ class define(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -83,7 +83,7 @@ class create(define):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -125,7 +125,7 @@ class sample_n(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     n : int, optional
         Number of items from axis to return.
     replace : boolean, optional
@@ -177,7 +177,7 @@ class sample_frac(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     frac : float, optional
         Fraction of axis items to return. Cannot be used with `n`.
     replace : boolean, optional
@@ -231,7 +231,7 @@ class select(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : tuple, optional
         Names of columns in dataframe. Normally, they are strings.
     startswith : str, optional
@@ -288,7 +288,7 @@ class rename(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : tuple, optional
         A single positional argument that holds
         ``{'new_name': 'old_name'}`` pairs. This is useful if the
@@ -336,7 +336,7 @@ class distinct(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     columns : list-like, optional
         Column names to use when determining uniqueness.
     keep : {'first', 'last', False}, optional
@@ -435,7 +435,7 @@ class arrange(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : tuple
         Columns/expressions to sort by.
 
@@ -484,7 +484,7 @@ class group_by(define):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -560,7 +560,7 @@ class ungroup(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
 
     Examples
     --------
@@ -588,7 +588,7 @@ class group_indices(group_by):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -639,7 +639,7 @@ class summarize(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : strs, tuples, optional
         Expressions or ``(name, expression)`` pairs. This should
         be used when the *name* is not a valid python variable
@@ -754,7 +754,7 @@ class query(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     expr : str
         The query string to evaluate.  You can refer to variables
         in the environment by prefixing them with an '@' character
@@ -809,7 +809,7 @@ class do(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     args : function, optional
         A single function to apply to each group. *The
         function should accept a dataframe and return a
@@ -902,7 +902,7 @@ class head(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     n : int, optional
         Number of rows to return. If the ``data`` is grouped,
         then number of rows per group. Default is 5.
@@ -942,7 +942,7 @@ class tail(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     n : int, optional
         Number of rows to return. If the ``data`` is grouped,
         then number of rows per group. Default is 5.
@@ -986,7 +986,7 @@ class tally(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     weights : str or array-like, optional
         Weight of each row in the group.
     sort : bool, optional
@@ -1060,7 +1060,7 @@ class count(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     *args : str, list
         Columns to group by.
     weights : str or array-like, optional
@@ -1137,7 +1137,7 @@ class modify_where(DataOperator):
     Parameters
     ----------
     data : dataframe, optional
-        Useful when not using the ``rrshift`` operator.
+        Useful when not using the ``>>`` operator.
     where : str
         The query to evaluate and find the rows to be modified.
     args : tuple, optional
