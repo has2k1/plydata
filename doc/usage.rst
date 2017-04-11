@@ -52,4 +52,61 @@ using the :obj:`~plydata.options.modify_input_data` option. However,
 only a few verbs can modify the input data and it is noted in
 the documentation.
 
-.. _zen of python: https://www.python.org/dev/peps/pep-0020/.
+Datastore Support
+-----------------
+
++---------------------------------------+-----------+--------+
+| Verb                                  | Dataframe | Sqlite |
++=======================================+===========+========+
+| :class:`~plydata.verbs.arrange`       | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.count`         | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.create`        | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.define`        | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.distinct`      | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.do`            | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.group_by`      | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.group_indices` | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.head`          | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.modify_where`  | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.query`         | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.rename`        | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.sample_frac`   | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.sample_n`      | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.select`        | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.summarize`     | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.tail`          | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.tally`         | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.ungroup`       | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.anti_join`     | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.inner_join`    | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.left_join`     | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.outer_join`    | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.right_join`    | Yes       | No     |
++---------------------------------------+-----------+--------+
+| :class:`~plydata.verbs.semi_join`     | Yes       | No     |
++---------------------------------------+-----------+--------+
+
+.. _zen of python: https://www.python.org/dev/peps/pep-0020/
