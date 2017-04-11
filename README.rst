@@ -2,13 +2,14 @@
 plydata
 #######
 
-=================    =================
-Latest Release       |release|_
-License              |license|_
-Build Status         |buildstatus|_
-Coverage             |coverage|_
-Documentation        |Documentation|_
-=================    =================
+=========================    =======================
+Latest Release               |release|_
+License                      |license|_
+Build Status                 |buildstatus|_
+Coverage                     |coverage|_
+Documentation (Dev)          |documentation|_
+Documentation (Release)      |documentation_stable|_
+=========================    =======================
 
 plydata is a library that provides a grammar for data manipulation.
 The grammar consists of verbs that can be applied to pandas
@@ -103,7 +104,10 @@ For more, see the documentation_.
 .. _coverage: https://coveralls.io/github/has2k1/plydata?branch=master
 
 .. |documentation| image:: https://readthedocs.org/projects/plydata/badge/?version=latest
-.. _documentation: https://readthedocs.org/projects/plydata/?badge=latest
+.. _documentation: https://plydata.readthedocs.io/en/latest/
+
+.. |documentation_stable| image:: https://readthedocs.org/projects/plydata/badge/?version=stable
+.. _documentation_stable: https://plydata.readthedocs.io/en/stable/
 
 .. _dplyr: http://github.com/hadley/dplyr
 .. _pandas-ply: https://github.com/coursera/pandas-ply
