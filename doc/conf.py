@@ -90,6 +90,12 @@ try:
 except ImportError:
     version = 'unknown'
 
+# readthedocs modifies the repository which messes up the version.
+if on_rtd:
+    import re
+    version = version.rstrip('.dirty')
+    version = re.sub('\+0\..+', '', version)
+    version
 
 # The full version, including alpha/beta/rc tags.
 release = version
