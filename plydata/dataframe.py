@@ -536,7 +536,7 @@ def _n_distinct(arr):
     """
     Number of unique values in array
     """
-    return len(np.unique(arr))
+    return len(pd.unique(arr))
 
 
 _aggregate_functions = {
