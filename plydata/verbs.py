@@ -758,7 +758,10 @@ class query(DataOperator):
     expr : str
         The query string to evaluate.  You can refer to variables
         in the environment by prefixing them with an '@' character
-        like ``@a + b``.
+        like ``@a + b``. Allowed functions are `sin`, `cos`, `exp`,
+        `log`, `expm1`, `log1p`, `sqrt`, `sinh`, `cosh`, `tanh`,
+        `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`,
+        `arctanh`, `abs` and `arctan2`.
     kwargs : dict
         See the documentation for :func:`pandas.eval` for complete
         details on the keyword arguments accepted by
@@ -793,6 +796,7 @@ class query(DataOperator):
     expression = None
 
     def __init__(self, expr, **kwargs):
+        self.set_env_from_verb_init()
         self.expression = expr
         self.kwargs = kwargs
 
@@ -1140,6 +1144,11 @@ class modify_where(DataOperator):
         Useful when not using the ``>>`` operator.
     where : str
         The query to evaluate and find the rows to be modified.
+        You can refer to variables in the environment by prefixing
+        them with an '@' character like ``@a + b``. Allowed functions
+        are `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`,
+        `sinh`, `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`,
+        `arccosh`, `arcsinh`, `arctanh`, `abs` and `arctan2`.
     args : tuple, optional
         A single positional argument that holds
         ``('column', expression)`` pairs. This is useful if
@@ -1176,6 +1185,12 @@ class modify_where(DataOperator):
     ----
     If :obj:`plydata.options.modify_input_data` is ``True``,
     :class:`modify_where` will modify the original dataframe.
+
+    The ``where`` query expression and the expressions for the
+    ``args`` and ``kwargs`` use different evaluation engines.
+    In ``where``, you cannot use any other function calls or
+    refer to variables in the namespace without the ``@``
+    symbol.
     """
 
     def __init__(self, where, *args, **kwargs):

@@ -173,7 +173,10 @@ def summarize(verb):
 
 
 def query(verb):
-    data = verb.data.query(verb.expression, **verb.kwargs)
+    data = verb.data.query(
+        verb.expression,
+        global_dict=verb.env.namespace,
+        **verb.kwargs)
     if data.is_copy:
         data.is_copy = None
     return data
@@ -240,7 +243,7 @@ def modify_where(verb):
         data = verb.data
     else:
         data = verb.data.copy()
-    idx = data.query(verb.where).index
+    idx = data.query(verb.where, global_dict=verb.env.namespace).index
     qdf = data.loc[idx, :]
 
     env = verb.env.with_outer_namespace({'Q': Q})

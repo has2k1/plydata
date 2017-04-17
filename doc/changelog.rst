@@ -11,6 +11,9 @@ v0.2.0
 - Added function :func:`~plydata.utils.Q` for quote non-pythonic column
   names in a dataframe.
 
+- Fixed :class:`~plydata.verbs.query` and :class:`~plydata.verbs.modify_where`
+  query expressions to handle environment variables.
+
 
 v0.1.1
 ------

@@ -334,8 +334,13 @@ class TestAggregateFunctions:
 def test_query():
     df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
                        'y': [0, 0, 1, 1, 2, 3]})
+    c = 3  # noqa: F841
+
     result = df >> query('x % 2 == 0')
     assert all(result.loc[:, 'x'] == [0, 2, 4])
+
+    result = df >> query('x > @c')
+    assert all(result.loc[:, 'x'] == [4, 5])
 
 
 def test_do():
@@ -441,6 +446,7 @@ def test_modify_where():
         'x': [0, 1, 2, 3, 4, 5],
         'y': [0, 1, 2, 3, 4, 5],
         'z': [0, 1, 2, 3, 4, 5]})
+    c = 3  # noqa: F84
 
     result = df >> modify_where('x%2 == 0', y='y*10', z=4)
     assert result.loc[[0, 2, 4], 'y'].tolist() == [0, 20, 40]
@@ -451,6 +457,9 @@ def test_modify_where():
 
     with pytest.raises(KeyError):
         df >> modify_where('x < 2', w=1)
+
+    result = df >> modify_where('x > @c', y=9)
+    assert all(result.loc[:, 'y'] == [0, 1, 2, 3, 9, 9])
 
 
 def test_data_as_first_argument():

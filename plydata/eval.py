@@ -59,6 +59,9 @@ class VarLookupDict(object):
     def __getstate__(*args, **kwargs):
         raise NotImplementedError("Sorry, pickling not supported")
 
+    def copy(self):
+        return self
+
 
 class EvalEnvironment(object):
     """Represents a Python execution environment.
