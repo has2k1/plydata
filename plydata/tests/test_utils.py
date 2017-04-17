@@ -1,5 +1,5 @@
 import pytest
-from plydata.utils import hasattrs, temporary_key, temporary_attr
+from plydata.utils import hasattrs, temporary_key, temporary_attr, Q
 
 
 def test_hasattrs():
@@ -46,3 +46,12 @@ def test_temporary_attr():
             assert obj.two == 2
             raise Exception()
     assert not hasattr(obj, 'two')
+
+
+def test_Q():
+    a = 1  # noqa: F841
+    assert Q("a") == 1
+    assert Q("Q") is Q
+
+    with pytest.raises(NameError):
+        Q('asdf')

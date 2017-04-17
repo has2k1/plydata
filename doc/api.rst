@@ -67,3 +67,15 @@ Options
    modify_input_data
    get_option
    set_option
+
+Useful Functions
+================
+
+.. currentmodule:: plydata.utils
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   Q

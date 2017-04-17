@@ -10,7 +10,7 @@ import pandas as pd
 
 from .grouped_datatypes import GroupedDataFrame
 from .options import get_option
-from .utils import hasattrs, temporary_key
+from .utils import hasattrs, temporary_key, Q
 
 
 def define(verb):
@@ -104,8 +104,12 @@ def distinct(verb):
 def arrange(verb):
     name_gen = ('col_{}'.format(x) for x in range(100))
     df = pd.DataFrame(index=verb.data.index)
+    env = verb.env.with_outer_namespace({'Q': Q})
     for col, expr in zip(name_gen, verb.expressions):
-        df[col] = verb.env.eval(expr, inner_namespace=verb.data)
+        try:
+            df[col] = verb.data[expr]
+        except KeyError:
+            df[col] = env.eval(expr, inner_namespace=verb.data)
 
     if len(df.columns):
         sorted_index = df.sort_values(by=list(df.columns)).index
@@ -149,10 +153,12 @@ def group_indices(verb):
 
 
 def summarize(verb):
-    env = verb.env
     cols = verb.new_columns
     exprs = verb.expressions
     data = verb.data
+
+    env = verb.env.with_outer_namespace(_aggregate_functions)
+    env = env.with_outer_namespace({'Q': Q})
 
     try:
         grouper = data.groupby(data.plydata_groups)
@@ -237,12 +243,13 @@ def modify_where(verb):
     idx = data.query(verb.where).index
     qdf = data.loc[idx, :]
 
+    env = verb.env.with_outer_namespace({'Q': Q})
     for col, expr in zip(verb.columns, verb.expressions):
         # Do not create new columns, define does that
         if col not in data:
             raise KeyError("Column '{}' not in dataframe".format(col))
         if isinstance(expr, str):
-            data.loc[idx, col] = verb.env.eval(expr, inner_namespace=qdf)
+            data.loc[idx, col] = env.eval(expr, inner_namespace=qdf)
         else:
             data.loc[idx, col] = expr
 
@@ -320,9 +327,10 @@ def _evaluate_expressions(verb):
     Evaluate Expressions and return the columns in a new dataframe
     """
     data = pd.DataFrame(index=verb.data.index)
+    env = verb.env.with_outer_namespace({'Q': Q})
     for col, expr in zip(verb.new_columns, verb.expressions):
         if isinstance(expr, str):
-            data[col] = verb.env.eval(expr, inner_namespace=verb.data)
+            data[col] = env.eval(expr, inner_namespace=verb.data)
         else:
             data[col] = expr
 
@@ -386,8 +394,6 @@ def _eval_summarize_expressions(expressions, columns, env, gdf):
     The caller does the *combine*, for one or more of these
     results.
     """
-    env = env.with_outer_namespace(_aggregate_functions)
-
     # Extra aggregate function that the user references with
     # the name `{n}`. It returns the length of the dataframe.
     def _plydata_n():

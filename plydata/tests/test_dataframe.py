@@ -598,3 +598,30 @@ def test_joins():
 
     result = inner_join(df2, df1 >> group_by('col1'), on='col1')
     assert not isinstance(result, GroupedDataFrame)
+
+
+def test_Q():
+    df = pd.DataFrame({'var.name': [1, 2, 3],
+                       'class': [1, 2, 3]})
+
+    with pytest.raises(NameError):
+        df >> define(y='var.name')
+
+    with pytest.raises(NameError):
+        df >> create(y='var.name')
+
+    with pytest.raises(SyntaxError):
+        df >> define(y='class')
+
+    with pytest.raises(SyntaxError):
+        df >> create(y='class')
+
+    with pytest.raises(SyntaxError):
+        df >> arrange('class+1')
+
+    df >> define(y='Q("var.name")')
+    df >> create(y='Q("var.name")')
+    df >> define(y='Q("class")')
+    df >> create(y='Q("class")')
+    df >> arrange('class')
+    df >> arrange('Q("class")+1')
