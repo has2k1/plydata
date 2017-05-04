@@ -16,6 +16,16 @@ v0.2.0
 
 - Added :class:`~plydata.options.options` context manager.
 
+- Fixed bug where some verbs were not reusable. e.g.
+
+  .. code-block:: python
+
+     data = pd.DataFrame({'x': range(5)})
+     v = define(y = 'x*2')
+     df >> v  # first use
+     df >> v  # Reuse of v
+
+
 v0.1.1
 ------
 *(2017-04-11)*

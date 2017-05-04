@@ -70,8 +70,8 @@ class define(DataOperator):
                 col, expr = arg
             cols.append(col)
             exprs.append(expr)
-        self.new_columns = itertools.chain(cols, kwargs.keys())
-        self.expressions = itertools.chain(exprs, kwargs.values())
+        self.new_columns = list(itertools.chain(cols, kwargs.keys()))
+        self.expressions = list(itertools.chain(exprs, kwargs.values()))
 
 
 class create(define):
@@ -1207,8 +1207,8 @@ class modify_where(DataOperator):
             cols.append(col)
             exprs.append(expr)
 
-        self.columns = itertools.chain(cols, kwargs.keys())
-        self.expressions = itertools.chain(exprs, kwargs.values())
+        self.columns = list(itertools.chain(cols, kwargs.keys()))
+        self.expressions = list(itertools.chain(exprs, kwargs.values()))
 
 
 # Multiple Table Verbs

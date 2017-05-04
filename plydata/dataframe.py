@@ -4,6 +4,7 @@ Verb implementations for a :class:`pandas.DataFrame`
 
 import re
 import warnings
+from copy import copy
 
 import numpy as np
 import pandas as pd
@@ -214,6 +215,7 @@ def tail(verb):
 
 
 def tally(verb):
+    verb = copy(verb)
     # Prepare for summarize
     verb.new_columns = ['n']
     if verb.weights:

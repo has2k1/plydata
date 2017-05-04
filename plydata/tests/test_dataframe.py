@@ -634,3 +634,24 @@ def test_Q():
     df >> create(y='Q("class")')
     df >> arrange('class')
     df >> arrange('Q("class")+1')
+
+
+class TestVerbReuse:
+    df = pd.DataFrame({'x': [0, 1, 2, 3, 4]})
+
+    def _test(self, v):
+        df1 = self.df >> v
+        df2 = self.df >> v
+        assert df1.equals(df2)
+
+    def define(self):
+        v = define(y='x*2')
+        self._test(v)
+
+    def modify_where(self):
+        v = modify_where('x%2 == 0', x='x*10')
+        self._test(v)
+
+    def tally(self):
+        v = tally()
+        self._test(v)
