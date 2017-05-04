@@ -12,7 +12,7 @@ toplevel=$(git rev-parse --show-toplevel)
 
 # Compile theme
 cd $toplevel/../sphinx-bootstrap-theme-customizer/
-build "$1" $2
+build "$@"
 
 # Copy theme for sphinx to use
 rm -rf $toplevel/doc/theme

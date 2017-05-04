@@ -75,8 +75,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'plydata'
-copyright = u'2017, Hassan Kibirige'
+project = 'plydata'
+copyright = '2017, Hassan Kibirige'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -113,7 +113,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -263,8 +263,8 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   (master_doc, 'plydata.tex',
-   u'PlyData Documentation',
-   u'Hassan Kibirige', 'manual'),
+   'PlyData Documentation',
+   'Hassan Kibirige', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -294,8 +294,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'plydata',
-     u'plydata Documentation',
-     [u'Hassan Kibirige'], 1)
+     'plydata Documentation',
+     ['Hassan Kibirige'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -309,8 +309,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   (master_doc, 'plydata',
-   u'plydata Documentation',
-   u'Hassan Kibirige',
+   'plydata Documentation',
+   'Hassan Kibirige',
    'plydata',
    'One line description of project.',
    'Miscellaneous'),
