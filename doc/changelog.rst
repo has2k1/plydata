@@ -21,10 +21,12 @@ v0.2.0
   .. code-block:: python
 
      data = pd.DataFrame({'x': range(5)})
-     v = define(y = 'x*2')
+     v = define(y='x*2')
      df >> v  # first use
      df >> v  # Reuse of v
 
+- Added :class:`~plydata.verbs.define_where` verb, a combination of
+  :class:`~plydata.verbs.define` and :class:`~plydata.verbs.modify_where`.
 
 v0.1.1
 ------

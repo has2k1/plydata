@@ -18,6 +18,7 @@ Single table verbs
    count
    create
    define
+   define_where
    distinct
    do
    group_by

@@ -9,7 +9,7 @@ __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'tally', 'count',
-           'modify_where', 'mutate', 'transmute',
+           'modify_where', 'define_where', 'mutate', 'transmute',
            'inner_join', 'outer_join', 'left_join', 'right_join',
            'full_join', 'anti_join', 'semi_join']
 
@@ -1210,6 +1210,82 @@ class modify_where(DataOperator):
         self.columns = list(itertools.chain(cols, kwargs.keys()))
         self.expressions = list(itertools.chain(exprs, kwargs.values()))
 
+
+class define_where(DataOperator):
+    """
+    Add column to DataFrame where the value is based on a condition
+
+    This verb is a combination of :class:`define` and
+    :class:`modify_where`.
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    where : str
+        The query to evaluate and find the rows to be modified.
+        You can refer to variables in the environment by prefixing
+        them with an '@' character like ``@a + b``. Allowed functions
+        are `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`,
+        `sinh`, `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`,
+        `arccosh`, `arcsinh`, `arctanh`, `abs` and `arctan2`.
+    args : tuple, optional
+        A single positional argument that holds
+        ``('column', 2-expressions)`` pairs. This is useful if
+        the *column* is not a valid python variable name.
+    kwargs : dict, optional
+        ``{column: 2-expressions}`` pairs. If all the columns to
+        be adjusted are valid python variable names, then they
+        can be specified as keyword arguments.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5]})
+    >>> df >> define_where('x%2 == 0', parity=("'even'", "'odd'"))
+       x parity
+    0  0   even
+    1  1    odd
+    2  2   even
+    3  3    odd
+    4  4   even
+    5  5    odd
+
+    This is equivalent to
+
+    >>> (df
+    ...  >> define(parity="'odd'")
+    ...  >> modify_where('x%2 == 0', parity="'even'"))
+       x parity
+    0  0   even
+    1  1    odd
+    2  2   even
+    3  3    odd
+    4  4   even
+    5  5    odd
+
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`define_where` will modify the original dataframe.
+    """
+    new_columns = None
+    expressions = None  # Expressions to create the new columns
+
+    def __init__(self, where, *args, **kwargs):
+        self.set_env_from_verb_init()
+        self.where = where
+        cols = []
+        exprs = []
+        for arg in args:
+            if isinstance(arg, str):
+                col = expr = arg
+            else:
+                col, expr = arg
+            cols.append(col)
+            exprs.append(expr)
+        self.new_columns = list(itertools.chain(cols, kwargs.keys()))
+        self.expressions = list(itertools.chain(exprs, kwargs.values()))
 
 # Multiple Table Verbs
 

@@ -8,7 +8,7 @@ import numpy.testing as npt
 from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
-                     tally, count, modify_where,
+                     tally, count, modify_where, define_where,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
 
@@ -462,6 +462,13 @@ def test_modify_where():
     assert all(result.loc[:, 'y'] == [0, 1, 2, 3, 9, 9])
 
 
+def test_define_where():
+    n = 6
+    df = pd.DataFrame({'x': range(n)})
+    result = df >> define_where('x%2 == 0', parity=("'even'", "'odd'"))
+    assert all(result['parity'] == ['even', 'odd']*(n//2))
+
+
 def test_data_as_first_argument():
     def equals(df1, df2):
         return df1.equals(df2)
@@ -518,6 +525,9 @@ def test_data_mutability():
     df >> modify_where('x<3', y=9)
     assert df.loc[0, 'y'] != 9
 
+    df >> define_where('x<3', z=(10, 100))
+    assert 'z' not in df
+
     set_option('modify_input_data', True)
 
     df2 = df.copy()
@@ -531,6 +541,10 @@ def test_data_mutability():
     df2 = df.copy()
     df2 >> modify_where('x<3', y=9)
     assert df2.loc[0, 'y'] == 9
+
+    df2 = df.copy()
+    df2 >> define_where('x<3', z=(10, 100))
+    assert 'z' in df2
 
     # Not mutable
     df2 = df.copy()
@@ -646,6 +660,10 @@ class TestVerbReuse:
 
     def define(self):
         v = define(y='x*2')
+        self._test(v)
+
+    def define_where(self):
+        v = define_where('x%2 == 0', parity=("'even'", "'odd'"))
         self._test(v)
 
     def modify_where(self):

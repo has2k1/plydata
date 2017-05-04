@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from .grouped_datatypes import GroupedDataFrame
-from .options import get_option
+from .options import get_option, options
 from .utils import hasattrs, temporary_key, Q
 
 
@@ -257,6 +257,25 @@ def modify_where(verb):
             data.loc[idx, col] = env.eval(expr, inner_namespace=qdf)
         else:
             data.loc[idx, col] = expr
+
+    return data
+
+
+def define_where(verb):
+    verb = copy(verb)
+    if not get_option('modify_input_data'):
+        verb.data = verb.data.copy()
+
+    alt_expressions = [x[0] for x in verb.expressions]
+    default_expressions = [x[1] for x in verb.expressions]
+
+    with options(modify_input_data=True):
+        verb.expressions = default_expressions
+        verb.data = define(verb)
+
+        verb.columns = verb.new_columns
+        verb.expressions = alt_expressions
+        data = modify_where(verb)
 
     return data
 
