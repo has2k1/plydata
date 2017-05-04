@@ -67,6 +67,7 @@ Options
    modify_input_data
    get_option
    set_option
+   options
 
 Useful Functions
 ================

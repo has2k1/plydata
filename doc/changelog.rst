@@ -14,6 +14,7 @@ v0.2.0
 - Fixed :class:`~plydata.verbs.query` and :class:`~plydata.verbs.modify_where`
   query expressions to handle environment variables.
 
+- Added :class:`~plydata.options.options` context manager.
 
 v0.1.1
 ------
