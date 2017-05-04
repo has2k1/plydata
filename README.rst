@@ -43,6 +43,7 @@ Example
 .. code-block:: python
 
     import pandas as pd
+    import numpy as np
     from plydata import define, query, modify_where
 
     df = pd.DataFrame({
@@ -74,6 +75,17 @@ Example
     2  2    two
     3  3  three
     """
+
+plydata piping works with `plotnine`_.
+
+.. code-block:: python
+
+    from plotnine import ggplot, aes, geom_line
+
+    df = pd.DataFrame({'x': np.linspace(0, 2*np.pi, 100)})
+    df >> define(y='np.sin(x)') >> ggplot(aes('x', 'y')) + geom_line()
+
+.. figure:: ./doc/images/readme-image.png
 
 What about dplython or pandas-ply?
 ----------------------------------
@@ -112,4 +124,4 @@ For more, see the documentation_.
 .. _dplyr: http://github.com/hadley/dplyr
 .. _pandas-ply: https://github.com/coursera/pandas-ply
 .. _dplython: https://github.com/dodger487/dplython
-
+.. _plotnine: http://plotnine.readthedocs.io/en/stable/

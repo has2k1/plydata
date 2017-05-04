@@ -21,7 +21,7 @@ help:
 	@echo "  theme    to create a custom sphinx boostrap theme"
 	@echo "  readme_images to generate images used in README.rst"
 
-.PHONY: help Makefile theme
+.PHONY: help Makefile theme readme_images
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
@@ -33,3 +33,7 @@ theme:
 	   --brand-primary '$(brand-primary)' \
 	   --headings-font-weight $(headings-font-weight) \
 	   --font-family-sans-serif '$(font-family-sans-serif)'
+
+readme_images:
+	cd images; \
+	python readme_images.py
