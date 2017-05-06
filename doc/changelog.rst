@@ -1,9 +1,14 @@
 Changelog
 =========
 
-v0.2.0
+v0.2.1
 ------
 *(unreleased)*
+
+
+v0.2.0
+------
+*(2017-05-06)*
 
 - :class:`~plydata.verbs.distinct` now uses `pandas.unique` instead of
   :func:`numpy.unique`.
