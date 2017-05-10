@@ -299,6 +299,13 @@ def test_summarize():
     assert 'y' in result
     assert result.loc[0, 'constant'] == 1
 
+    # Category stays category
+    df1 = df.copy()
+    df1['z'] = pd.Categorical(df1['z'])
+    result = df1 >> group_by('y', 'z') >> summarize(mean_x='np.mean(x)')
+    assert result['y'].dtype == np.int
+    assert result['z'].dtype == 'category'
+
 
 class TestAggregateFunctions:
     df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
@@ -346,7 +353,9 @@ def test_query():
 def test_do():
     df = pd.DataFrame({'x': [1, 2, 2, 3],
                        'y': [2, 3, 4, 3],
-                       'z': list('aabb')})
+                       'z': list('aabb'),
+                       'w': pd.Categorical(list('aabb')),
+                       })
 
     def least_squares(gdf):
         X = np.vstack([gdf.x, np.ones(len(gdf))]).T
@@ -368,8 +377,17 @@ def test_do():
         slope=lambda gdf: slope(gdf.x, gdf.y),
         intercept=lambda gdf: intercept(gdf.x, gdf.y))
 
+    df3 = df >> group_by('w') >> do(least_squares)
+    df4 = df >> group_by('w') >> do(
+        slope=lambda gdf: slope(gdf.x, gdf.y),
+        intercept=lambda gdf: intercept(gdf.x, gdf.y))
+
     assert df1.plydata_groups == ['z']
     assert df2.plydata_groups == ['z']
+    assert df1['z'].dtype == object
+    assert df2['z'].dtype == object
+    assert df3['w'].dtype == 'category'
+    assert df4['w'].dtype == 'category'
 
     npt.assert_array_equal(df1['z'],  df2['z'])
     npt.assert_array_almost_equal(df1['intercept'],  df2['intercept'])

@@ -5,6 +5,10 @@ v0.2.1
 ------
 *(unreleased)*
 
+- Fixed issue with :class:`~plydata.verbs.do` and
+  :class:`~plydata.verbs.summarize` where the categorical group columns
+  are note categorical in the result.
+
 
 v0.2.0
 ------

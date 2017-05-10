@@ -5,6 +5,7 @@ Verb implementations for a :class:`pandas.DataFrame`
 import re
 import warnings
 from copy import copy
+from contextlib import suppress
 
 import numpy as np
 import pandas as pd
@@ -346,6 +347,35 @@ def _get_base_dataframe(df):
     return base_df
 
 
+def _add_group_columns(data, gdf):
+    """
+    Add group columns to data with a value from the grouped dataframe
+
+    It is assumed that the grouped dataframe contains a single group
+
+    >>> data = pd.DataFrame({
+    ...     'x': [5, 6, 7]})
+    >>> gdf = GroupedDataFrame({
+    ...     'g': list('aaa'),
+    ...     'x': range(3)}, groups=['g'])
+    >>> _add_group_columns(data, gdf)
+       g  x
+    0  a  5
+    1  a  6
+    2  a  7
+    """
+    if isinstance(gdf, GroupedDataFrame):
+        for i, col in enumerate(gdf.plydata_groups):
+            if col not in data:
+                # Indexing with a list maintains the dtype
+                # of the group
+                value = gdf[col].iloc[[0]*len(data)]
+                with suppress(AttributeError):
+                    value.reset_index(inplace=True, drop=True)
+                data.insert(i, col, value)
+    return data
+
+
 def _evaluate_expressions(verb):
     """
     Evaluate Expressions and return the columns in a new dataframe
@@ -445,12 +475,7 @@ def _eval_summarize_expressions(expressions, columns, env, gdf):
                 n = 1
             data = pd.DataFrame({col: value}, index=range(n))
 
-    # Add the grouped-on columns
-    if isinstance(gdf, GroupedDataFrame):
-        for i, col in enumerate(gdf.plydata_groups):
-            data.insert(i, col, gdf[col].iloc[0])
-
-    return data
+    return _add_group_columns(data, gdf)
 
 
 def _eval_do_single_function(function, gdf):
@@ -462,14 +487,7 @@ def _eval_do_single_function(function, gdf):
     """
     gdf.is_copy = None
     data = function(gdf)
-
-    # Add the grouped-on columns
-    if isinstance(gdf, GroupedDataFrame):
-        for i, col in enumerate(gdf.plydata_groups):
-            if col not in data:
-                data.insert(i, col, gdf[col].iloc[0])
-
-    return data
+    return _add_group_columns(data, gdf)
 
 
 def _eval_do_functions(functions, columns, gdf):
@@ -492,13 +510,7 @@ def _eval_do_functions(functions, columns, gdf):
                 n = 1
             data = pd.DataFrame({col: value}, index=range(n))
 
-    # Add the grouped-on columns
-    if isinstance(gdf, GroupedDataFrame):
-        for i, col in enumerate(gdf.plydata_groups):
-            if col not in data:
-                data.insert(i, col, gdf[col].iloc[0])
-
-    return data
+    return _add_group_columns(data, gdf)
 
 
 def _do_single_function(verb):
