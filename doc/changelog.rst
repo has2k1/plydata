@@ -9,6 +9,9 @@ v0.2.1
   :class:`~plydata.verbs.summarize` where the categorical group columns
   are note categorical in the result.
 
+- Fixed issue with internal modules being imported with
+  :py:`from plydata import *`.
+
 
 v0.2.0
 ------
