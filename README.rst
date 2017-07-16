@@ -44,7 +44,7 @@ Example
 
     import pandas as pd
     import numpy as np
-    from plydata import define, query, modify_where
+    from plydata import define, query, modify_where, define_where
 
     df = pd.DataFrame({
         'x': [0, 1, 2, 3],
@@ -82,8 +82,13 @@ plydata piping works with `plotnine`_.
 
     from plotnine import ggplot, aes, geom_line
 
-    df = pd.DataFrame({'x': np.linspace(0, 2*np.pi, 100)})
-    df >> define(y='np.sin(x)') >> ggplot(aes('x', 'y')) + geom_line()
+    df = pd.DataFrame({'x': np.linspace(0, 2*np.pi, 500)})
+    (df
+     >> define(y='np.sin(x)')
+     >> define_where('y>=0', sign=('"positive"', '"negative"'))
+     >> (ggplot(aes('x', 'y'))
+         + geom_line(aes(color='sign'), size=1.5))
+     )
 
 .. figure:: ./doc/images/readme-image.png
 
