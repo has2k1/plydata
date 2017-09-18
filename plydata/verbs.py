@@ -10,6 +10,7 @@ __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'tally', 'count',
            'modify_where', 'define_where', 'mutate', 'transmute',
+           'dropna', 'fillna',
            'inner_join', 'outer_join', 'left_join', 'right_join',
            'full_join', 'anti_join', 'semi_join']
 
@@ -791,7 +792,8 @@ class query(DataOperator):
     2  2  1
     4  4  2
 
-    For more information see :meth:`pandas.DataFrame.query`.
+    For more information see :meth:`pandas.DataFrame.query`. To query
+    rows and columns with ``NaN`` values, use :class:`dropna`
     """
     expression = None
 
@@ -1191,6 +1193,8 @@ class modify_where(DataOperator):
     In ``where``, you cannot use any other function calls or
     refer to variables in the namespace without the ``@``
     symbol.
+
+    To modify cells with ``NaN`` values use :class:`fillna`.
     """
 
     def __init__(self, where, *args, **kwargs):
@@ -1286,6 +1290,239 @@ class define_where(DataOperator):
             exprs.append(expr)
         self.new_columns = list(itertools.chain(cols, kwargs.keys()))
         self.expressions = list(itertools.chain(exprs, kwargs.values()))
+
+
+class dropna(DataOperator):
+    """
+    Remove rows or columns with missing values
+
+    This is a wrapper around :meth:`pandas.DataFrame.dropna`. It
+    is useful because you cannot :class:`query` ``NaN`` values.
+
+    Parameters
+    ----------
+    axis : {0 or 'index', 1 or 'columns'}, or tuple/list thereof
+        Pass tuple or list to drop on multiple axes
+    how : {'any', 'all'}
+        * any : if any NA values are present, drop that label
+        * all : if all values are NA, drop that label
+    thresh : int, default None
+        int value : require that many non-NA values
+    subset : array-like
+        Labels along other axis to consider, e.g. if you are
+        dropping rows these would be a list of columns to include
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...     'w': [1, 2, np.nan, 4, 5],
+    ...     'x': [np.nan, 2, np.nan, 4, 5],
+    ...     'y': [np.nan] * 4 + [5],
+    ...     'z': [np.nan] * 5
+    ... })
+    >>> df
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  NaN  NaN  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Drop rows with any ``NaN`` values
+
+    >>> df >> dropna()
+    Empty DataFrame
+    Columns: [w, x, y, z]
+    Index: []
+
+    Drop rows with all ``NaN`` values
+
+    >>> df >> dropna(how='all')
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Drop rows with ``NaN`` values in the *x* column.
+
+    >>> df >> dropna(subset=['x'])
+         w    x    y   z
+    1  2.0  2.0  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Drop and keep rows atleast 3 ``non-NaN`` values
+
+    >>> df >> dropna(thresh=3)
+         w    x    y   z
+    4  5.0  5.0  5.0 NaN
+
+    Drop columns with all ``NaN`` values
+
+    >>> df >> dropna(axis=1, how='all')
+         w    x    y
+    0  1.0  NaN  NaN
+    1  2.0  2.0  NaN
+    2  NaN  NaN  NaN
+    3  4.0  4.0  NaN
+    4  5.0  5.0  5.0
+
+    Drop columns with any ``NaN`` values in row 3.
+
+    >>> df >> dropna(axis=1, subset=[3])
+         w    x
+    0  1.0  NaN
+    1  2.0  2.0
+    2  NaN  NaN
+    3  4.0  4.0
+    4  5.0  5.0
+    """
+
+    def __init__(self, axis=0, how='any', thresh=None, subset=None):
+        self.axis = axis
+        self.how = how
+        self.thresh = thresh
+        self.subset = subset
+
+
+class fillna(DataOperator):
+    """
+    Fill NA/NaN values using the specified method
+
+    This is a wrapper around :meth:`pandas.DataFrame.fillna`. It
+    is useful because you cannot :class:`modify_where` ``NaN``
+    values.
+
+    Parameters
+    ----------
+    value : scalar, dict, Series, or DataFrame
+        Value to use to fill holes (e.g. 0), alternately a
+        dict/Series/DataFrame of values specifying which value to
+        use for each index (for a Series) or column (for a DataFrame).
+        (values not in the dict/Series/DataFrame will not be filled).
+        This value cannot be a list.
+    method : {'backfill', 'bfill', 'pad', 'ffill', None}, default None
+        Method to use for filling holes in reindexed Series
+        pad / ffill: propagate last valid observation forward to next
+        valid backfill / bfill: use NEXT valid observation to fill gap
+    axis : {0 or 'index', 1 or 'columns'}
+    inplace : boolean, default False
+        If True, fill in place. Note: this will modify any
+        other views on this object, (e.g. a no-copy slice for a column
+        in a DataFrame).
+    limit : int, default None
+        If method is specified, this is the maximum number of
+        consecutive NaN values to forward/backward fill. In other
+        words, if there is a gap with more than this number of
+        consecutive NaNs, it will only be partially filled. If method
+        is not specified, this is the maximum number of entries along
+        the entire axis where NaNs will be filled. Must be greater
+        than 0 if not None.
+    downcast : dict, default is None
+        a dict of item->dtype of what to downcast if possible, or the
+        string 'infer' which will try to downcast to an appropriate
+        equal type (e.g. float64 to int64 if possible)
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...     'w': [1, 2, np.nan, 4, 5],
+    ...     'x': [np.nan, 2, np.nan, 4, 5],
+    ...     'y': [np.nan] * 4 + [5],
+    ...     'z': [np.nan] * 5
+    ... })
+    >>> df
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  NaN  NaN  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace all ``NaN`` values with -1.
+
+    >>> df >> fillna(-1)
+         w    x    y    z
+    0  1.0 -1.0 -1.0 -1.0
+    1  2.0  2.0 -1.0 -1.0
+    2 -1.0 -1.0 -1.0 -1.0
+    3  4.0  4.0 -1.0 -1.0
+    4  5.0  5.0  5.0 -1.0
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value *above
+    in column*
+
+    >>> df >> fillna(method='ffill')
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  2.0  2.0  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value *below
+    in column*
+
+    >>> df >> fillna(method='bfill')
+         w    x    y   z
+    0  1.0  2.0  5.0 NaN
+    1  2.0  2.0  5.0 NaN
+    2  4.0  4.0  5.0 NaN
+    3  4.0  4.0  5.0 NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace atmost 2 ``NaN`` values with the first ``non-NaN`` value
+    *below in column*
+
+    >>> df >> fillna(method='bfill', limit=2)
+         w    x    y   z
+    0  1.0  2.0  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  4.0  4.0  5.0 NaN
+    3  4.0  4.0  5.0 NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value to the
+    *left in the row*
+
+    >>> df >> fillna(method='ffill', axis=1)
+         w    x    y    z
+    0  1.0  1.0  1.0  1.0
+    1  2.0  2.0  2.0  2.0
+    2  NaN  NaN  NaN  NaN
+    3  4.0  4.0  4.0  4.0
+    4  5.0  5.0  5.0  5.0
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value to the
+    *right in the row*
+
+    >>> df >> fillna(method='bfill', axis=1)
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  NaN  NaN  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`modify_where` will modify the original dataframe.
+    """
+
+    def __init__(self, value=None, method=None, axis=None, limit=None,
+                 downcast=None):
+        self.value = value
+        self.method = method
+        self.axis = axis
+        self.limit = limit
+        self.downcast = downcast
+
 
 # Multiple Table Verbs
 

@@ -281,6 +281,29 @@ def define_where(verb):
     return data
 
 
+def dropna(verb):
+    result = verb.data.dropna(
+        axis=verb.axis,
+        how=verb.how,
+        thresh=verb.thresh,
+        subset=verb.subset
+    )
+    return result
+
+
+def fillna(verb):
+    inplace = get_option('modify_input_data')
+    result = verb.data.fillna(
+        value=verb.value,
+        method=verb.method,
+        axis=verb.axis,
+        limit=verb.limit,
+        downcast=verb.downcast,
+        inplace=inplace
+    )
+    return result if not inplace else verb.data
+
+
 def inner_join(verb):
     verb.kwargs['how'] = 'inner'
     return _join(verb)

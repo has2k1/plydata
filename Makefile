@@ -1,4 +1,4 @@
-.PHONY: clean-pyc clean-build docs clean
+.PHONY: clean-pyc clean-build doc clean
 BROWSER := python -mwebbrowser
 
 help:

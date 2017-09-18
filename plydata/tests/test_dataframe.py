@@ -8,7 +8,7 @@ import numpy.testing as npt
 from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
-                     tally, count, modify_where, define_where,
+                     tally, count, modify_where, define_where, fillna,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
 
@@ -487,6 +487,16 @@ def test_define_where():
     assert all(result['parity'] == ['even', 'odd']*(n//2))
 
 
+def test_dropna():
+    # wraps around pandas and doctests are sufficient
+    pass
+
+
+def test_fillna():
+    # wraps around pandas and doctests are adequate
+    pass
+
+
 def test_data_as_first_argument():
     def equals(df1, df2):
         return df1.equals(df2)
@@ -546,6 +556,11 @@ def test_data_mutability():
     df >> define_where('x<3', z=(10, 100))
     assert 'z' not in df
 
+    df2 = df.copy()
+    df2['x'] = np.nan
+    df2 >> fillna(-1)
+    assert all(df2['x'].isnull())
+
     set_option('modify_input_data', True)
 
     df2 = df.copy()
@@ -563,6 +578,11 @@ def test_data_mutability():
     df2 = df.copy()
     df2 >> define_where('x<3', z=(10, 100))
     assert 'z' in df2
+
+    df2 = df.copy()
+    df2['x'] = np.nan
+    df2 >> fillna(-1)
+    assert all(df2['x'] == -1)
 
     # Not mutable
     df2 = df.copy()
@@ -669,9 +689,15 @@ def test_Q():
 
 
 class TestVerbReuse:
+    """
+    Test that you can use the same verb for multiple operations
+    """
     df = pd.DataFrame({'x': [0, 1, 2, 3, 4]})
 
     def _test(self, v):
+        """
+        Testing method, other methods create verbs
+        """
         df1 = self.df >> v
         df2 = self.df >> v
         assert df1.equals(df2)

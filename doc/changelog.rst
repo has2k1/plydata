@@ -12,6 +12,9 @@ v0.2.1
 - Fixed issue with internal modules being imported with
   :py:`from plydata import *`.
 
+- Added :class:`~plydata.verbs.dropna` and :class:`~plydata.verbs.fillna`
+  verbs. They both wrap around pandas methods of the same name. Now you
+  man maintain the pipelining when dealing with most ``NaN`` values.
 
 v0.2.0
 ------

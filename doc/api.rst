@@ -21,6 +21,8 @@ Single table verbs
    define_where
    distinct
    do
+   dropna
+   fillna
    group_by
    group_indices
    head
