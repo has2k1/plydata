@@ -3,11 +3,11 @@ Changelog
 
 v0.2.1
 ------
-*(unreleased)*
+*(2017-09-20)*
 
 - Fixed issue with :class:`~plydata.verbs.do` and
   :class:`~plydata.verbs.summarize` where the categorical group columns
-  are note categorical in the result.
+  are not categorical in the result.
 
 - Fixed issue with internal modules being imported with
   :py:`from plydata import *`.
