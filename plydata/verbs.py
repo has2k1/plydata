@@ -10,7 +10,7 @@ __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'tally', 'count',
            'modify_where', 'define_where', 'mutate', 'transmute',
-           'dropna', 'fillna',
+           'dropna', 'fillna', 'call',
            'inner_join', 'outer_join', 'left_join', 'right_join',
            'full_join', 'anti_join', 'semi_join']
 
@@ -1523,6 +1523,91 @@ class fillna(DataOperator):
         self.limit = limit
         self.downcast = downcast
 
+
+class call(DataOperator):
+    """
+    Call external function or dataframe method
+
+    This is a special verb; it turns regular functions and
+    dataframe instance methods into verb instances that you
+    can pipe to. It reduces the times one needs to break out
+    of the piping workflow.
+
+    Parameters
+    ----------
+    func : callable or str
+        A function that accepts a dataframe as the first argument.
+        Dataframe methods are specified using strings and
+        preferrably they should start with a period,
+        e.g ``'.reset_index'``
+    *args : tuple
+        Second, third, fourth, ... arguments to ``func``
+    **kwargs : dict
+        Keyword arguments to ``func``
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...     'A': {0: 'a', 1: 'b', 2: 'c'},
+    ...     'B': {0: 1, 1: 3, 2: 5},
+    ...     'C': {0: 2, 1: 4, 2: np.nan}
+    ... })
+    >>> df
+       A  B    C
+    0  a  1  2.0
+    1  b  3  4.0
+    2  c  5  NaN
+
+    Using an external function
+
+    >>> df >> call(pd.melt)
+      variable value
+    0        A     a
+    1        A     b
+    2        A     c
+    3        B     1
+    4        B     3
+    5        B     5
+    6        C     2
+    7        C     4
+    8        C   NaN
+
+    An external function with arguments
+
+    >>> df >> call(pd.melt, id_vars=['A'], value_vars=['B'])
+       A variable  value
+    0  a        B      1
+    1  b        B      3
+    2  c        B      5
+
+    A method on the dataframe
+
+    >>> df >> call('.dropna', axis=1)
+       A  B
+    0  a  1
+    1  b  3
+    2  c  5
+
+    >>> (df
+    ...  >> call(pd.melt)
+    ...  >> query('variable != "B"')
+    ...  >> call('.reset_index', drop=True)
+    ...  )
+      variable value
+    0        A     a
+    1        A     b
+    2        A     c
+    3        C     2
+    4        C     4
+    5        C   NaN
+    """
+
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
 
 # Multiple Table Verbs
 
