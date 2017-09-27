@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v0.3.0
+------
+*not-yet-released*
+
+New Features
+************
+
+- Added special verb :class:`~plydata.verbs.call`, it allows one to use
+  external functions that accept a dataframe as the first argument.
+
 v0.2.1
 ------
 *(2017-09-20)*

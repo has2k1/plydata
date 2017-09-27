@@ -304,6 +304,14 @@ def fillna(verb):
     return result if not inplace else verb.data
 
 
+def call(verb):
+    if isinstance(verb.func, str):
+        func = getattr(verb.data, verb.func.lstrip('.'))
+        return func(*verb.args, **verb.kwargs)
+    else:
+        return verb.func(verb.data, *verb.args, **verb.kwargs)
+
+
 def inner_join(verb):
     verb.kwargs['how'] = 'inner'
     return _join(verb)

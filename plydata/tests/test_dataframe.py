@@ -9,6 +9,7 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
                      tally, count, modify_where, define_where, fillna,
+                     call,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
 
@@ -495,6 +496,31 @@ def test_dropna():
 def test_fillna():
     # wraps around pandas and doctests are adequate
     pass
+
+
+def test_call():
+    def remove_column_a(df):
+        _df = df.copy()
+        del _df['a']
+        return _df
+
+    df = pd.DataFrame({'a': [1, 2, 3],
+                       'b': [4, 5, np.nan]})
+
+    # External function
+    result = df >> call(remove_column_a)
+    assert 'a' not in result
+    assert 'b' in result
+
+    # dataframe method
+    result = df >> call('.dropna')
+    assert len(result) == 2
+
+    # dataframe method with arguments
+    result = df >> define(c='a*2') >> call('.dropna', axis=1)
+    assert 'a' in result
+    assert 'b' not in result
+    assert 'c' in result
 
 
 def test_data_as_first_argument():
