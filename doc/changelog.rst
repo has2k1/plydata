@@ -5,6 +5,10 @@ v0.3.0
 ------
 *not-yet-released*
 
+- Fixed :class:`~plydata.verbs.define` (mutate) and
+  :class:`~plydata.verbs.create` (transmute), make them work with
+  ``group_by``.
+
 New Features
 ************
 

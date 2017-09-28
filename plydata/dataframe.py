@@ -5,10 +5,10 @@ Verb implementations for a :class:`pandas.DataFrame`
 import re
 import warnings
 from copy import copy
-from contextlib import suppress
 
 import numpy as np
 import pandas as pd
+import pandas.api.types as pdtypes
 
 from .grouped_datatypes import GroupedDataFrame
 from .options import get_option, options
@@ -21,7 +21,7 @@ def define(verb):
     else:
         data = verb.data.copy()
 
-    new_data = _evaluate_expressions(verb)
+    new_data = _evaluate_expressions_per_group(verb)
     for col in new_data:
         data[col] = new_data[col]
     return data
@@ -29,7 +29,7 @@ def define(verb):
 
 def create(verb):
     data = _get_base_dataframe(verb.data)
-    new_data = _evaluate_expressions(verb)
+    new_data = _evaluate_expressions_per_group(verb)
     for col in new_data:
         data[col] = new_data[col]
     return data
@@ -125,9 +125,11 @@ def arrange(verb):
 
 
 def group_by(verb):
+    if not all(g in verb.data for g in verb.groups):
+        verb.data = define(verb)
+
     copy = not get_option('modify_input_data')
-    verb.data = GroupedDataFrame(verb.data, verb.groups, copy=copy)
-    return define(verb)
+    return GroupedDataFrame(verb.data, verb.groups, copy=copy)
 
 
 def ungroup(verb):
@@ -165,9 +167,9 @@ def summarize(verb):
     try:
         grouper = data.groupby(data.plydata_groups)
     except AttributeError:
-        data = _eval_summarize_expressions(exprs, cols, env, data)
+        data = _evaluate_summarize_expressions(exprs, cols, env, data)
     else:
-        dfs = [_eval_summarize_expressions(exprs, cols, env, gdf)
+        dfs = [_evaluate_summarize_expressions(exprs, cols, env, gdf)
                for _, gdf in grouper]
         data = pd.concat(dfs, axis=0, ignore_index=True)
 
@@ -395,34 +397,68 @@ def _add_group_columns(data, gdf):
     1  a  6
     2  a  7
     """
+    n = len(data)
     if isinstance(gdf, GroupedDataFrame):
         for i, col in enumerate(gdf.plydata_groups):
             if col not in data:
-                # Indexing with a list maintains the dtype
-                # of the group
-                value = gdf[col].iloc[[0]*len(data)]
-                with suppress(AttributeError):
-                    value.reset_index(inplace=True, drop=True)
-                data.insert(i, col, value)
+                group_values = [gdf[col].iloc[0]] * n
+                # Need to be careful and maintain the dtypes
+                # of the group columns
+                if pdtypes.is_categorical_dtype(gdf[col]):
+                    col_values = pd.Categorical(
+                        group_values,
+                        categories=gdf[col].cat.categories,
+                        ordered=gdf[col].cat.ordered
+                    )
+                else:
+                    col_values = pd.Series(
+                        group_values,
+                        index=data.index,
+                        dtype=gdf[col].dtype
+                    )
+                # Group columns come first
+                data.insert(i, col, col_values)
     return data
 
 
-def _evaluate_expressions(verb):
+def _evaluate_expressions_per_group(verb):
     """
     Evaluate Expressions and return the columns in a new dataframe
     """
-    data = pd.DataFrame(index=verb.data.index)
+    cols = verb.new_columns
+    exprs = verb.expressions
+    data = verb.data
     env = verb.env.with_outer_namespace({'Q': Q})
-    for col, expr in zip(verb.new_columns, verb.expressions):
-        if isinstance(expr, str):
-            data[col] = env.eval(expr, inner_namespace=verb.data)
-        else:
-            data[col] = expr
+
+    try:
+        grouper = data.groupby(data.plydata_groups)
+    except AttributeError:
+        data = _evaluate_expressions(exprs, cols, env, data)
+    else:
+        dfs = [_evaluate_expressions(exprs, cols, env, gdf)
+               for _, gdf in grouper]
+        data = pd.concat(dfs, axis=0, ignore_index=True)
 
     return data
 
 
-def _eval_summarize_expressions(expressions, columns, env, gdf):
+def _evaluate_expressions(expressions, columns, env, gdf):
+    """
+    Evaluate Expressions and return the columns in a new dataframe
+    """
+    data = pd.DataFrame(index=gdf.index)
+    env = env.with_outer_namespace({'Q': Q})
+    for col, expr in zip(columns, expressions):
+        if isinstance(expr, str):
+            value = env.eval(expr, inner_namespace=gdf)
+        else:
+            value = expr
+
+        data[col] = np.asarray(value)
+    return _add_group_columns(data, gdf)
+
+
+def _evaluate_summarize_expressions(expressions, columns, env, gdf):
     """
     Evaluate expressions to create a dataframe.
 
@@ -471,7 +507,7 @@ def _eval_summarize_expressions(expressions, columns, env, gdf):
 
     Finally, the *apply*
 
-    >>> _eval_summarize_expressions(expressions, columns, env, gdf)
+    >>> _evaluate_summarize_expressions(expressions, columns, env, gdf)
        x  ysq  ycubed
     0  b    4       8
     1  b    9      27
@@ -509,11 +545,11 @@ def _eval_summarize_expressions(expressions, columns, env, gdf):
     return _add_group_columns(data, gdf)
 
 
-def _eval_do_single_function(function, gdf):
+def _evaluate_do_single_function(function, gdf):
     """
     Evaluate an expression to create a dataframe.
 
-    Similar to :func:`_eval_summarize_expressions`, but for the
+    Similar to :func:`_evaluate_summarize_expressions`, but for the
     ``do`` operation.
     """
     gdf.is_copy = None
@@ -521,11 +557,11 @@ def _eval_do_single_function(function, gdf):
     return _add_group_columns(data, gdf)
 
 
-def _eval_do_functions(functions, columns, gdf):
+def _evaluate_do_functions(functions, columns, gdf):
     """
     Evaluate functions to create a dataframe.
 
-    Similar to :func:`_eval_summarize_expressions`, but for the
+    Similar to :func:`_evaluate_summarize_expressions`, but for the
     ``do`` operation.
     """
     gdf.is_copy = None
@@ -551,9 +587,9 @@ def _do_single_function(verb):
     try:
         groups = data.plydata_groups
     except AttributeError:
-        data = _eval_do_single_function(func, data)
+        data = _evaluate_do_single_function(func, data)
     else:
-        dfs = [_eval_do_single_function(func, gdf)
+        dfs = [_evaluate_do_single_function(func, gdf)
                for _, gdf in data.groupby(groups)]
         data = pd.concat(dfs, axis=0, ignore_index=True)
         data.plydata_groups = list(groups)
@@ -569,9 +605,9 @@ def _do_functions(verb):
     try:
         groups = data.plydata_groups
     except AttributeError:
-        data = _eval_do_functions(funcs, cols, data)
+        data = _evaluate_do_functions(funcs, cols, data)
     else:
-        dfs = [_eval_do_functions(funcs, cols, gdf)
+        dfs = [_evaluate_do_functions(funcs, cols, gdf)
                for _, gdf in data.groupby(groups)]
         data = pd.concat(dfs, axis=0, ignore_index=True)
         data.plydata_groups = list(groups)

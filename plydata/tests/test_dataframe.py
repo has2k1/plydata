@@ -50,6 +50,10 @@ def test_define():
     with pytest.raises(ValueError):
         df >> define(z=[1, 2, 3, 4])
 
+    # Works with group_by
+    result = df >> group_by('x < 3') >> define(z='len(x)')
+    assert all(result['z'] == [1, 2, 2])
+
 
 def test_create():
     x = np.array([1, 2, 3])
@@ -83,6 +87,10 @@ def test_create():
     # Branches
     with pytest.raises(ValueError):
         df >> create(z=[1, 2, 3, 4])
+
+    # Works with group_by
+    result = df >> group_by('x < 3') >> create(z='len(x)')
+    assert all(result['z'] == [1, 2, 2])
 
 
 def test_sample_n():
