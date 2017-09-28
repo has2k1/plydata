@@ -39,8 +39,8 @@ clean-test:
 lint:
 	flake8 plydata
 
-test:
-	pytest --cov=plydata
+test: clean-test
+	pytest
 
 test-all:
 	tox
