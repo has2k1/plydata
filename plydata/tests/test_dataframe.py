@@ -339,6 +339,9 @@ class TestAggregateFunctions:
         result = self.df >> summarize('{n}')
         assert result.loc[0, '{n}'] == 6
 
+        result = self.df >> summarize(nth='nth(x, 100)')
+        assert np.isnan(result.loc[0, 'nth'])
+
     def test_groups(self):
         result = self.df >> group_by('y') >> summarize('mean(x)')
         assert all(result['mean(x)'] == [0.5, 2.5, 4, 5])

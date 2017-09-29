@@ -13,6 +13,9 @@ v0.3.0
 
 - Fixed :class:`~plydata.verbs.tally` to sort in descending order.
 
+- Fixed the ``nth`` function of :class:`~plydata.verbs.summarize` to
+  return *NaN* when the requested value is out of bounds.
+
 New Features
 ************
 

@@ -642,8 +642,8 @@ def _nth(arr, n):
     """
     try:
         return arr.iloc[n]
-    except KeyError:
-        raise np.nan
+    except (KeyError, IndexError):
+        return np.nan
 
 
 def _n_distinct(arr):
