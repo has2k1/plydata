@@ -35,3 +35,6 @@ def test_options_context():
 
     # The above exception should not leave a modified option
     assert not get_option('modify_input_data')
+
+    with pytest.raises(ValueError):
+        assert not get_option('time_travel')

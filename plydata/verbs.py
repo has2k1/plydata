@@ -405,7 +405,7 @@ class distinct(DataOperator):
     def __init__(self, *args, **kwargs):
         self.set_env_from_verb_init()
         if len(args) == 1:
-            if isinstance(args[0], str):
+            if isinstance(args[0], (str, bool)):
                 self.keep = args[0]
             else:
                 self.columns = args[0]
@@ -1282,10 +1282,11 @@ class define_where(DataOperator):
         cols = []
         exprs = []
         for arg in args:
-            if isinstance(arg, str):
-                col = expr = arg
-            else:
+            try:
                 col, expr = arg
+            except (TypeError, ValueError):
+                raise ValueError(
+                    "Positional arguments must be a tuple of 2")
             cols.append(col)
             exprs.append(expr)
         self.new_columns = list(itertools.chain(cols, kwargs.keys()))

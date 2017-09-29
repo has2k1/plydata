@@ -12,7 +12,7 @@ import pandas.api.types as pdtypes
 
 from .grouped_datatypes import GroupedDataFrame
 from .options import get_option, options
-from .utils import hasattrs, temporary_key, Q
+from .utils import temporary_key, Q
 
 
 def define(verb):
@@ -95,7 +95,7 @@ def rename(verb):
 
 
 def distinct(verb):
-    if hasattrs(verb, ('new_columns', 'expressions')):
+    if verb.new_columns:
         data = define(verb)
     else:
         data = verb.data
@@ -116,8 +116,6 @@ def arrange(verb):
     if len(df.columns):
         sorted_index = df.sort_values(by=list(df.columns)).index
         data = verb.data.loc[sorted_index, :]
-        if data.is_copy:
-            data.is_copy = None
     else:
         data = verb.data
 
@@ -181,8 +179,7 @@ def query(verb):
         verb.expression,
         global_dict=verb.env.namespace,
         **verb.kwargs)
-    if data.is_copy:
-        data.is_copy = None
+    data.is_copy = None
     return data
 
 

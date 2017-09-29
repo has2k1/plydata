@@ -166,6 +166,15 @@ def test_distinct():
     result = df >> distinct()
     assert result.index.equals(I([0, 1, 2, 3, 4, 6]))
 
+    result = df >> distinct(('x', 'y'), z='x+1')
+    assert result.index.equals(I([0, 1, 2, 3, 4, 6]))
+
+    result = df >> distinct('last')
+    assert result.index.equals(I([0, 1, 2, 3, 5, 6]))
+
+    result = df >> distinct(False)
+    assert result.index.equals(I([0, 1, 2, 3, 6]))
+
     result = df >> distinct(['x'])
     assert result.index.equals(I([0, 2, 3, 4, 6]))
 
@@ -178,6 +187,9 @@ def test_distinct():
     result1 = df >> define(z='x%2') >> distinct(['x', 'z'])
     result2 = df >> distinct(['x'], z='x%2')
     assert result1.equals(result2)
+
+    with pytest.raises(Exception):
+        df >> distinct(['x'], 'last', 'cause_exception')
 
 
 def test_arrange():
@@ -233,6 +245,10 @@ def test_group_indices():
 
     results = df >> group_indices('y % 2')
     assert all(results == [1, 0, 1, 0, 1, 0, 1])
+
+    # Branches
+    with pytest.warns(UserWarning):
+        df >> group_by('x') >> group_indices('y')
 
 
 class TestGroupedDataFrame:
@@ -302,6 +318,11 @@ def test_summarize():
     assert 'y' in result
     assert 'z' in result
     assert all(result['mean_x'] == [1, 5, 2, 2, 4, 0])
+
+    # (Name, Expression) tuples
+    result = df >> summarize(('sum', 'np.sum(x)'), ('max', 'np.max(x)'))
+    assert 'sum' in result
+    assert 'max' in result
 
     # Branches
     result = df >> group_by('y') >> summarize('np.sum(z)', constant=1)
@@ -408,6 +429,33 @@ def test_do():
     result = df >> group_by('z') >> do(reuse_gdf_func)
     assert result.loc[0, 'c'] == 0
 
+    # No groups (Test with pass-through functions)
+    df1 = df >> do(lambda gdf: gdf)
+    df2 = df >> do(
+        x=lambda gdf: gdf.x,
+        y=lambda gdf: gdf.y,
+        z=lambda gdf: gdf.z,
+        w=lambda gdf: gdf.w
+    )
+
+    cols = list('xyzw')
+    assert all(df[cols] == df1[cols])
+    assert all(df[cols] == df2[cols])
+
+    # Branches
+    with pytest.raises(ValueError):
+        # args and kwargs
+        df >> group_by('w') >> do(
+            least_squares,
+            slope=lambda gdf: slope(gdf.x, gdf.y),
+            intercept=lambda gdf: intercept(gdf.x, gdf.y))
+
+    with pytest.raises(ValueError):
+        # More than one arg
+        df >> group_by('w') >> do(
+            least_squares,
+            least_squares)
+
 
 def test_head():
     df = pd.DataFrame({
@@ -472,6 +520,9 @@ def test_count():
     result = df >> count('y')
     assert result.loc[:, 'n'].tolist() == [3, 3]
 
+    result = df >> count('y', 'w')
+    assert result.loc[:, 'n'].tolist() == [3, 3]
+
     result = df >> count('y', weights='w')
     assert result.loc[:, 'n'].tolist() == [3, 6]
 
@@ -499,12 +550,23 @@ def test_modify_where():
     result = df >> modify_where('x > @c', y=9)
     assert all(result.loc[:, 'y'] == [0, 1, 2, 3, 9, 9])
 
+    # Branches
+    with pytest.raises(ValueError):
+        df >> modify_where('x%2 == 0', ('y', 'y*10', 'cause-error'))
+
 
 def test_define_where():
     n = 6
     df = pd.DataFrame({'x': range(n)})
     result = df >> define_where('x%2 == 0', parity=("'even'", "'odd'"))
     assert all(result['parity'] == ['even', 'odd']*(n//2))
+
+    result = df >> define_where('x<3', ('x<3', ('"Yes"', '"No"')))
+    assert all(result['x<3'] == np.repeat(['Yes', 'No'], 3))
+
+    # Branches
+    with pytest.raises(ValueError):
+        df >> define_where('x<3', ('x<3', (1, 0), 'cause-error'))
 
 
 def test_dropna():
@@ -747,18 +809,18 @@ class TestVerbReuse:
         df2 = self.df >> v
         assert df1.equals(df2)
 
-    def define(self):
+    def test_define(self):
         v = define(y='x*2')
         self._test(v)
 
-    def define_where(self):
+    def test_define_where(self):
         v = define_where('x%2 == 0', parity=("'even'", "'odd'"))
         self._test(v)
 
-    def modify_where(self):
+    def test_modify_where(self):
         v = modify_where('x%2 == 0', x='x*10')
         self._test(v)
 
-    def tally(self):
+    def test_tally(self):
         v = tally()
         self._test(v)
