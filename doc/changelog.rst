@@ -9,6 +9,8 @@ v0.3.0
   :class:`~plydata.verbs.create` (transmute), make them work with
   ``group_by``.
 
+- Fixed :class:`~plydata.verbs.tally` to work with external arrays.
+
 New Features
 ************
 

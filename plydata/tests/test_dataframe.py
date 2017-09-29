@@ -448,6 +448,10 @@ def test_tally():
     result2 = df >> group_by('y') >> summarize(n='sum(w)')
     assert result.equals(result2)
 
+    # External weights
+    result = df >> tally(range(5))
+    assert result.loc[0, 'n'] == 10
+
 
 def test_count():
     df = pd.DataFrame({

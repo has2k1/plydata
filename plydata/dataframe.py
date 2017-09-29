@@ -221,10 +221,15 @@ def tally(verb):
     verb = copy(verb)
     # Prepare for summarize
     verb.new_columns = ['n']
-    if verb.weights:
+    if verb.weights is not None:
         if isinstance(verb.weights, str):
+            # Summarize will evaluate and sum up the weights
             verb.weights = 'sum({})'.format(verb.weights)
-        verb.expressions = [verb.weights]
+            verb.expressions = [verb.weights]
+        else:
+            # Do the summation here. The result does not depend
+            # on the dataframe.
+            verb.expressions = [np.sum(verb.weights)]
     else:
         verb.expressions = ['{n}']
 
