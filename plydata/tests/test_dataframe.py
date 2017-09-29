@@ -452,6 +452,10 @@ def test_tally():
     result = df >> tally(range(5))
     assert result.loc[0, 'n'] == 10
 
+    # Sort
+    result = df >> group_by('y') >> tally('w', sort=True)
+    assert result.loc[:, 'n'].tolist() == [6, 3]
+
 
 def test_count():
     df = pd.DataFrame({

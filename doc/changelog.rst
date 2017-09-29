@@ -11,6 +11,8 @@ v0.3.0
 
 - Fixed :class:`~plydata.verbs.tally` to work with external arrays.
 
+- Fixed :class:`~plydata.verbs.tally` to sort in descending order.
+
 New Features
 ************
 

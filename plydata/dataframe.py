@@ -235,7 +235,7 @@ def tally(verb):
 
     data = summarize(verb)
     if verb.sort:
-        data = data.sort_values(by='n')
+        data = data.sort_values(by='n', ascending=False)
         data.reset_index(drop=True, inplace=True)
 
     return data
