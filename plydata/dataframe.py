@@ -47,23 +47,27 @@ def select(verb):
     kw = verb.kwargs
     columns = verb.data.columns
     groups = _get_groups(verb)
-    c0 = np.array([False]*len(columns))
-    c1 = c2 = c3 = c4 = c5 = c6 = c0
+    conds = []
 
     if verb.args:
-        c1 = [x in set(verb.args) for x in columns]
+        _args = set(verb.args)
+        c1 = [x in _args for x in columns]
+        conds.append(c1)
 
     if kw['startswith']:
         c2 = [isinstance(x, str) and x.startswith(kw['startswith'])
               for x in columns]
+        conds.append(c2)
 
     if kw['endswith']:
         c3 = [isinstance(x, str) and x.endswith(kw['endswith'])
               for x in columns]
+        conds.append(c3)
 
     if kw['contains']:
         c4 = [isinstance(x, str) and kw['contains'] in x
               for x in columns]
+        conds.append(c4)
 
     if kw['matches']:
         if hasattr(kw['matches'], 'match'):
@@ -72,11 +76,17 @@ def select(verb):
             pattern = re.compile(kw['matches'])
         c5 = [isinstance(x, str) and bool(pattern.match(x))
               for x in columns]
+        conds.append(c5)
 
     if groups:
-        c6 = [x in set(groups) for x in columns]
+        _groups = set(groups)
+        c6 = [x in _groups for x in columns]
+        conds.append(c6)
 
-    cond = np.logical_or.reduce((c1, c2, c3, c4, c5, c6))
+    if conds:
+        cond = np.logical_or.reduce(conds)
+    else:
+        cond = np.array([False]*len(columns))
 
     if kw['drop']:
         cond = ~cond
