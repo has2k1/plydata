@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from plydata import define
 
@@ -5,11 +6,11 @@ from plydata.operators import get_verb_function
 
 
 def test_get_verb_function():
-    class dict_subclass(dict):
+    class dataframe_subclass(pd.DataFrame):
         pass
 
-    data = dict()
-    data2 = dict_subclass()
+    data = pd.DataFrame()
+    data2 = dataframe_subclass()
 
     # No error
     func1 = get_verb_function(data, 'define')
@@ -17,12 +18,13 @@ def test_get_verb_function():
     assert func1 is func2
 
     with pytest.raises(TypeError):
-        get_verb_function(data, 'arrange')
+        get_verb_function(data, 'unknown_verb')
 
 
 def test_DataOperator():
-    s = {1, 2, 3}
-    data = {'x': [1, 2, 3], 'y': [1, 2, 3]}
+    s = {1, 2, 3}  # unrecognized datastore
+    data = pd.DataFrame({'x': [1, 2, 3],
+                         'y': [1, 2, 3]})
 
     with pytest.raises(TypeError):
         s >> define(z='x')

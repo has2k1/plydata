@@ -115,3 +115,13 @@ def Q(name):
         return env.namespace[name]
     except KeyError:
         raise NameError("No data named {!r} found".format(name))
+
+
+class custom_dict(dict):
+    """
+    Dict datastore for conflict testing purposes
+
+    Using a regular dict creates conflicts with verbs
+    whose first parameter can be a dict
+    """
+    pass

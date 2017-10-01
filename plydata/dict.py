@@ -2,11 +2,12 @@
 # works for multiple data type sources.
 
 """
-Verb implementations for a :class:`dict`
+Verb implementations for a :class:`custom_dict`
 """
 
 
 def define(verb):
+    verb.data = verb.data.copy()
     env = verb.env.with_outer_namespace(verb.data)
     for col, expr in zip(verb.new_columns, verb.expressions):
         if isinstance(expr, str):

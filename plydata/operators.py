@@ -4,13 +4,16 @@ import pandas as pd
 
 from .eval import EvalEnvironment
 from .grouped_datatypes import GroupedDataFrame
-from .utils import temporary_attr
+from .utils import temporary_attr, custom_dict
+
 
 type_lookup = {
     pd.DataFrame: import_module('.dataframe', __package__),
     GroupedDataFrame: import_module('.dataframe', __package__),
-    dict: import_module('.dict', __package__)
+    custom_dict: import_module('.dict', __package__)
 }
+
+DATASTORE_TYPES = tuple(type_lookup.keys())
 
 
 # We use this for "single dispatch" instead of maybe
@@ -53,7 +56,7 @@ class OptionalSingleDataFrameArgument(type):
     """
     def __call__(cls, *args, **kwargs):
         # When we have data we can proceed with the computation
-        if len(args) and isinstance(args[0], pd.DataFrame):
+        if len(args) and isinstance(args[0], DATASTORE_TYPES):
             return args[0] >> super().__call__(*args[1:], **kwargs)
         else:
             return super().__call__(*args, **kwargs)
@@ -86,7 +89,7 @@ class DataOperator(metaclass=OptionalSingleDataFrameArgument):
         Overload the >> operator
         """
         if self.data is None:
-            if isinstance(other, (pd.DataFrame, dict)):
+            if isinstance(other, DATASTORE_TYPES):
                 self.data = other
             else:
                 msg = "Unknown type of data {}"
