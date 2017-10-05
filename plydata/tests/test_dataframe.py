@@ -123,6 +123,12 @@ def test_select():
                           matches='\w+opa')
     assert len(result.columns) == 5
 
+    result = df >> select(contains=['ee', 'ion', '23'])
+    assert len(result.columns) == 2
+
+    result = df >> select(matches=('\w+opa', '\w+r$'))
+    assert len(result.columns) == 4
+
     # Numerical column names, and regex object
     df[123] = 1
     df[456] = 2
@@ -136,6 +142,9 @@ def test_select():
 
     result = df >> select(456, 789, drop=True)
     assert len(result.columns) == len(df.columns)-2
+
+    result = df >> select(contains=['ee', 'ion'])
+    assert len(result.columns) == 2
 
     # No selection, should still have an index
     result = df >> select()

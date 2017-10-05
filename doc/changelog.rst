@@ -16,6 +16,11 @@ v0.3.0
 - Fixed the ``nth`` function of :class:`~plydata.verbs.summarize` to
   return *NaN* when the requested value is out of bounds.
 
+- The ``contains`` and ``matches`` parameters of
+  :class:`~plydata.verbs.select` can now accept a
+  :class:`tuple` of values.
+
+
 New Features
 ************
 

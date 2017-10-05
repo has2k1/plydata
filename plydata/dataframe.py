@@ -44,8 +44,9 @@ def sample_frac(verb):
 
 
 def select(verb):
-    kw = verb.kwargs
     columns = verb.data.columns
+    contains = verb.contains
+    matches = verb.matches
     groups = _get_groups(verb)
     conds = []
 
@@ -54,28 +55,35 @@ def select(verb):
         c1 = [x in _args for x in columns]
         conds.append(c1)
 
-    if kw['startswith']:
-        c2 = [isinstance(x, str) and x.startswith(kw['startswith'])
+    if verb.startswith:
+        c2 = [isinstance(x, str) and x.startswith(verb.startswith)
               for x in columns]
         conds.append(c2)
 
-    if kw['endswith']:
-        c3 = [isinstance(x, str) and x.endswith(kw['endswith'])
+    if verb.endswith:
+        c3 = [isinstance(x, str) and x.endswith(verb.endswith)
               for x in columns]
         conds.append(c3)
 
-    if kw['contains']:
-        c4 = [isinstance(x, str) and kw['contains'] in x
-              for x in columns]
+    if contains:
+        c4 = []
+        for col in columns:
+            if isinstance(col, str):
+                c4.append(any(s in col for s in contains))
+            else:
+                c4.append(False)
         conds.append(c4)
 
-    if kw['matches']:
-        if hasattr(kw['matches'], 'match'):
-            pattern = kw['matches']
-        else:
-            pattern = re.compile(kw['matches'])
-        c5 = [isinstance(x, str) and bool(pattern.match(x))
-              for x in columns]
+    if matches:
+        c5 = []
+        patterns = [x if hasattr(x, 'match') else re.compile(x)
+                    for x in matches]
+        for col in columns:
+            if isinstance(col, str):
+                c5.append(any(bool(p.match(col)) for p in patterns))
+            else:
+                c5.append(False)
+
         conds.append(c5)
 
     if groups:
@@ -88,7 +96,7 @@ def select(verb):
     else:
         cond = np.array([False]*len(columns))
 
-    if kw['drop']:
+    if verb.drop:
         cond = ~cond
 
     data = verb.data.loc[:, cond]

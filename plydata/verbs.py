@@ -235,15 +235,15 @@ class select(DataOperator):
         Useful when not using the ``>>`` operator.
     args : tuple, optional
         Names of columns in dataframe. Normally, they are strings.
-    startswith : str, optional
+    startswith : str or tuple, optional
         All column names that start with this string will be included.
-    endswith : str, optional
+    endswith : str or tuple, optional
         All column names that end with this string will be included.
-    contains : str, optional
+    contains : str or tuple, optional
         All column names that contain with this string will be included.
-    matches : str or regex, optional
+    matches : str or regex or tuple, optional
         All column names that match the string or a compiled regex pattern
-        will be included.
+        will be included. A tuple can be used to match multiple regexs.
     drop : bool, optional
         If ``True``, the selection is inverted. The unspecified/unmatched
         columns are returned instead. Default is ``False``.
@@ -276,10 +276,22 @@ class select(DataOperator):
     """
     def __init__(self, *args, startswith=None, endswith=None,
                  contains=None, matches=None, drop=False):
+        def as_tuple(obj):
+            if obj is None:
+                return tuple()
+            elif isinstance(obj, tuple):
+                return obj
+            elif isinstance(obj, list):
+                return tuple(obj)
+            else:
+                return (obj,)
+
         self.args = args
-        self.kwargs = dict(
-            startswith=startswith, endswith=endswith,
-            contains=contains, matches=matches, drop=drop)
+        self.startswith = as_tuple(startswith)
+        self.endswith = as_tuple(endswith)
+        self.contains = as_tuple(contains)
+        self.matches = as_tuple(matches)
+        self.drop = drop
 
 
 class rename(DataOperator):
