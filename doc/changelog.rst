@@ -20,6 +20,14 @@ v0.3.0
   :class:`~plydata.verbs.select` can now accept a
   :class:`tuple` of values.
 
+- Fixed verbs that create columns (i.e
+  :class:`~plydata.verbs.create`,
+  :class:`~plydata.verbs.define`,
+  :class:`~plydata.verbs.define_where` and
+  :class:`~plydata.verbs.do`)
+  so that they can create categorical columns.
+
+
 
 New Features
 ************

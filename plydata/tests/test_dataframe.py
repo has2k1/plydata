@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import pytest
 import numpy.testing as npt
+import pandas.api.types as pdtypes
 
 from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
@@ -53,6 +54,18 @@ def test_define():
     # Works with group_by
     result = df >> group_by('x < 3') >> define(z='len(x)')
     assert all(result['z'] == [1, 2, 2])
+
+    # Potentially problematic index
+    def non_range_index_func(s):
+        return pd.Series([11, 12, 13], index=[21, 22, 23])
+
+    result = df >> define(z='non_range_index_func(x)')
+    assert all(result['z'] == [11, 12, 13])
+
+    # Can create categorical column
+    result = df >> define(xcat='pd.Categorical(x)')
+    assert all(result['xcat'] == result['x'])
+    assert pdtypes.is_categorical_dtype(result['xcat'])
 
 
 def test_create():
@@ -343,7 +356,7 @@ def test_summarize():
     df1['z'] = pd.Categorical(df1['z'])
     result = df1 >> group_by('y', 'z') >> summarize(mean_x='np.mean(x)')
     assert result['y'].dtype == np.int
-    assert result['z'].dtype == 'category'
+    assert pdtypes.is_categorical_dtype(result['z'])
 
 
 class TestAggregateFunctions:
@@ -464,6 +477,13 @@ def test_do():
         df >> group_by('w') >> do(
             least_squares,
             least_squares)
+
+    # Potentially problematic index
+    def non_range_index_func(gdf):
+        return pd.Series([11, 12, 13], index=[21, 22, 23])
+
+    result = df >> do(r=non_range_index_func)
+    assert all(result['r'] == [11, 12, 13])
 
 
 def test_head():

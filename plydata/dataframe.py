@@ -5,6 +5,7 @@ Verb implementations for a :class:`pandas.DataFrame`
 import re
 import warnings
 from copy import copy
+from contextlib import suppress
 
 import numpy as np
 import pandas as pd
@@ -441,6 +442,81 @@ def _add_group_columns(data, gdf):
     return data
 
 
+def _create_column(data, col, value):
+    """
+    Create column in dataframe
+
+    Helper method meant to deal with problematic
+    column values. e.g When the series index does
+    not match that of the data.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        dataframe in which to insert value
+    col : column label
+        Column name
+    value : object
+        Value to assign to column
+
+    Returns
+    -------
+    data : pandas.DataFrame
+        Modified original dataframe
+
+    >>> df = pd.DataFrame({'x': [1, 2, 3]})
+    >>> y = pd.Series([11, 12, 13], index=[21, 22, 23])
+
+    Data index and value index do not match
+
+    >>> _create_column(df, 'y', y)
+       x   y
+    0  1  11
+    1  2  12
+    2  3  13
+
+    Non-empty dataframe, scalar value
+
+    >>> _create_column(df, 'z', 3)
+       x   y  z
+    0  1  11  3
+    1  2  12  3
+    2  3  13  3
+
+    Empty dataframe, scalar value
+
+    >>> df = pd.DataFrame()
+    >>> _create_column(df, 'w', 3)
+       w
+    0  3
+    >>> _create_column(df, 'z', 'abc')
+       w    z
+    0  3  abc
+    """
+    with suppress(AttributeError):
+        # If the index of a series and the dataframe
+        # in which the series will be assigned to a
+        # column do not match, missing values/NaNs
+        # are created. We do not want that.
+        value.reset_index(drop=True, inplace=True)
+
+    # You cannot assign a scalar value to a dataframe
+    # without an index. You need an interable value.
+    if data.index.empty:
+        try:
+            len(value)
+        except TypeError:
+            scalar = True
+        else:
+            scalar = isinstance(value, str)
+
+        if scalar:
+            value = [value]
+
+    data[col] = value
+    return data
+
+
 def _evaluate_expressions_per_group(verb):
     """
     Evaluate Expressions and return the columns in a new dataframe
@@ -474,7 +550,8 @@ def _evaluate_expressions(expressions, columns, env, gdf):
         else:
             value = expr
 
-        data[col] = np.asarray(value)
+        _create_column(data, col, value)
+
     return _add_group_columns(data, gdf)
 
 
@@ -540,6 +617,7 @@ def _evaluate_summarize_expressions(expressions, columns, env, gdf):
     def _plydata_n():
         return len(gdf)
 
+    data = pd.DataFrame()
     for col, expr in zip(columns, expressions):
         if isinstance(expr, str):
             expr = expr.format(n='_plydata_n()')
@@ -549,18 +627,7 @@ def _evaluate_summarize_expressions(expressions, columns, env, gdf):
         else:
             value = expr
 
-        # Non-consecutive 0-n pd.series indices create gaps with
-        # nans when inserted into a dataframe
-        value = np.asarray(value)
-
-        try:
-            data[col] = value
-        except NameError:
-            try:
-                n = len(value)
-            except TypeError:
-                n = 1
-            data = pd.DataFrame({col: value}, index=range(n))
+        data = _create_column(data, col, value)
 
     return _add_group_columns(data, gdf)
 
@@ -585,17 +652,10 @@ def _evaluate_do_functions(functions, columns, gdf):
     ``do`` operation.
     """
     gdf.is_copy = None
+    data = pd.DataFrame()
     for col, func in zip(columns, functions):
-        value = np.asarray(func(gdf))
-
-        try:
-            data[col] = value
-        except NameError:
-            try:
-                n = len(value)
-            except TypeError:
-                n = 1
-            data = pd.DataFrame({col: value}, index=range(n))
+        value = func(gdf)
+        data = _create_column(data, col, value)
 
     return _add_group_columns(data, gdf)
 
