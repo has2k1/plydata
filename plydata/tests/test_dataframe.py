@@ -835,14 +835,16 @@ class TestVerbReuse:
     """
     Test that you can use the same verb for multiple operations
     """
-    df = pd.DataFrame({'x': [0, 1, 2, 3, 4]})
+    df1 = pd.DataFrame({'x': [0, 1, 2, 3, 4]})
+    df2 = pd.DataFrame({'x': [4, 3, 2, 1, 0]})  # df1 reversed rows
 
     def _test(self, v):
         """
         Testing method, other methods create verbs
         """
-        df1 = self.df >> v
-        df2 = self.df >> v
+        df1 = self.df1 >> v
+        df2 = self.df2 >> v
+        df2 = df2[::-1].reset_index(drop=True)  # unreverse
         assert df1.equals(df2)
 
     def test_define(self):

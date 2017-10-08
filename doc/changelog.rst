@@ -29,6 +29,8 @@ v0.3.0
 
 - The ``join`` verbs gained *left_on* and *right_on* parameters.
 
+- Fixed verb reuse. You can create a verb and assign it to a variable
+  and pipe to the same variable in different operations.
 
 New Features
 ************

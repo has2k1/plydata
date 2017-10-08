@@ -1,4 +1,5 @@
 from importlib import import_module
+from copy import copy
 
 import pandas as pd
 
@@ -88,12 +89,13 @@ class DataOperator(metaclass=OptionalSingleDataFrameArgument):
         """
         Overload the >> operator
         """
-        if self.data is None:
-            if isinstance(other, DATASTORE_TYPES):
-                self.data = other
-            else:
-                msg = "Unknown type of data {}"
-                raise TypeError(msg.format(type(other)))
+        # Makes verb reuseable
+        self = copy(self)
+        if isinstance(other, DATASTORE_TYPES):
+            self.data = other
+        else:
+            msg = "Unknown type of data {}"
+            raise TypeError(msg.format(type(other)))
 
         func = get_verb_function(self.data, self.__class__.__name__)
         return func(self)
@@ -101,6 +103,7 @@ class DataOperator(metaclass=OptionalSingleDataFrameArgument):
     def __call__(self, data):
         # This is an undocumented feature, it allows for
         # verb(*args, **kwargs)(df)
+        self = copy(self)
         func = get_verb_function(data, self.__class__.__name__)
         with temporary_attr(self, 'data', data):
             result = func(self)
