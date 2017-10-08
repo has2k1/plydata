@@ -1630,10 +1630,12 @@ class _join(DoubleDataOperator):
     Base class for join verbs
     """
 
-    def __init__(self, x, y, on=None, suffixes=('_x', '_y')):
+    def __init__(self, x, y, on=None, left_on=None, right_on=None,
+                 suffixes=('_x', '_y')):
         self.x = x
         self.y = y
-        self.kwargs = dict(on=on, suffixes=suffixes)
+        self.kwargs = dict(on=on, left_on=left_on, right_on=right_on,
+                           suffixes=suffixes)
 
 
 class inner_join(_join):
@@ -1647,7 +1649,14 @@ class inner_join(_join):
     y : dataframe
         Right dataframe
     on : str or tuple or list
-        Columns on which to join
+        Columns on which to join. Must be found in both DataFrames.
+    left_on : label or list, or array-like
+        Field names to join on in left DataFrame. Can be a vector
+        or list of vectors of the length of the DataFrame to use a
+        particular vector as the join key instead of columns
+    right_on : label or list, or array-like
+        Field names to join on in right DataFrame or vector/list of
+        vectors per left_on docs
     suffixes : 2-length sequence
         Suffix to apply to overlapping column names in the left and
         right side, respectively.
@@ -1688,7 +1697,14 @@ class outer_join(_join):
     y : dataframe
         Right dataframe
     on : str or tuple or list
-        Columns on which to join
+        Columns on which to join. Must be found in both DataFrames.
+    left_on : label or list, or array-like
+        Field names to join on in left DataFrame. Can be a vector
+        or list of vectors of the length of the DataFrame to use a
+        particular vector as the join key instead of columns
+    right_on : label or list, or array-like
+        Field names to join on in right DataFrame or vector/list of
+        vectors per left_on docs
     suffixes : 2-length sequence
         Suffix to apply to overlapping column names in the left and
         right side, respectively.
@@ -1731,7 +1747,14 @@ class left_join(_join):
     y : dataframe
         Right dataframe
     on : str or tuple or list
-        Columns on which to join
+        Columns on which to join. Must be found in both DataFrames.
+    left_on : label or list, or array-like
+        Field names to join on in left DataFrame. Can be a vector
+        or list of vectors of the length of the DataFrame to use a
+        particular vector as the join key instead of columns
+    right_on : label or list, or array-like
+        Field names to join on in right DataFrame or vector/list of
+        vectors per left_on docs
     suffixes : 2-length sequence
         Suffix to apply to overlapping column names in the left and
         right side, respectively.
@@ -1773,7 +1796,14 @@ class right_join(_join):
     y : dataframe
         Right dataframe
     on : str or tuple or list
-        Columns on which to join
+        Columns on which to join. Must be found in both DataFrames.
+    left_on : label or list, or array-like
+        Field names to join on in left DataFrame. Can be a vector
+        or list of vectors of the length of the DataFrame to use a
+        particular vector as the join key instead of columns
+    right_on : label or list, or array-like
+        Field names to join on in right DataFrame or vector/list of
+        vectors per left_on docs
     suffixes : 2-length sequence
         Suffix to apply to overlapping column names in the left and
         right side, respectively.
@@ -1818,7 +1848,14 @@ class anti_join(_join):
     y : dataframe
         Right dataframe
     on : str or tuple or list
-        Columns on which to join
+        Columns on which to join. Must be found in both DataFrames.
+    left_on : label or list, or array-like
+        Field names to join on in left DataFrame. Can be a vector
+        or list of vectors of the length of the DataFrame to use a
+        particular vector as the join key instead of columns
+    right_on : label or list, or array-like
+        Field names to join on in right DataFrame or vector/list of
+        vectors per left_on docs
 
     Examples
     --------
@@ -1843,10 +1880,8 @@ class anti_join(_join):
     preserves the grouping of x.
     """
 
-    def __init__(self, x, y, on=None):
-        self.x = x
-        self.y = y
-        self.kwargs = dict(on=on)
+    def __init__(self, x, y, on=None, left_on=None, right_on=None):
+        super().__init__(x, y, on=on, left_on=left_on, right_on=right_on)
 
 
 class semi_join(_join):
@@ -1865,7 +1900,14 @@ class semi_join(_join):
     y : dataframe
         Right dataframe
     on : str or tuple or list
-        Columns on which to join
+        Columns on which to join. Must be found in both DataFrames.
+    left_on : label or list, or array-like
+        Field names to join on in left DataFrame. Can be a vector
+        or list of vectors of the length of the DataFrame to use a
+        particular vector as the join key instead of columns
+    right_on : label or list, or array-like
+        Field names to join on in right DataFrame or vector/list of
+        vectors per left_on docs
     suffixes : 2-length sequence
         Suffix to apply to overlapping column names in the left and
         right side, respectively.
@@ -1901,6 +1943,8 @@ class semi_join(_join):
     Groups are ignored for the purpose of joining, but the result
     preserves the grouping of x.
     """
+    def __init__(self, x, y, on=None, left_on=None, right_on=None):
+        super().__init__(x, y, on=on, left_on=left_on, right_on=right_on)
 
 
 # Aliases

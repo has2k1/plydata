@@ -27,6 +27,7 @@ v0.3.0
   :class:`~plydata.verbs.do`)
   so that they can create categorical columns.
 
+- The ``join`` verbs gained *left_on* and *right_on* parameters.
 
 
 New Features
