@@ -498,7 +498,11 @@ def _create_column(data, col, value):
         # in which the series will be assigned to a
         # column do not match, missing values/NaNs
         # are created. We do not want that.
-        value.reset_index(drop=True, inplace=True)
+        if not value.index.equals(data.index):
+            if len(value) == len(data):
+                value.index = data.index
+            else:
+                value.reset_index(drop=True, inplace=True)
 
     # You cannot assign a scalar value to a dataframe
     # without an index. You need an interable value.
@@ -533,8 +537,11 @@ def _evaluate_expressions_per_group(verb):
     else:
         dfs = [_evaluate_expressions(exprs, cols, env, gdf)
                for _, gdf in grouper]
+        # When the indices do not match, the columns in the
+        # evaluated data may create NaN values when inserted
+        # into the original dataframe.
         data = pd.concat(dfs, axis=0, ignore_index=True)
-
+        data.index = verb.data.index
     return data
 
 

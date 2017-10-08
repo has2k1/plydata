@@ -67,6 +67,13 @@ def test_define():
     assert all(result['xcat'] == result['x'])
     assert pdtypes.is_categorical_dtype(result['xcat'])
 
+    # Messing with indices
+    result = (df
+              >> query('x >= 2')
+              >> group_by('x')
+              >> define(y='x'))
+    assert all(result['x'] == result['y'])
+
 
 def test_create():
     x = np.array([1, 2, 3])
