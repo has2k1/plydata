@@ -245,7 +245,7 @@ def tally(verb):
             # on the dataframe.
             verb.expressions = [np.sum(verb.weights)]
     else:
-        verb.expressions = ['{n}']
+        verb.expressions = ['n()']
 
     data = summarize(verb)
     if verb.sort:
@@ -525,14 +525,13 @@ def _evaluate_expressions_per_group(verb):
     cols = verb.new_columns
     exprs = verb.expressions
     data = verb.data
-    env = verb.env.with_outer_namespace({'Q': Q})
 
     try:
         grouper = data.groupby(data.plydata_groups)
     except AttributeError:
-        data = _evaluate_expressions(exprs, cols, env, data)
+        data = _evaluate_expressions(exprs, cols, verb.env, data)
     else:
-        dfs = [_evaluate_expressions(exprs, cols, env, gdf)
+        dfs = [_evaluate_expressions(exprs, cols, verb.env, gdf)
                for _, gdf in grouper]
         # When the indices do not match, the columns in the
         # evaluated data may create NaN values when inserted
@@ -546,8 +545,13 @@ def _evaluate_expressions(expressions, columns, env, gdf):
     """
     Evaluate Expressions and return the columns in a new dataframe
     """
+    # return the length of the dataframe.
+    # Part of the public API
+    def n():
+        return len(gdf)
+
     data = pd.DataFrame(index=gdf.index)
-    env = env.with_outer_namespace({'Q': Q})
+    env = env.with_outer_namespace({'Q': Q, 'n': n})
     for col, expr in zip(columns, expressions):
         if isinstance(expr, str):
             value = env.eval(expr, inner_namespace=gdf)
@@ -617,21 +621,20 @@ def _evaluate_summarize_expressions(expressions, columns, env, gdf):
     results.
     """
     # Extra aggregate function that the user references with
-    # the name `{n}`. It returns the length of the dataframe.
-    def _plydata_n():
+    # the name `n()`. It returns the length of the dataframe.
+    # It is part of the public API
+    def n():
         return len(gdf)
 
     data = pd.DataFrame()
-    for col, expr in zip(columns, expressions):
-        if isinstance(expr, str):
-            expr = expr.format(n='_plydata_n()')
-            with temporary_key(_aggregate_functions,
-                               '_plydata_n', _plydata_n):
+    with temporary_key(_aggregate_functions, 'n', n):
+        for col, expr in zip(columns, expressions):
+            if isinstance(expr, str):
                 value = env.eval(expr, inner_namespace=gdf)
-        else:
-            value = expr
+            else:
+                value = expr
 
-        data = _create_column(data, col, value)
+            data = _create_column(data, col, value)
 
     return _add_group_columns(data, gdf)
 

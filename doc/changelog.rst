@@ -38,6 +38,16 @@ New Features
 - Added special verb :class:`~plydata.verbs.call`, it allows one to use
   external functions that accept a dataframe as the first argument.
 
+- :class:`~plydata.verbs.define` You can now use the internal function
+  ``n()`` to count the number of elements in current group.
+
+API Changes
+***********
+- Using internal function for :class:`~plydata.verbs.summarize` that
+  counts the number of elements in the current group changed from
+  ``{n}`` to ``n()``.
+
+
 v0.2.1
 ------
 *(2017-09-20)*

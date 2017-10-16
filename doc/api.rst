@@ -84,3 +84,10 @@ Useful Functions
    :template: main.rst
 
    Q
+
+n()
+---
+This is a special internal function that returns the number of
+rows in the current groups. It can be used in verbs like
+:class:`~plydata.verbs.summarize`, :class:`~plydata.verbs.define`.
+and :class:`~plydata.verbs.create`.

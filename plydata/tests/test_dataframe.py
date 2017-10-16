@@ -386,8 +386,8 @@ class TestAggregateFunctions:
         result = self.df >> summarize('n_distinct(y)')
         assert result.loc[0, 'n_distinct(y)'] == 4
 
-        result = self.df >> summarize('{n}')
-        assert result.loc[0, '{n}'] == 6
+        result = self.df >> summarize('n()')
+        assert result.loc[0, 'n()'] == 6
 
         result = self.df >> summarize(nth='nth(x, 100)')
         assert np.isnan(result.loc[0, 'nth'])
@@ -396,8 +396,8 @@ class TestAggregateFunctions:
         result = self.df >> group_by('y') >> summarize('mean(x)')
         assert all(result['mean(x)'] == [0.5, 2.5, 4, 5])
 
-        result = self.df >> group_by('y') >> summarize('{n}')
-        assert all(result['{n}'] == [2, 2, 1, 1])
+        result = self.df >> group_by('y') >> summarize('n()')
+        assert all(result['n()'] == [2, 2, 1, 1])
 
 
 def test_query():
