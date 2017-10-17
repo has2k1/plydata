@@ -15,6 +15,8 @@ Single table verbs
    :template: main.rst
 
    arrange
+   add_count
+   add_tally
    call
    count
    create

@@ -264,6 +264,37 @@ def count(verb):
     return tally(verb)
 
 
+def add_tally(verb):
+    verb.new_columns = ['n']
+
+    if verb.weights:
+        if isinstance(verb.weights, str):
+            verb.weights = 'sum({})'.format(verb.weights)
+        verb.expressions = [verb.weights]
+    else:
+        verb.expressions = ['n()']
+
+    data = define(verb)
+    if verb.sort:
+        data = data.sort_values(by='n')
+        data.reset_index(drop=True, inplace=True)
+
+    return data
+
+
+def add_count(verb):
+    remove_groups = False
+    if (not isinstance(verb.data, GroupedDataFrame) and
+            verb.groups):
+        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
+        remove_groups = True
+
+    data = add_tally(verb)
+    if remove_groups:
+        data = pd.DataFrame(data)
+    return data
+
+
 def modify_where(verb):
     if get_option('modify_input_data'):
         data = verb.data

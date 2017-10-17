@@ -9,6 +9,7 @@ __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize', 'summarise',
            'query', 'do', 'head', 'tail', 'tally', 'count',
+           'add_tally', 'add_count',
            'modify_where', 'define_where', 'mutate', 'transmute',
            'dropna', 'fillna', 'call',
            'inner_join', 'outer_join', 'left_join', 'right_join',
@@ -1145,6 +1146,231 @@ class count(DataOperator):
             self.groups = []
         self.weights = weights
         self.sort = sort
+
+
+class add_tally(tally):
+    """
+    Add column with tally of items in each group
+
+    Similar to :class:`tally`, but it adds a column and does
+    not collapse the groups.
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    weights : str or array-like, optional
+        Weight of each row in the group.
+    sort : bool, optional
+        If ``True``, sort the resulting data in descending
+        order.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [1, 2, 3, 4, 5, 6],
+    ...     'y': ['a', 'b', 'a', 'b', 'a', 'b'],
+    ...     'w': [1, 2, 1, 2, 1, 2]})
+
+    Without groups it is one large group
+
+    >>> df >> add_tally()
+       w  x  y  n
+    0  1  1  a  6
+    1  2  2  b  6
+    2  1  3  a  6
+    3  2  4  b  6
+    4  1  5  a  6
+    5  2  6  b  6
+
+    Sum of the weights
+
+    >>> df >> add_tally('w')
+       w  x  y  n
+    0  1  1  a  9
+    1  2  2  b  9
+    2  1  3  a  9
+    3  2  4  b  9
+    4  1  5  a  9
+    5  2  6  b  9
+
+    With groups
+
+    >>> df >> group_by('y') >> add_tally()
+    groups: ['y']
+       w  x  y  n
+    0  1  1  a  3
+    1  2  2  b  3
+    2  1  3  a  3
+    3  2  4  b  3
+    4  1  5  a  3
+    5  2  6  b  3
+
+    With groups and weights
+
+    >>> df >> group_by('y') >> add_tally('w')
+    groups: ['y']
+       w  x  y  n
+    0  1  1  a  3
+    1  2  2  b  6
+    2  1  3  a  3
+    3  2  4  b  6
+    4  1  5  a  3
+    5  2  6  b  6
+
+    Applying the weights to a column
+
+    >>> df >> group_by('y') >> add_tally('x*w')
+    groups: ['y']
+       w  x  y   n
+    0  1  1  a   9
+    1  2  2  b  24
+    2  1  3  a   9
+    3  2  4  b  24
+    4  1  5  a   9
+    5  2  6  b  24
+
+    Add tally is equivalent to using :func:`sum` or ``n()``
+    in :class:`define`.
+
+    >>> df >> group_by('y') >> define(n='sum(x*w)')
+    groups: ['y']
+       w  x  y   n
+    0  1  1  a   9
+    1  2  2  b  24
+    2  1  3  a   9
+    3  2  4  b  24
+    4  1  5  a   9
+    5  2  6  b  24
+
+    >>> df >> group_by('y') >> define(n='n()')
+    groups: ['y']
+       w  x  y  n
+    0  1  1  a  3
+    1  2  2  b  3
+    2  1  3  a  3
+    3  2  4  b  3
+    4  1  5  a  3
+    5  2  6  b  3
+
+    Which is the same result as
+    :py:`df >> group_by('y') >> add_tally()` above.
+
+    See Also
+    --------
+    :class:`add_count`
+    """
+
+
+class add_count(count):
+    """
+    Add column with number of items in each group
+
+    Similar to :class:`count`, but it adds a column and does
+    not collapse the groups. It is also a shortcut of
+    :class:`add_tally` that does the grouping.
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    *args : str, list
+        Columns to group by.
+    weights : str or array-like, optional
+        Weight of each row in the group.
+    sort : bool, optional
+        If ``True``, sort the resulting data in descending
+        order.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [1, 2, 3, 4, 5, 6],
+    ...     'y': ['a', 'b', 'a', 'b', 'a', 'b'],
+    ...     'w': [1, 2, 1, 2, 1, 2]})
+
+    Without groups it is one large group
+
+    >>> df >> add_count()
+       w  x  y  n
+    0  1  1  a  6
+    1  2  2  b  6
+    2  1  3  a  6
+    3  2  4  b  6
+    4  1  5  a  6
+    5  2  6  b  6
+
+    Sum of the weights
+
+    >>> df >> add_count(weights='w')
+       w  x  y  n
+    0  1  1  a  9
+    1  2  2  b  9
+    2  1  3  a  9
+    3  2  4  b  9
+    4  1  5  a  9
+    5  2  6  b  9
+
+    With groups
+
+    >>> df >> add_count('y')
+       w  x  y  n
+    0  1  1  a  3
+    1  2  2  b  3
+    2  1  3  a  3
+    3  2  4  b  3
+    4  1  5  a  3
+    5  2  6  b  3
+
+    >>> df >> group_by('y') >> add_count()
+    groups: ['y']
+       w  x  y  n
+    0  1  1  a  3
+    1  2  2  b  3
+    2  1  3  a  3
+    3  2  4  b  3
+    4  1  5  a  3
+    5  2  6  b  3
+
+    With groups and weights
+
+    >>> df >> add_count('y', weights='w')
+       w  x  y  n
+    0  1  1  a  3
+    1  2  2  b  6
+    2  1  3  a  3
+    3  2  4  b  6
+    4  1  5  a  3
+    5  2  6  b  6
+
+    Applying the weights to a column
+
+    >>> df >> add_count('y', weights='x*w')
+       w  x  y   n
+    0  1  1  a   9
+    1  2  2  b  24
+    2  1  3  a   9
+    3  2  4  b  24
+    4  1  5  a   9
+    5  2  6  b  24
+
+    You can do that with :class:`add_tally`
+
+    >>> df >> group_by('y') >> add_tally('x*w') >> ungroup()
+       w  x  y   n
+    0  1  1  a   9
+    1  2  2  b  24
+    2  1  3  a   9
+    3  2  4  b  24
+    4  1  5  a   9
+    5  2  6  b  24
+
+    See Also
+    --------
+    :class:`add_tally`
+    """
 
 
 class modify_where(DataOperator):

@@ -41,6 +41,9 @@ New Features
 - :class:`~plydata.verbs.define` You can now use the internal function
   ``n()`` to count the number of elements in current group.
 
+- Added :class:`~plydata.verbs.add_tally` and
+  :class:`~plydata.verbs.add_count` verbs.
+
 API Changes
 ***********
 - Using internal function for :class:`~plydata.verbs.summarize` that

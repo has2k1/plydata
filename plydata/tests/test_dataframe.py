@@ -9,7 +9,8 @@ import pandas.api.types as pdtypes
 from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
-                     tally, count, modify_where, define_where, fillna,
+                     tally, count, add_tally, add_count,
+                     modify_where, define_where, fillna,
                      call,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
@@ -607,6 +608,55 @@ def test_count():
 
     result2 = df >> group_by('y') >> summarize(n='sum(w)')
     assert result.equals(result2)
+
+
+def test_add_tally():
+    df = pd.DataFrame({
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': ['a', 'b', 'a', 'b', 'a', 'b'],
+        'w': [1, 2, 1, 2, 1, 2]})
+    n = len(df)
+
+    result = df >> add_tally()
+    assert all(result['n'] == [6]*n)
+    assert not isinstance(result, GroupedDataFrame)
+
+    result = df >> add_tally('w')
+    assert all(result['n'] == [9]*n)
+    assert not isinstance(result, GroupedDataFrame)
+
+    result = df >> group_by('y') >> add_tally()
+    assert all(result['n'] == [3]*n)
+    assert isinstance(result, GroupedDataFrame)
+
+    result = df >> group_by('y') >> add_tally('w')
+    assert all(result['n'] == [3, 6]*(n//2))
+    assert isinstance(result, GroupedDataFrame)
+
+    result1 = df >> group_by('y') >> add_tally('x*w')
+    result2 = df >> group_by('y') >> add_tally('x*w', sort=True)
+    assert not result2['n'].equals(result1['n'])
+    assert result2['n'].tolist() == result1['n'].sort_values().tolist()
+
+
+def test_add_count():
+    df = pd.DataFrame({
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': ['a', 'b', 'a', 'b', 'a', 'b'],
+        'w': [1, 2, 1, 2, 1, 2]})
+    n = len(df)
+
+    result = df >> add_count()
+    assert all(result['n'] == [6]*n)
+    assert not isinstance(result, GroupedDataFrame)
+
+    result = df >> add_count('y')
+    assert all(result['n'] == [3]*n)
+    assert not isinstance(result, GroupedDataFrame)
+
+    result = df >> group_by('y') >> add_count()
+    assert all(result['n'] == [3]*n)
+    assert isinstance(result, GroupedDataFrame)
 
 
 def test_modify_where():
