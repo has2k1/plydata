@@ -12,26 +12,28 @@ import pandas.api.types as pdtypes
 
 from .grouped_datatypes import GroupedDataFrame
 from .options import get_option, options
-from .utils import temporary_key, Q
+from .utils import temporary_key, Q, get_empty_env, regular_index
 
 
 def define(verb):
-    if get_option('modify_input_data'):
-        data = verb.data
-    else:
-        data = verb.data.copy()
+    if not get_option('modify_input_data'):
+        verb.data = verb.data.copy()
 
-    new_data = _evaluate_expressions_per_group(verb)
-    for col in new_data:
-        data[col] = new_data[col]
-    return data
+    verb.env = verb.env.with_outer_namespace(_outer_namespace)
+    with regular_index(verb.data):
+        new_data = _evaluate_per_group(verb)
+        for col in new_data:
+            verb.data[col] = new_data[col]
+    return verb.data
 
 
 def create(verb):
     data = _get_base_dataframe(verb.data)
-    new_data = _evaluate_expressions_per_group(verb)
-    for col in new_data:
-        data[col] = new_data[col]
+    verb.env = verb.env.with_outer_namespace(_outer_namespace)
+    with regular_index(verb.data, data):
+        new_data = _evaluate_per_group(verb)
+        for col in new_data:
+            data[col] = new_data[col]
     return data
 
 
@@ -164,7 +166,7 @@ def group_indices(verb):
     else:
         data = create(verb)
 
-    indices_dict = data.groupby(groups).indices
+    indices_dict = data.groupby(groups, sort=False).indices
     indices = -np.ones(len(data), dtype=int)
     for i, (_, idx) in enumerate(sorted(indices_dict.items())):
         indices[idx] = i
@@ -173,22 +175,9 @@ def group_indices(verb):
 
 
 def summarize(verb):
-    cols = verb.new_columns
-    exprs = verb.expressions
-    data = verb.data
-
-    env = verb.env.with_outer_namespace(_aggregate_functions)
-    env = env.with_outer_namespace({'Q': Q})
-
-    try:
-        grouper = data.groupby(data.plydata_groups)
-    except AttributeError:
-        data = _evaluate_summarize_expressions(exprs, cols, env, data)
-    else:
-        dfs = [_evaluate_summarize_expressions(exprs, cols, env, gdf)
-               for _, gdf in grouper]
-        data = pd.concat(dfs, axis=0, ignore_index=True)
-
+    verb.env = verb.env.with_outer_namespace(_outer_namespace)
+    with regular_index(verb.data):
+        data = _evaluate_per_group(verb, keep_index=False)
     return data
 
 
@@ -202,17 +191,30 @@ def query(verb):
 
 
 def do(verb):
+    verb.env = get_empty_env()
     if verb.single_function:
-        return _do_single_function(verb)
+        verb.new_columns = None
+        verb.expressions = verb.single_function
+        keep_index = True
     else:
-        return _do_functions(verb)
+        verb.new_columns = verb.columns
+        verb.expressions = verb.functions
+        keep_index = False
+
+    with regular_index(verb.data):
+        data = _evaluate_per_group(verb, keep_index)
+
+    if (len(verb.data.index) == len(data.index)):
+        data.index = verb.data.index
+
+    return data
 
 
 def head(verb):
     if isinstance(verb.data, GroupedDataFrame):
-        grouper = verb.data.groupby(verb.data.plydata_groups)
+        grouper = verb.data.groupby(verb.data.plydata_groups, sort=False)
         dfs = [gdf.head(verb.n) for _, gdf in grouper]
-        data = pd.concat(dfs, axis=0, ignore_index=True)
+        data = pd.concat(dfs, axis=0, ignore_index=True, copy=False)
         data.plydata_groups = list(verb.data.plydata_groups)
     else:
         data = verb.data.head(verb.n)
@@ -222,9 +224,9 @@ def head(verb):
 
 def tail(verb):
     if isinstance(verb.data, GroupedDataFrame):
-        grouper = verb.data.groupby(verb.data.plydata_groups)
+        grouper = verb.data.groupby(verb.data.plydata_groups, sort=False)
         dfs = [gdf.tail(verb.n) for _, gdf in grouper]
-        data = pd.concat(dfs, axis=0, ignore_index=True)
+        data = pd.concat(dfs, axis=0, ignore_index=True, copy=False)
         data.plydata_groups = list(verb.data.plydata_groups)
     else:
         data = verb.data.tail(verb.n)
@@ -518,63 +520,71 @@ def _create_column(data, col, value):
     return data
 
 
-def _evaluate_expressions_per_group(verb):
+def _evaluate_per_group(verb, keep_index=True):
     """
     Evaluate Expressions and return the columns in a new dataframe
-    """
-    cols = verb.new_columns
-    exprs = verb.expressions
-    data = verb.data
-
-    try:
-        grouper = data.groupby(data.plydata_groups)
-    except AttributeError:
-        data = _evaluate_expressions(exprs, cols, verb.env, data)
-    else:
-        dfs = [_evaluate_expressions(exprs, cols, verb.env, gdf)
-               for _, gdf in grouper]
-        # When the indices do not match, the columns in the
-        # evaluated data may create NaN values when inserted
-        # into the original dataframe.
-        data = pd.concat(dfs, axis=0, ignore_index=True)
-        data.index = verb.data.index
-    return data
-
-
-def _evaluate_expressions(expressions, columns, env, gdf):
-    """
-    Evaluate Expressions and return the columns in a new dataframe
-    """
-    # return the length of the dataframe.
-    # Part of the public API
-    def n():
-        return len(gdf)
-
-    data = pd.DataFrame(index=gdf.index)
-    env = env.with_outer_namespace({'Q': Q, 'n': n})
-    for col, expr in zip(columns, expressions):
-        if isinstance(expr, str):
-            value = env.eval(expr, inner_namespace=gdf)
-        else:
-            value = expr
-
-        _create_column(data, col, value)
-
-    return _add_group_columns(data, gdf)
-
-
-def _evaluate_summarize_expressions(expressions, columns, env, gdf):
-    """
-    Evaluate expressions to create a dataframe.
 
     Parameters
     ----------
-    expressions : list of str
-    columns : list of str
-    env : environment
+    verb : object
+        verb.data should have a regular index (RangeIndex).
+    keep_index : bool
+        If True, the evaluation method *tries* to create a
+        dataframe with the same index as the original.
+        Ultimately whether this succeeds depends on the
+        expressions to be evaluated.
+    """
+    # assert isinstance(verb.data.index, pd.RangeIndex)
+    try:
+        groups = verb.data.plydata_groups
+    except AttributeError:
+        data = _evaluate(verb, verb.data, keep_index)
+    else:
+        grouper = verb.data.groupby(groups, sort=False)
+        dfs = [_evaluate(verb, gdf, keep_index) for _, gdf in grouper]
+        data = pd.concat(dfs, axis=0, ignore_index=False, copy=False)
+
+        # groupby can mixup the rows. We try to maintain the original
+        # order, but we can only do that if the result has a one to
+        # one relationship with the original
+        one2one = (
+            keep_index and
+            not any(data.index.duplicated()) and
+            len(data.index) == len(verb.data.index))
+        if one2one:
+            data = data.sort_index()
+        else:
+            data.reset_index(drop=True, inplace=True)
+
+        # Maybe this should happen in the verb functions
+        try:
+            keep_groups = verb.keep_groups
+        except AttributeError:
+            keep_groups = True
+        finally:
+            if keep_groups:
+                data.plydata_groups = list(groups)
+
+    return data
+
+
+def _evaluate(verb, gdf, keep_index=True):
+    """
+    Evaluate verb expressions and return a new dataframe
+
+    Parameters
+    ----------
+    verb : object
+        An object with *expressions*, *new_columns* and
+        *env* attributes.
     gdf : dataframe
         Dataframe where all items are assumed to belong to the
         same group.
+    keep_index : bool
+        If True, the evaluation method *tries* to create a
+        dataframe with the same index as the original.
+        Ultimately whether this succeeds depends on the
+        expressions to be evaluated.
 
     This excutes an *apply* part of the *split-apply-combine*
     data manipulation strategy. Callers of the function do
@@ -605,100 +615,54 @@ def _evaluate_summarize_expressions(expressions, columns, env, gdf):
     3 b  3
 
     Create the other parameters
-
-    >>> env = get_empty_env()
-    >>> columns = ['ysq', 'ycubed']
-    >>> expressions = ['y**2', 'y**3']
+    >>> verb = type('verb', (object,), {})
+    >>> verb.env = get_empty_env()
+    >>> verb.new_columns = ['ysq', 'ycubed']
+    >>> verb.expressions = ['y**2', 'y**3']
 
     Finally, the *apply*
 
-    >>> _evaluate_summarize_expressions(expressions, columns, env, gdf)
+    >>> _evaluate(verb, gdf)
        x  ysq  ycubed
-    0  b    4       8
-    1  b    9      27
+    2  b    4       8
+    3  b    9      27
 
     The caller does the *combine*, for one or more of these
     results.
     """
-    # Extra aggregate function that the user references with
-    # the name `n()`. It returns the length of the dataframe.
-    # It is part of the public API
     def n():
+        """
+        Return number of rows in groups
+
+        This function is part of the public API
+        """
         return len(gdf)
 
-    data = pd.DataFrame()
-    with temporary_key(_aggregate_functions, 'n', n):
-        for col, expr in zip(columns, expressions):
-            if isinstance(expr, str):
-                value = env.eval(expr, inner_namespace=gdf)
-            else:
-                value = expr
-
-            data = _create_column(data, col, value)
-
-    return _add_group_columns(data, gdf)
-
-
-def _evaluate_do_single_function(function, gdf):
-    """
-    Evaluate an expression to create a dataframe.
-
-    Similar to :func:`_evaluate_summarize_expressions`, but for the
-    ``do`` operation.
-    """
     gdf.is_copy = None
-    data = function(gdf)
-    return _add_group_columns(data, gdf)
+    result_index = gdf.index if keep_index else []
+    data = pd.DataFrame(index=result_index)
+    expressions = verb.expressions
+    new_columns = verb.new_columns
 
+    with temporary_key(_outer_namespace, 'n', n):
+        if expressions is not None and new_columns is not None:
+            for col, expr in zip(new_columns, expressions):
+                if isinstance(expr, str):
+                    value = verb.env.eval(expr, inner_namespace=gdf)
+                elif callable(expr):
+                    value = expr(gdf)
+                else:
+                    value = expr
 
-def _evaluate_do_functions(functions, columns, gdf):
-    """
-    Evaluate functions to create a dataframe.
+                _create_column(data, col, value)
+        elif callable(expressions):
+            data = expressions(gdf)
+        else:
+            raise TypeError(
+                "{} cannot evaluate object of type "
+                "{}".format(type(verb), type(verb.expressions)))
 
-    Similar to :func:`_evaluate_summarize_expressions`, but for the
-    ``do`` operation.
-    """
-    gdf.is_copy = None
-    data = pd.DataFrame()
-    for col, func in zip(columns, functions):
-        value = func(gdf)
-        data = _create_column(data, col, value)
-
-    return _add_group_columns(data, gdf)
-
-
-def _do_single_function(verb):
-    func = verb.single_function
-    data = verb.data
-
-    try:
-        groups = data.plydata_groups
-    except AttributeError:
-        data = _evaluate_do_single_function(func, data)
-    else:
-        dfs = [_evaluate_do_single_function(func, gdf)
-               for _, gdf in data.groupby(groups)]
-        data = pd.concat(dfs, axis=0, ignore_index=True)
-        data.plydata_groups = list(groups)
-
-    return data
-
-
-def _do_functions(verb):
-    cols = verb.columns
-    funcs = verb.functions
-    data = verb.data
-
-    try:
-        groups = data.plydata_groups
-    except AttributeError:
-        data = _evaluate_do_functions(funcs, cols, data)
-    else:
-        dfs = [_evaluate_do_functions(funcs, cols, gdf)
-               for _, gdf in data.groupby(groups)]
-        data = pd.concat(dfs, axis=0, ignore_index=True)
-        data.plydata_groups = list(groups)
-
+    data = _add_group_columns(data, gdf)
     return data
 
 
@@ -735,7 +699,7 @@ def _n_distinct(arr):
     return len(pd.unique(arr))
 
 
-_aggregate_functions = {
+_outer_namespace = {
     'min': np.min,
     'max': np.max,
     'sum': np.sum,
@@ -748,4 +712,5 @@ _aggregate_functions = {
     'nth': _nth,
     'n_distinct': _n_distinct,
     'n_unique': _n_distinct,
+    'Q': Q
 }

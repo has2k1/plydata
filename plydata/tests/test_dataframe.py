@@ -53,7 +53,7 @@ def test_define():
 
     # Works with group_by
     result = df >> group_by('x < 3') >> define(z='len(x)')
-    assert all(result['z'] == [1, 2, 2])
+    assert all(result['z'] == [2, 2, 1])
 
     # Potentially problematic index
     def non_range_index_func(s):
@@ -110,7 +110,7 @@ def test_create():
 
     # Works with group_by
     result = df >> group_by('x < 3') >> create(z='len(x)')
-    assert all(result['z'] == [1, 2, 2])
+    assert all(result['z'] == [2, 2, 1])
 
 
 def test_sample_n():
@@ -430,10 +430,6 @@ def test_do():
     def intercept(x, y):
         return y.values[0] - slope(x, y) * x.values[0]
 
-    def reuse_gdf_func(gdf):
-        gdf['c'] = 0
-        return gdf
-
     df1 = df >> group_by('z') >> do(least_squares)
     df2 = df >> group_by('z') >> do(
         slope=lambda gdf: slope(gdf.x, gdf.y),
@@ -455,9 +451,6 @@ def test_do():
     npt.assert_array_almost_equal(df1['intercept'],  df2['intercept'])
     npt.assert_array_almost_equal(df1['slope'],  df2['slope'])
 
-    result = df >> group_by('z') >> do(reuse_gdf_func)
-    assert result.loc[0, 'c'] == 0
-
     # No groups (Test with pass-through functions)
     df1 = df >> do(lambda gdf: gdf)
     df2 = df >> do(
@@ -470,6 +463,47 @@ def test_do():
     cols = list('xyzw')
     assert all(df[cols] == df1[cols])
     assert all(df[cols] == df2[cols])
+
+    # Reordered data so that the groups are not all
+    # bunched together
+    df = pd.DataFrame({'x': [2, 1, 2, 3],
+                       'y': [4, 2, 3, 3],
+                       'z': list('baab'),
+                       'w': pd.Categorical(list('baab')),
+                       },
+                      index=[3, 1, 0, 2]  # good index
+                      )
+
+    dfi = pd.DataFrame({'x': [2, 1, 2, 3],
+                        'y': [4, 2, 3, 3],
+                        'z': list('baab'),
+                        'w': pd.Categorical(list('baab')),
+                        },
+                       index=[3, 1, 0, 0]  # bad index
+                       )
+
+    # Reuse group dataframe
+    def sum_x(gdf):
+        gdf['sum_x'] = gdf['x'].sum()
+        return gdf
+
+    # When the group dataframe is reused and the
+    # index is good (no duplicates) the rows
+    # in the result should not be reordered
+    res = df >> group_by('z') >> do(sum_x)
+    assert df['x'].equals(res['x'])
+    assert all(res['sum_x'] == [5, 3, 3, 5])
+
+    # Can use string evaluation
+    res = df >> group_by('z') >> do(n='len(x)')
+    assert all(res['z'] == ['b', 'a'])
+    assert all(res['n'] == [2, 2])
+
+    # bad index is handled correctly
+    res = dfi >> group_by('z') >> do(sum_x)
+    assert dfi.index.equals(res.index)
+    assert dfi['x'].equals(res['x'])
+    assert all(res['sum_x'] == [5, 3, 3, 5])
 
     # Branches
     with pytest.raises(ValueError):
@@ -484,6 +518,15 @@ def test_do():
         df >> group_by('w') >> do(
             least_squares,
             least_squares)
+
+    with pytest.raises(ValueError):
+        # More than one arg
+        df >> group_by('w') >> do(
+            least_squares,
+            least_squares)
+
+    with pytest.raises(TypeError):
+        df >> group_by('w') >> do('len(x)')
 
     # Potentially problematic index
     def non_range_index_func(gdf):
