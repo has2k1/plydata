@@ -644,23 +644,23 @@ def _evaluate(verb, gdf, keep_index=True):
     expressions = verb.expressions
     new_columns = verb.new_columns
 
-    with temporary_key(_outer_namespace, 'n', n):
-        if expressions is not None and new_columns is not None:
-            for col, expr in zip(new_columns, expressions):
-                if isinstance(expr, str):
-                    value = verb.env.eval(expr, inner_namespace=gdf)
-                elif callable(expr):
-                    value = expr(gdf)
-                else:
-                    value = expr
+    if expressions is not None and new_columns is not None:
+        for col, expr in zip(new_columns, expressions):
+            if isinstance(expr, str):
+                d = dict(gdf, n=n)
+                value = verb.env.eval(expr, inner_namespace=d)
+            elif callable(expr):
+                value = expr(gdf)
+            else:
+                value = expr
 
-                _create_column(data, col, value)
-        elif callable(expressions):
-            data = expressions(gdf)
-        else:
-            raise TypeError(
-                "{} cannot evaluate object of type "
-                "{}".format(type(verb), type(verb.expressions)))
+            _create_column(data, col, value)
+    elif callable(expressions):
+        data = expressions(gdf)
+    else:
+        raise TypeError(
+            "{} cannot evaluate object of type "
+            "{}".format(type(verb), type(verb.expressions)))
 
     data = _add_group_columns(data, gdf)
     return data
