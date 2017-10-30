@@ -15,10 +15,7 @@ Single table verbs
    :template: main.rst
 
    arrange
-   add_count
-   add_tally
    call
-   count
    create
    define
    define_where
@@ -38,11 +35,22 @@ Single table verbs
    select
    summarize
    tail
-   tally
    transmute
    ungroup
    unique
 
+Helpers
+-------
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   add_count
+   add_tally
+   count
+   tally
 
 Two table verbs
 ===============

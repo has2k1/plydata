@@ -16,7 +16,7 @@ class GroupedDataFrame(pd.DataFrame):
 
     def __init__(self, data=None, groups=None, **kwargs):
         super().__init__(data=data, **kwargs)
-        if groups:
+        if groups is not None:
             self.plydata_groups = list(groups)
 
     @property

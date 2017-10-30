@@ -2,6 +2,7 @@
 Verb implementations for a :class:`pandas.DataFrame`
 """
 
+import itertools
 import re
 import warnings
 from contextlib import suppress
@@ -12,26 +13,33 @@ import pandas.api.types as pdtypes
 
 from .grouped_datatypes import GroupedDataFrame
 from .options import get_option, options
-from .utils import temporary_key, Q, get_empty_env, regular_index
+from .utils import Q, get_empty_env, regular_index, unique
+from .utils import Expression
 
 
 def define(verb):
     if not get_option('modify_input_data'):
         verb.data = verb.data.copy()
 
+    if not verb.expressions:
+        return verb.data
+
     verb.env = verb.env.with_outer_namespace(_outer_namespace)
     with regular_index(verb.data):
-        new_data = _evaluate_per_group(verb)
+        new_data = Evaluator(verb).process()
         for col in new_data:
             verb.data[col] = new_data[col]
     return verb.data
+
+
+mutate = define
 
 
 def create(verb):
     data = _get_base_dataframe(verb.data)
     verb.env = verb.env.with_outer_namespace(_outer_namespace)
     with regular_index(verb.data, data):
-        new_data = _evaluate_per_group(verb)
+        new_data = Evaluator(verb, drop=True).process()
         for col in new_data:
             data[col] = new_data[col]
     return data
@@ -46,65 +54,8 @@ def sample_frac(verb):
 
 
 def select(verb):
-    columns = verb.data.columns
-    contains = verb.contains
-    matches = verb.matches
-    groups = _get_groups(verb)
-    conds = []
-
-    if verb.args:
-        _args = set(verb.args)
-        c1 = [x in _args for x in columns]
-        conds.append(c1)
-
-    if verb.startswith:
-        c2 = [isinstance(x, str) and x.startswith(verb.startswith)
-              for x in columns]
-        conds.append(c2)
-
-    if verb.endswith:
-        c3 = [isinstance(x, str) and x.endswith(verb.endswith)
-              for x in columns]
-        conds.append(c3)
-
-    if contains:
-        c4 = []
-        for col in columns:
-            if isinstance(col, str):
-                c4.append(any(s in col for s in contains))
-            else:
-                c4.append(False)
-        conds.append(c4)
-
-    if matches:
-        c5 = []
-        patterns = [x if hasattr(x, 'match') else re.compile(x)
-                    for x in matches]
-        for col in columns:
-            if isinstance(col, str):
-                c5.append(any(bool(p.match(col)) for p in patterns))
-            else:
-                c5.append(False)
-
-        conds.append(c5)
-
-    if groups:
-        _groups = set(groups)
-        c6 = [x in _groups for x in columns]
-        conds.append(c6)
-
-    if conds:
-        cond = np.logical_or.reduce(conds)
-    else:
-        cond = np.array([False]*len(columns))
-
-    if verb.drop:
-        cond = ~cond
-
-    data = verb.data.loc[:, cond]
-    if data.is_copy:
-        data.is_copy = None
-
+    columns = Selector.get(verb)
+    data = verb.data.loc[:, columns]
     return data
 
 
@@ -115,39 +66,46 @@ def rename(verb):
 
 
 def distinct(verb):
-    if verb.new_columns:
-        data = define(verb)
-    else:
-        data = verb.data
+    data = define(verb)
     return data.drop_duplicates(subset=verb.columns,
                                 keep=verb.keep)
 
 
 def arrange(verb):
-    name_gen = ('col_{}'.format(x) for x in range(100))
-    df = pd.DataFrame(index=verb.data.index)
-    env = verb.env.with_outer_namespace({'Q': Q})
-    for col, expr in zip(name_gen, verb.expressions):
-        try:
-            df[col] = verb.data[expr]
-        except KeyError:
-            df[col] = env.eval(expr, inner_namespace=verb.data)
+    # Do not evaluate if all statements correspond to
+    # columns already in the dataframe
+    stmts = [expr.stmt for expr in verb.expressions]
+    has_all_columns = all(stmt in verb.data for stmt in stmts)
+    if has_all_columns:
+        df = verb.data.loc[:, stmts]
+    else:
+        verb.env = verb.env.with_outer_namespace({'Q': Q})
+        df = Evaluator(verb, keep_index=True).process()
 
     if len(df.columns):
         sorted_index = df.sort_values(by=list(df.columns)).index
         data = verb.data.loc[sorted_index, :]
     else:
         data = verb.data
-
     return data
 
 
 def group_by(verb):
-    if not all(g in verb.data for g in verb.groups):
-        verb.data = define(verb)
+    verb.data = define(verb)
 
     copy = not get_option('modify_input_data')
-    return GroupedDataFrame(verb.data, verb.groups, copy=copy)
+
+    try:
+        verb.add_
+    except AttributeError:
+        groups = verb.groups
+    else:
+        groups = _get_groups(verb) + verb.groups
+
+    if groups:
+        return GroupedDataFrame(verb.data, groups, copy=copy)
+    else:
+        return pd.DataFrame(verb.data, copy=copy)
 
 
 def ungroup(verb):
@@ -177,7 +135,10 @@ def group_indices(verb):
 def summarize(verb):
     verb.env = verb.env.with_outer_namespace(_outer_namespace)
     with regular_index(verb.data):
-        data = _evaluate_per_group(verb, keep_index=False)
+        data = Evaluator(
+            verb,
+            keep_index=False,
+            keep_groups=False).process()
     return data
 
 
@@ -192,17 +153,14 @@ def query(verb):
 
 def do(verb):
     verb.env = get_empty_env()
+    keep_index = verb.single_function
     if verb.single_function:
-        verb.new_columns = None
-        verb.expressions = verb.single_function
-        keep_index = True
-    else:
-        verb.new_columns = verb.columns
-        verb.expressions = verb.functions
-        keep_index = False
+        if isinstance(verb.expressions[0].stmt, str):
+            raise TypeError(
+                "A single function for `do` cannot be a string")
 
     with regular_index(verb.data):
-        data = _evaluate_per_group(verb, keep_index)
+        data = Evaluator(verb, keep_index=keep_index).process()
 
     if (len(verb.data.index) == len(data.index)):
         data.index = verb.data.index
@@ -234,84 +192,23 @@ def tail(verb):
     return data
 
 
-def tally(verb):
-    # Prepare for summarize
-    verb.new_columns = ['n']
-    if verb.weights is not None:
-        if isinstance(verb.weights, str):
-            # Summarize will evaluate and sum up the weights
-            verb.weights = 'sum({})'.format(verb.weights)
-            verb.expressions = [verb.weights]
-        else:
-            # Do the summation here. The result does not depend
-            # on the dataframe.
-            verb.expressions = [np.sum(verb.weights)]
-    else:
-        verb.expressions = ['n()']
-
-    data = summarize(verb)
-    if verb.sort:
-        data = data.sort_values(by='n', ascending=False)
-        data.reset_index(drop=True, inplace=True)
-
-    return data
-
-
-def count(verb):
-    if (not isinstance(verb.data, GroupedDataFrame) and
-            verb.groups):
-        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
-    return tally(verb)
-
-
-def add_tally(verb):
-    verb.new_columns = ['n']
-
-    if verb.weights:
-        if isinstance(verb.weights, str):
-            verb.weights = 'sum({})'.format(verb.weights)
-        verb.expressions = [verb.weights]
-    else:
-        verb.expressions = ['n()']
-
-    data = define(verb)
-    if verb.sort:
-        data = data.sort_values(by='n')
-        data.reset_index(drop=True, inplace=True)
-
-    return data
-
-
-def add_count(verb):
-    remove_groups = False
-    if (not isinstance(verb.data, GroupedDataFrame) and
-            verb.groups):
-        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
-        remove_groups = True
-
-    data = add_tally(verb)
-    if remove_groups:
-        data = pd.DataFrame(data)
-    return data
-
-
 def modify_where(verb):
     if get_option('modify_input_data'):
         data = verb.data
     else:
         data = verb.data.copy()
-    idx = data.query(verb.where, global_dict=verb.env.namespace).index
-    qdf = data.loc[idx, :]
 
-    env = verb.env.with_outer_namespace({'Q': Q})
-    for col, expr in zip(verb.columns, verb.expressions):
+    # Evaluation uses queried data
+    idx = data.query(verb.where, global_dict=verb.env.namespace).index
+    verb.data = data.loc[idx, :]
+    verb.env = verb.env.with_outer_namespace({'Q': Q})
+    new_data = Evaluator(verb).process()
+
+    for col in new_data:
         # Do not create new columns, define does that
         if col not in data:
             raise KeyError("Column '{}' not in dataframe".format(col))
-        if isinstance(expr, str):
-            data.loc[idx, col] = env.eval(expr, inner_namespace=qdf)
-        else:
-            data.loc[idx, col] = expr
+        data.loc[idx, col] = new_data.loc[idx, col]
 
     return data
 
@@ -320,15 +217,11 @@ def define_where(verb):
     if not get_option('modify_input_data'):
         verb.data = verb.data.copy()
 
-    alt_expressions = [x[0] for x in verb.expressions]
-    default_expressions = [x[1] for x in verb.expressions]
-
     with options(modify_input_data=True):
-        verb.expressions = default_expressions
+        verb.expressions = verb.define_expressions
         verb.data = define(verb)
 
-        verb.columns = verb.new_columns
-        verb.expressions = alt_expressions
+        verb.expressions = verb.where_expressions
         data = modify_where(verb)
 
     return data
@@ -363,6 +256,69 @@ def call(verb):
         return func(*verb.args, **verb.kwargs)
     else:
         return verb.func(verb.data, *verb.args, **verb.kwargs)
+
+
+# Single table verb helpers
+
+
+def tally(verb):
+    # Prepare for summarize
+    if verb.weights is not None:
+        if isinstance(verb.weights, str):
+            # Summarize will evaluate and sum up the weights
+            stmt = 'sum({})'.format(verb.weights)
+        else:
+            # Do the summation here. The result does not depend
+            # on the dataframe.
+            stmt = np.sum(verb.weights)
+    else:
+        stmt = 'n()'
+
+    verb.expressions = [Expression(stmt, 'n')]
+    data = summarize(verb)
+    if verb.sort:
+        data = data.sort_values(by='n', ascending=False)
+        data.reset_index(drop=True, inplace=True)
+
+    return data
+
+
+def count(verb):
+    if (not isinstance(verb.data, GroupedDataFrame) and
+            verb.groups):
+        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
+    return tally(verb)
+
+
+def add_tally(verb):
+    if verb.weights:
+        if isinstance(verb.weights, str):
+            stmt = 'sum({})'.format(verb.weights)
+        else:
+            stmt = verb.weights
+    else:
+        stmt = 'n()'
+
+    verb.expressions = [Expression(stmt, 'n')]
+    data = define(verb)
+    if verb.sort:
+        data = data.sort_values(by='n')
+        data.reset_index(drop=True, inplace=True)
+
+    return data
+
+
+def add_count(verb):
+    remove_groups = False
+    if (not isinstance(verb.data, GroupedDataFrame) and
+            verb.groups):
+        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
+        remove_groups = True
+
+    data = add_tally(verb)
+    if remove_groups:
+        data = pd.DataFrame(data)
+    return data
 
 
 def inner_join(verb):
@@ -407,6 +363,7 @@ def semi_join(verb):
 
 
 # Helper functions
+
 
 def _get_groups(verb):
     """
@@ -551,150 +508,333 @@ def _create_column(data, col, value):
     return data
 
 
-def _evaluate_per_group(verb, keep_index=True):
+class Evaluator:
     """
-    Evaluate Expressions and return the columns in a new dataframe
+    Evaluator for expressions of a verb
 
     Parameters
     ----------
-    verb : object
-        verb.data should have a regular index (RangeIndex).
+    verb : verb
+        Verb with expressions to evaluate
     keep_index : bool
         If True, the evaluation method *tries* to create a
         dataframe with the same index as the original.
         Ultimately whether this succeeds depends on the
         expressions to be evaluated.
+    keep_groups : bool
+        If True, the resulting data will be grouped in the input
+        data was grouped.
+    drop : bool
+        If True drop unselected columns. (Used by create)
     """
-    # assert isinstance(verb.data.index, pd.RangeIndex)
-    try:
-        groups = verb.data.plydata_groups
-    except AttributeError:
-        data = _evaluate(verb, verb.data, keep_index)
-    else:
-        grouper = verb.data.groupby(groups, sort=False)
-        dfs = [_evaluate(verb, gdf, keep_index) for _, gdf in grouper]
-        data = pd.concat(dfs, axis=0, ignore_index=False, copy=False)
+    def __init__(self, verb, keep_index=True, keep_groups=True, drop=False):
+        self.data = verb.data
+        self.expressions = verb.expressions
+        self.env = get_empty_env() if verb.env is None else verb.env
+        self.keep_index = keep_index
+        self.keep_groups = keep_groups
+        self.drop = drop
+
+        try:
+            self.groups = verb.data.plydata_groups
+        except AttributeError:
+            self.groups = None
+
+    def process(self):
+        """
+        Run the expressions
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            Resulting data
+        """
+        # Short cut
+        if self._all_expressions_evaluated():
+            if self.drop:
+                # Drop extra columns. They do not correspond to
+                # any expressions.
+                columns = [expr.column for expr in self.expressions]
+                self.data = self.data.loc[:, columns]
+            return self.data
+
+        # group_by
+        # evaluate expressions
+        # combine columns
+        # concat group data
+        # clean up index and group
+        gdfs = self._get_group_dataframes()
+        gdfs = self._evaluate_expressions(gdfs)
+        data = self._concat(gdfs)
+        return data
+
+    def _all_expressions_evaluated(self):
+        """
+        Return True all expressions match with the columns
+
+        Saves some processor cycles
+        """
+        def present(expr):
+            return expr.stmt == expr.column and expr.column in self.data
+        return all(present(expr) for expr in self.expressions)
+
+    def _get_group_dataframes(self):
+        """
+        Get group dataframes
+
+        Returns
+        -------
+        out : tuple or generator
+            Group dataframes
+        """
+        if self.groups:
+            grouper = self.data.groupby(self.groups, sort=False)
+            return (gdf for _, gdf in grouper)
+        else:
+            return (self.data, )
+
+    def _evaluate_expressions(self, gdfs):
+        """
+        Evaluate all group dataframes
+
+        Parameters
+        ----------
+        gdfs : list
+            Dataframes for each group
+
+        Returns
+        -------
+        out : list
+            Result dataframes for each group
+        """
+        return (self._evaluate_group_dataframe(gdf)for gdf in gdfs)
+
+    def _evaluate_group_dataframe(self, gdf):
+        """
+        Evaluate a single group dataframe
+
+        Parameters
+        ----------
+        gdf : pandas.DataFrame
+            Input group dataframe
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            Result data
+        """
+        gdf.is_copy = None
+        result_index = gdf.index if self.keep_index else []
+        data = pd.DataFrame(index=result_index)
+        for expr in self.expressions:
+            value = expr.evaluate(gdf, self.env)
+            if isinstance(value, pd.DataFrame):
+                data = value
+                break
+            else:
+                _create_column(data, expr.column, value)
+        data = _add_group_columns(data, gdf)
+        return data
+
+    def _concat(self, gdfs):
+        """
+        Concatenate group dataframes
+        """
+        gdfs = list(gdfs)
+        data = pd.concat(gdfs, axis=0, ignore_index=False, copy=False)
 
         # groupby can mixup the rows. We try to maintain the original
         # order, but we can only do that if the result has a one to
         # one relationship with the original
         one2one = (
-            keep_index and
+            self.keep_index and
             not any(data.index.duplicated()) and
-            len(data.index) == len(verb.data.index))
+            len(data.index) == len(self.data.index))
         if one2one:
             data = data.sort_index()
         else:
             data.reset_index(drop=True, inplace=True)
 
         # Maybe this should happen in the verb functions
+        if self.keep_groups and self.groups:
+            data = GroupedDataFrame(data, groups=self.groups)
+        return data
+
+
+class Selector:
+    """
+    Helper to select columns of a verb
+    """
+    @classmethod
+    def select(cls, verb):
+        """
+        Return selected columns for the select verb
+
+        Parameters
+        ----------
+        verb : object
+            verb with the column selection attributes:
+
+                - names
+                - startswith
+                - endswith
+                - contains
+                - matches
+        """
+        columns = verb.data.columns
+        contains = verb.contains
+        matches = verb.matches
+
+        groups = _get_groups(verb)
+        names = verb.names
+        names_set = set(names)
+        groups_set = set(groups)
+        lst = [[]]
+
+        if names or groups:
+            # group variable missing from the selection are prepended
+            missing = [g for g in groups if g not in names_set]
+            missing_set = set(missing)
+            c1 = missing + [x for x in names if x not in missing_set]
+            lst.append(c1)
+
+        if verb.startswith:
+            c2 = [x for x in columns
+                  if isinstance(x, str) and x.startswith(verb.startswith)]
+            lst.append(c2)
+
+        if verb.endswith:
+            c3 = [x for x in columns if
+                  isinstance(x, str) and x.endswith(verb.endswith)]
+            lst.append(c3)
+
+        if contains:
+            c4 = []
+            for col in columns:
+                if (isinstance(col, str) and
+                        any(s in col for s in contains)):
+                    c4.append(col)
+            lst.append(c4)
+
+        if matches:
+            c5 = []
+            patterns = [x if hasattr(x, 'match') else re.compile(x)
+                        for x in matches]
+            for col in columns:
+                if isinstance(col, str):
+                    if any(bool(p.match(col)) for p in patterns):
+                        c5.append(col)
+
+            lst.append(c5)
+
+        selected = unique(list(itertools.chain(*lst)))
+
+        if verb.drop:
+            to_drop = [col for col in selected if col not in groups_set]
+            selected = [col for col in columns if col not in to_drop]
+
+        return selected
+
+    @classmethod
+    def get(cls, verb):
+        if not hasattr(verb, 'selector') and hasattr(verb, 'names'):
+            return cls.select(verb)
+
+
+def make_expressions(verb):
+    def partial(func, col, *args, **kwargs):
+        """
+        Make a function that acts on a column in a dataframe
+
+        Parameters
+        ----------
+        func : callable
+            Function
+        col : str
+            Column
+        args : tuple
+            Arguments to pass to func
+        kwargs : dict
+            Keyword arguments to func
+
+        Results
+        -------
+        new_func : callable
+            Function that takes a dataframe, and calls the
+            original function on a column in the dataframe.
+        """
+        def new_func(gdf):
+            return func(gdf[col], *args, **kwargs)
+
+        return new_func
+
+    def make_statement(func, col):
+        """
+        A statement of function called on a column in a dataframe
+
+        Parameters
+        ----------
+        func : str or callable
+            Function to call on a dataframe column
+        col : str
+            Column
+        """
+        if isinstance(func, str):
+            expr = '{}({})'.format(func, col)
+        elif callable(func):
+            expr = partial(func, col, *verb.args, **verb.kwargs)
+        else:
+            raise TypeError("{} is not a function".format(func))
+        return expr
+
+    def func_name(func):
+        """
+        Return name of a function.
+
+        If the function is `np.sin`, we return `sin`.
+        """
+        if isinstance(func, str):
+            return func
+
         try:
-            keep_groups = verb.keep_groups
+            return func.__name__
         except AttributeError:
-            keep_groups = True
-        finally:
-            if keep_groups:
-                data.plydata_groups = list(groups)
+            return ''
 
-    return data
-
-
-def _evaluate(verb, gdf, keep_index=True):
-    """
-    Evaluate verb expressions and return a new dataframe
-
-    Parameters
-    ----------
-    verb : object
-        An object with *expressions*, *new_columns* and
-        *env* attributes.
-    gdf : dataframe
-        Dataframe where all items are assumed to belong to the
-        same group.
-    keep_index : bool
-        If True, the evaluation method *tries* to create a
-        dataframe with the same index as the original.
-        Ultimately whether this succeeds depends on the
-        expressions to be evaluated.
-
-    This excutes an *apply* part of the *split-apply-combine*
-    data manipulation strategy. Callers of the function do
-    the *split* and the *combine*.
-
-    A peak into the function
-
-    >>> import pandas as pd
-    >>> from .utils import get_empty_env
-
-    A Dataframe with many groups
-
-    >>> df = GroupedDataFrame(
-    ...     {'x': list('aabbcc'),
-    ...      'y': [0, 1, 2, 3, 4, 5]
-    ...      }, groups=['x'])
-
-    Do a groupby and obtain a dataframe with a single group,
-    (i.e. the *split*)
-
-    >>> grouper = df.groupby(df.plydata_groups)
-    >>> group = 'b'      # The group we want to evalualte
-    >>> gdf = grouper.get_group(group)
-    >>> gdf
-    groups: ['x']
-      x  y
-    2 b  2
-    3 b  3
-
-    Create the other parameters
-    >>> verb = type('verb', (object,), {})
-    >>> verb.env = get_empty_env()
-    >>> verb.new_columns = ['ysq', 'ycubed']
-    >>> verb.expressions = ['y**2', 'y**3']
-
-    Finally, the *apply*
-
-    >>> _evaluate(verb, gdf)
-       x  ysq  ycubed
-    2  b    4       8
-    3  b    9      27
-
-    The caller does the *combine*, for one or more of these
-    results.
-    """
-    def n():
-        """
-        Return number of rows in groups
-
-        This function is part of the public API
-        """
-        return len(gdf)
-
-    gdf.is_copy = None
-    result_index = gdf.index if keep_index else []
-    data = pd.DataFrame(index=result_index)
-    expressions = verb.expressions
-    new_columns = verb.new_columns
-
-    if expressions is not None and new_columns is not None:
-        for col, expr in zip(new_columns, expressions):
-            if isinstance(expr, str):
-                d = dict(gdf, n=n)
-                value = verb.env.eval(expr, inner_namespace=d)
-            elif callable(expr):
-                value = expr(gdf)
-            else:
-                value = expr
-
-            _create_column(data, col, value)
-    elif callable(expressions):
-        data = expressions(gdf)
+    # Generate function names. They act as identifiers (postfixed
+    # to the original columns) in the new_column names.
+    if isinstance(verb.functions, (tuple, list)):
+        names = (func_name(func) for func in verb.functions)
+        names_and_functions = zip(names, verb.functions)
     else:
-        raise TypeError(
-            "{} cannot evaluate object of type "
-            "{}".format(type(verb), type(verb.expressions)))
+        names_and_functions = verb.functions.items()
 
-    data = _add_group_columns(data, gdf)
-    return data
+    # Create statements for the expressions
+    # and postfix identifiers
+    columns = Selector.get(verb)  # columns to act on
+    postfixes = []
+    stmts = []
+    for name, func in names_and_functions:
+        postfixes.append(name)
+        for col in columns:
+            stmts.append(make_statement(func, col))
+
+    if not stmts:
+        stmts = columns
+
+    # Names of the new columns
+    # e.g col1_mean, col2_mean, col1_std, col2_std
+    add_postfix = (isinstance(verb.functions, dict) or
+                   len(verb.functions) > 1)
+    if add_postfix:
+        fmt = '{}_{}'.format
+        new_columns = [fmt(c, p) for p in postfixes for c in columns]
+    else:
+        new_columns = columns
+
+    expressions = [Expression(stmt, col)
+                   for stmt, col in zip(stmts, new_columns)]
+    return expressions, new_columns
 
 
 def _join(verb):

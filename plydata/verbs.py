@@ -4,6 +4,7 @@ Verb Initializations
 import itertools
 
 from .operators import DataOperator, DoubleDataOperator
+from .utils import Expression
 
 __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
@@ -58,8 +59,6 @@ class define(DataOperator):
     If :obj:`plydata.options.modify_input_data` is ``True``,
     :class:`define` will modify the original dataframe.
     """
-    new_columns = None
-    expressions = None  # Expressions to create the new columns
 
     def __init__(self, *args, **kwargs):
         self.set_env_from_verb_init()
@@ -72,8 +71,11 @@ class define(DataOperator):
                 col, expr = arg
             cols.append(col)
             exprs.append(expr)
-        self.new_columns = list(itertools.chain(cols, kwargs.keys()))
-        self.expressions = list(itertools.chain(exprs, kwargs.values()))
+
+        _cols = itertools.chain(cols, kwargs.keys())
+        _exprs = itertools.chain(exprs, kwargs.values())
+        self.expressions = [Expression(stmt, col)
+                            for stmt, col in zip(_exprs, _cols)]
 
 
 class create(define):
@@ -234,7 +236,7 @@ class select(DataOperator):
     ----------
     data : dataframe, optional
         Useful when not using the ``>>`` operator.
-    args : tuple, optional
+    names : tuple, optional
         Names of columns in dataframe. Normally, they are strings.
     startswith : str or tuple, optional
         All column names that start with this string will be included.
@@ -265,17 +267,17 @@ class select(DataOperator):
     1     2        2
     2     3        3
     >>> df >> select('whistle',  endswith='ail')
-       nail  tail  whistle
-    0     1     1        1
-    1     2     2        2
-    2     3     3        3
+       whistle nail  tail
+    0        1    1     1
+    1        2    2     2
+    2        3    3     3
     >>> df >> select('bell',  matches='\w+tle$')
        bell  whistle
     0     1        1
     1     2        2
     2     3        3
     """
-    def __init__(self, *args, startswith=None, endswith=None,
+    def __init__(self, *names, startswith=None, endswith=None,
                  contains=None, matches=None, drop=False):
         def as_tuple(obj):
             if obj is None:
@@ -287,7 +289,7 @@ class select(DataOperator):
             else:
                 return (obj,)
 
-        self.args = args
+        self.names = names
         self.startswith = as_tuple(startswith)
         self.endswith = as_tuple(endswith)
         self.contains = as_tuple(contains)
@@ -412,8 +414,6 @@ class distinct(DataOperator):
     """
     columns = None
     keep = 'first'
-    new_columns = None
-    expressions = None  # Expressions to create the new columns
 
     def __init__(self, *args, **kwargs):
         self.set_env_from_verb_init()
@@ -434,12 +434,15 @@ class distinct(DataOperator):
             elif not isinstance(self.columns, list):
                 self.columns = list(self.columns)
 
-            self.new_columns = list(kwargs.keys())
-            self.expressions = list(kwargs.values())
-            self.columns.extend(self.new_columns)
+            _cols = list(kwargs.keys())
+            _exprs = list(kwargs.values())
+            self.columns.extend(_cols)
         else:
-            self.new_columns = []
-            self.expressions = []
+            _cols = []
+            _exprs = []
+
+        self.expressions = [Expression(stmt, col)
+                            for stmt, col in zip(_exprs, _cols)]
 
 
 class arrange(DataOperator):
@@ -488,7 +491,11 @@ class arrange(DataOperator):
 
     def __init__(self, *args):
         self.set_env_from_verb_init()
-        self.expressions = [x for x in args]
+        name_gen = ('col_{}'.format(x) for x in range(100))
+        self.expressions = [
+            Expression(stmt, col)
+            for stmt, col in zip(args, name_gen)
+        ]
 
 
 class group_by(define):
@@ -505,6 +512,9 @@ class group_by(define):
         name. The expression should be of type :class:`str` or
         an *interable* with the same number of elements as the
         dataframe.
+    add_ : bool, optional
+        If True, add to existing groups. Default is to create
+        new groups.
     kwargs : dict, optional
         ``{name: expression}`` pairs.
 
@@ -544,14 +554,14 @@ class group_by(define):
 
     >>> df >> group_by('y-1', xplus1='x+1') >> select('y')
     groups: ['y-1', 'xplus1']
-       y  y-1  xplus1
-    0  1    0       2
-    1  2    1       6
-    2  3    2       3
-    3  4    3       3
-    4  5    4       5
-    5  6    5       1
-    6  5    4       5
+       y-1  xplus1  y
+    0    0       2  1
+    1    1       6  2
+    2    2       3  3
+    3    3       3  4
+    4    4       5  5
+    5    5       1  6
+    6    4       5  5
 
     Note
     ----
@@ -560,11 +570,11 @@ class group_by(define):
     """
     groups = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, add_=False, **kwargs):
         self.set_env_from_verb_init()
         super().__init__(*args, **kwargs)
-        self.new_columns = list(self.new_columns)
-        self.groups = list(self.new_columns)
+        self.add_ = add_
+        self.groups = [expr.column for expr in self.expressions]
 
 
 class ungroup(DataOperator):
@@ -646,7 +656,7 @@ class group_indices(group_by):
     """
 
 
-class summarize(DataOperator):
+class summarize(define):
     """
     Summarise multiple values to a single value
 
@@ -741,23 +751,6 @@ class summarize(DataOperator):
        n()
     0    6
     """
-    new_columns = None
-    epressions = None  # Expressions to create the summary columns
-
-    def __init__(self, *args, **kwargs):
-        self.set_env_from_verb_init()
-        cols = []
-        exprs = []
-        for arg in args:
-            if isinstance(arg, str):
-                col = expr = arg
-            else:
-                col, expr = arg
-            cols.append(col)
-            exprs.append(expr)
-
-        self.new_columns = list(itertools.chain(cols, kwargs.keys()))
-        self.expressions = list(itertools.chain(exprs, kwargs.values()))
 
 
 class query(DataOperator):
@@ -867,6 +860,7 @@ class do(DataOperator):
     Demonstrating do
 
     >>> df >> group_by('z') >> do(least_squares)
+    groups: ['z']
        z  intercept  slope
     0  a        1.0    1.0
     1  b        6.0   -1.0
@@ -878,6 +872,7 @@ class do(DataOperator):
     ...     slope=lambda gdf: slope(gdf.x, gdf.y),
     ...     intercept=lambda gdf: intercept(gdf.x, gdf.y))
     >>> df2[['z', 'intercept', 'slope']]  # Ordered the same as above
+    groups: ['z']
        z  intercept  slope
     0  a        1.0    1.0
     1  b        6.0   -1.0
@@ -893,9 +888,7 @@ class do(DataOperator):
     You cannot have both a position argument and keyword
     arguments.
     """
-    single_function = None
-    columns = None
-    functions = None
+    single_function = False
 
     def __init__(self, *args, **kwargs):
         if args and kwargs:
@@ -907,10 +900,13 @@ class do(DataOperator):
                 "Got more than one positional argument.")
 
         if args:
-            self.single_function = args[0]
+            self.single_function = True
+            self.expressions = [Expression(args[0], None)]
         else:
-            self.columns = list(kwargs.keys())
-            self.functions = list(kwargs.values())
+            stmts_cols = zip(kwargs.values(), kwargs.keys())
+            self.expressions = [
+                Expression(stmt, col) for stmt, col in stmts_cols
+            ]
 
 
 class head(DataOperator):
@@ -991,6 +987,497 @@ class tail(DataOperator):
     """
     def __init__(self, n=5):
         self.n = n
+
+
+class modify_where(DataOperator):
+    """
+    Modify columns from of selected rows
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    where : str
+        The query to evaluate and find the rows to be modified.
+        You can refer to variables in the environment by prefixing
+        them with an '@' character like ``@a + b``. Allowed functions
+        are `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`,
+        `sinh`, `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`,
+        `arccosh`, `arcsinh`, `arctanh`, `abs` and `arctan2`.
+    args : tuple, optional
+        A single positional argument that holds
+        ``('column', expression)`` pairs. This is useful if
+        the *column* is not a valid python variable name.
+    kwargs : dict, optional
+        ``{column: expression}`` pairs. If all the columns to
+        be adjusted are valid python variable names, then they
+        can be specified as keyword arguments.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [0, 1, 2, 3, 4, 5],
+    ...     'y': [0, 1, 2, 3, 4, 5],
+    ...     'z': [0, 1, 2, 3, 4, 5]
+    ... })
+    >>> df >> modify_where('x%2 == 0', y='y*10', z='x-y')
+       x   y  z
+    0  0   0  0
+    1  1   1  1
+    2  2  20  0
+    3  3   3  3
+    4  4  40  0
+    5  5   5  5
+
+    Compared that to::
+
+        idx = df['x'] % 2 == 0
+        df.loc[idx, 'z'] = df.loc[idx, 'x'] - df.loc[idx, 'y']
+        df.loc[idx, 'y'] = df.loc[idx, 'y'] * 10
+
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`modify_where` will modify the original dataframe.
+
+    The ``where`` query expression and the expressions for the
+    ``args`` and ``kwargs`` use different evaluation engines.
+    In ``where``, you cannot use any other function calls or
+    refer to variables in the namespace without the ``@``
+    symbol.
+
+    To modify cells with ``NaN`` values use :class:`fillna`.
+    """
+
+    def __init__(self, where, *args, **kwargs):
+        self.set_env_from_verb_init()
+        self.where = where
+        cols = []
+        exprs = []
+        for arg in args:
+            try:
+                col, expr = arg
+            except (TypeError, ValueError):
+                raise ValueError(
+                    "Positional arguments must be a tuple of 2")
+            cols.append(col)
+            exprs.append(expr)
+
+        # self.columns = list(itertools.chain(cols, kwargs.keys()))
+        # self.expressions = list(itertools.chain(exprs, kwargs.values()))
+        _cols = itertools.chain(cols, kwargs.keys())
+        _exprs = itertools.chain(exprs, kwargs.values())
+        self.expressions = [Expression(stmt, col)
+                            for stmt, col in zip(_exprs, _cols)]
+
+
+class define_where(DataOperator):
+    """
+    Add column to DataFrame where the value is based on a condition
+
+    This verb is a combination of :class:`define` and
+    :class:`modify_where`.
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    where : str
+        The query to evaluate and find the rows to be modified.
+        You can refer to variables in the environment by prefixing
+        them with an '@' character like ``@a + b``. Allowed functions
+        are `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`,
+        `sinh`, `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`,
+        `arccosh`, `arcsinh`, `arctanh`, `abs` and `arctan2`.
+    args : tuple, optional
+        A single positional argument that holds
+        ``('column', 2-expressions)`` pairs. This is useful if
+        the *column* is not a valid python variable name.
+    kwargs : dict, optional
+        ``{column: 2-expressions}`` pairs. If all the columns to
+        be adjusted are valid python variable names, then they
+        can be specified as keyword arguments.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5]})
+    >>> df >> define_where('x%2 == 0', parity=("'even'", "'odd'"))
+       x parity
+    0  0   even
+    1  1    odd
+    2  2   even
+    3  3    odd
+    4  4   even
+    5  5    odd
+
+    This is equivalent to
+
+    >>> (df
+    ...  >> define(parity="'odd'")
+    ...  >> modify_where('x%2 == 0', parity="'even'"))
+       x parity
+    0  0   even
+    1  1    odd
+    2  2   even
+    3  3    odd
+    4  4   even
+    5  5    odd
+
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`define_where` will modify the original dataframe.
+    """
+
+    def __init__(self, where, *args, **kwargs):
+        self.set_env_from_verb_init()
+        self.where = where
+        cols = []
+        exprs = []
+        for arg in args:
+            try:
+                col, expr = arg
+            except (TypeError, ValueError):
+                raise ValueError(
+                    "Positional arguments must be a tuple of 2")
+            cols.append(col)
+            exprs.append(expr)
+
+        # Split up the expression into those that define the
+        # column and those that modify
+        _cols = list(itertools.chain(cols, kwargs.keys()))
+        _exprs = itertools.chain(exprs, kwargs.values())
+        _where = []
+        _define = []
+        for (stmt_where, stmt_define), col in zip(_exprs, _cols):
+            _where.append(Expression(stmt_where, col))
+            _define.append(Expression(stmt_define, col))
+
+        self.define_expressions = _define
+        self.where_expressions = _where
+
+
+class dropna(DataOperator):
+    """
+    Remove rows or columns with missing values
+
+    This is a wrapper around :meth:`pandas.DataFrame.dropna`. It
+    is useful because you cannot :class:`query` ``NaN`` values.
+
+    Parameters
+    ----------
+    axis : {0 or 'index', 1 or 'columns'}, or tuple/list thereof
+        Pass tuple or list to drop on multiple axes
+    how : {'any', 'all'}
+        * any : if any NA values are present, drop that label
+        * all : if all values are NA, drop that label
+    thresh : int, default None
+        int value : require that many non-NA values
+    subset : array-like
+        Labels along other axis to consider, e.g. if you are
+        dropping rows these would be a list of columns to include
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...     'w': [1, 2, np.nan, 4, 5],
+    ...     'x': [np.nan, 2, np.nan, 4, 5],
+    ...     'y': [np.nan] * 4 + [5],
+    ...     'z': [np.nan] * 5
+    ... })
+    >>> df
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  NaN  NaN  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Drop rows with any ``NaN`` values
+
+    >>> df >> dropna()
+    Empty DataFrame
+    Columns: [w, x, y, z]
+    Index: []
+
+    Drop rows with all ``NaN`` values
+
+    >>> df >> dropna(how='all')
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Drop rows with ``NaN`` values in the *x* column.
+
+    >>> df >> dropna(subset=['x'])
+         w    x    y   z
+    1  2.0  2.0  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Drop and keep rows atleast 3 ``non-NaN`` values
+
+    >>> df >> dropna(thresh=3)
+         w    x    y   z
+    4  5.0  5.0  5.0 NaN
+
+    Drop columns with all ``NaN`` values
+
+    >>> df >> dropna(axis=1, how='all')
+         w    x    y
+    0  1.0  NaN  NaN
+    1  2.0  2.0  NaN
+    2  NaN  NaN  NaN
+    3  4.0  4.0  NaN
+    4  5.0  5.0  5.0
+
+    Drop columns with any ``NaN`` values in row 3.
+
+    >>> df >> dropna(axis=1, subset=[3])
+         w    x
+    0  1.0  NaN
+    1  2.0  2.0
+    2  NaN  NaN
+    3  4.0  4.0
+    4  5.0  5.0
+    """
+
+    def __init__(self, axis=0, how='any', thresh=None, subset=None):
+        self.axis = axis
+        self.how = how
+        self.thresh = thresh
+        self.subset = subset
+
+
+class fillna(DataOperator):
+    """
+    Fill NA/NaN values using the specified method
+
+    This is a wrapper around :meth:`pandas.DataFrame.fillna`. It
+    is useful because you cannot :class:`modify_where` ``NaN``
+    values.
+
+    Parameters
+    ----------
+    value : scalar, dict, Series, or DataFrame
+        Value to use to fill holes (e.g. 0), alternately a
+        dict/Series/DataFrame of values specifying which value to
+        use for each index (for a Series) or column (for a DataFrame).
+        (values not in the dict/Series/DataFrame will not be filled).
+        This value cannot be a list.
+    method : {'backfill', 'bfill', 'pad', 'ffill', None}, default None
+        Method to use for filling holes in reindexed Series
+        pad / ffill: propagate last valid observation forward to next
+        valid backfill / bfill: use NEXT valid observation to fill gap
+    axis : {0 or 'index', 1 or 'columns'}
+    inplace : boolean, default False
+        If True, fill in place. Note: this will modify any
+        other views on this object, (e.g. a no-copy slice for a column
+        in a DataFrame).
+    limit : int, default None
+        If method is specified, this is the maximum number of
+        consecutive NaN values to forward/backward fill. In other
+        words, if there is a gap with more than this number of
+        consecutive NaNs, it will only be partially filled. If method
+        is not specified, this is the maximum number of entries along
+        the entire axis where NaNs will be filled. Must be greater
+        than 0 if not None.
+    downcast : dict, default is None
+        a dict of item->dtype of what to downcast if possible, or the
+        string 'infer' which will try to downcast to an appropriate
+        equal type (e.g. float64 to int64 if possible)
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...     'w': [1, 2, np.nan, 4, 5],
+    ...     'x': [np.nan, 2, np.nan, 4, 5],
+    ...     'y': [np.nan] * 4 + [5],
+    ...     'z': [np.nan] * 5
+    ... })
+    >>> df
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  NaN  NaN  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace all ``NaN`` values with -1.
+
+    >>> df >> fillna(-1)
+         w    x    y    z
+    0  1.0 -1.0 -1.0 -1.0
+    1  2.0  2.0 -1.0 -1.0
+    2 -1.0 -1.0 -1.0 -1.0
+    3  4.0  4.0 -1.0 -1.0
+    4  5.0  5.0  5.0 -1.0
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value *above
+    in column*
+
+    >>> df >> fillna(method='ffill')
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  2.0  2.0  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value *below
+    in column*
+
+    >>> df >> fillna(method='bfill')
+         w    x    y   z
+    0  1.0  2.0  5.0 NaN
+    1  2.0  2.0  5.0 NaN
+    2  4.0  4.0  5.0 NaN
+    3  4.0  4.0  5.0 NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace atmost 2 ``NaN`` values with the first ``non-NaN`` value
+    *below in column*
+
+    >>> df >> fillna(method='bfill', limit=2)
+         w    x    y   z
+    0  1.0  2.0  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  4.0  4.0  5.0 NaN
+    3  4.0  4.0  5.0 NaN
+    4  5.0  5.0  5.0 NaN
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value to the
+    *left in the row*
+
+    >>> df >> fillna(method='ffill', axis=1)
+         w    x    y    z
+    0  1.0  1.0  1.0  1.0
+    1  2.0  2.0  2.0  2.0
+    2  NaN  NaN  NaN  NaN
+    3  4.0  4.0  4.0  4.0
+    4  5.0  5.0  5.0  5.0
+
+    Replace all ``NaN`` values with the first ``non-NaN`` value to the
+    *right in the row*
+
+    >>> df >> fillna(method='bfill', axis=1)
+         w    x    y   z
+    0  1.0  NaN  NaN NaN
+    1  2.0  2.0  NaN NaN
+    2  NaN  NaN  NaN NaN
+    3  4.0  4.0  NaN NaN
+    4  5.0  5.0  5.0 NaN
+
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`modify_where` will modify the original dataframe.
+    """
+
+    def __init__(self, value=None, method=None, axis=None, limit=None,
+                 downcast=None):
+        self.value = value
+        self.method = method
+        self.axis = axis
+        self.limit = limit
+        self.downcast = downcast
+
+
+class call(DataOperator):
+    """
+    Call external function or dataframe method
+
+    This is a special verb; it turns regular functions and
+    dataframe instance methods into verb instances that you
+    can pipe to. It reduces the times one needs to break out
+    of the piping workflow.
+
+    Parameters
+    ----------
+    func : callable or str
+        A function that accepts a dataframe as the first argument.
+        Dataframe methods are specified using strings and
+        preferrably they should start with a period,
+        e.g ``'.reset_index'``
+    *args : tuple
+        Second, third, fourth, ... arguments to ``func``
+    **kwargs : dict
+        Keyword arguments to ``func``
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...     'A': {0: 'a', 1: 'b', 2: 'c'},
+    ...     'B': {0: 1, 1: 3, 2: 5},
+    ...     'C': {0: 2, 1: 4, 2: np.nan}
+    ... })
+    >>> df
+       A  B    C
+    0  a  1  2.0
+    1  b  3  4.0
+    2  c  5  NaN
+
+    Using an external function
+
+    >>> df >> call(pd.melt)
+      variable value
+    0        A     a
+    1        A     b
+    2        A     c
+    3        B     1
+    4        B     3
+    5        B     5
+    6        C     2
+    7        C     4
+    8        C   NaN
+
+    An external function with arguments
+
+    >>> df >> call(pd.melt, id_vars=['A'], value_vars=['B'])
+       A variable  value
+    0  a        B      1
+    1  b        B      3
+    2  c        B      5
+
+    A method on the dataframe
+
+    >>> df >> call('.dropna', axis=1)
+       A  B
+    0  a  1
+    1  b  3
+    2  c  5
+
+    >>> (df
+    ...  >> call(pd.melt)
+    ...  >> query('variable != "B"')
+    ...  >> call('.reset_index', drop=True)
+    ...  )
+      variable value
+    0        A     a
+    1        A     b
+    2        A     c
+    3        C     2
+    4        C     4
+    5        C   NaN
+    """
+
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+
+# Single table verb helpers
 
 
 class tally(DataOperator):
@@ -1372,480 +1859,6 @@ class add_count(count):
     :class:`add_tally`
     """
 
-
-class modify_where(DataOperator):
-    """
-    Modify columns from of selected rows
-
-    Parameters
-    ----------
-    data : dataframe, optional
-        Useful when not using the ``>>`` operator.
-    where : str
-        The query to evaluate and find the rows to be modified.
-        You can refer to variables in the environment by prefixing
-        them with an '@' character like ``@a + b``. Allowed functions
-        are `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`,
-        `sinh`, `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`,
-        `arccosh`, `arcsinh`, `arctanh`, `abs` and `arctan2`.
-    args : tuple, optional
-        A single positional argument that holds
-        ``('column', expression)`` pairs. This is useful if
-        the *column* is not a valid python variable name.
-    kwargs : dict, optional
-        ``{column: expression}`` pairs. If all the columns to
-        be adjusted are valid python variable names, then they
-        can be specified as keyword arguments.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> df = pd.DataFrame({
-    ...     'x': [0, 1, 2, 3, 4, 5],
-    ...     'y': [0, 1, 2, 3, 4, 5],
-    ...     'z': [0, 1, 2, 3, 4, 5]
-    ... })
-    >>> df >> modify_where('x%2 == 0', y='y*10', z='x-y')
-       x   y  z
-    0  0   0  0
-    1  1   1  1
-    2  2  20  0
-    3  3   3  3
-    4  4  40  0
-    5  5   5  5
-
-    Compared that to::
-
-        idx = df['x'] % 2 == 0
-        df.loc[idx, 'z'] = df.loc[idx, 'x'] - df.loc[idx, 'y']
-        df.loc[idx, 'y'] = df.loc[idx, 'y'] * 10
-
-    Note
-    ----
-    If :obj:`plydata.options.modify_input_data` is ``True``,
-    :class:`modify_where` will modify the original dataframe.
-
-    The ``where`` query expression and the expressions for the
-    ``args`` and ``kwargs`` use different evaluation engines.
-    In ``where``, you cannot use any other function calls or
-    refer to variables in the namespace without the ``@``
-    symbol.
-
-    To modify cells with ``NaN`` values use :class:`fillna`.
-    """
-
-    def __init__(self, where, *args, **kwargs):
-        self.set_env_from_verb_init()
-        self.where = where
-        cols = []
-        exprs = []
-        for arg in args:
-            try:
-                col, expr = arg
-            except (TypeError, ValueError):
-                raise ValueError(
-                    "Positional arguments must be a tuple of 2")
-            cols.append(col)
-            exprs.append(expr)
-
-        self.columns = list(itertools.chain(cols, kwargs.keys()))
-        self.expressions = list(itertools.chain(exprs, kwargs.values()))
-
-
-class define_where(DataOperator):
-    """
-    Add column to DataFrame where the value is based on a condition
-
-    This verb is a combination of :class:`define` and
-    :class:`modify_where`.
-
-    Parameters
-    ----------
-    data : dataframe, optional
-        Useful when not using the ``>>`` operator.
-    where : str
-        The query to evaluate and find the rows to be modified.
-        You can refer to variables in the environment by prefixing
-        them with an '@' character like ``@a + b``. Allowed functions
-        are `sin`, `cos`, `exp`, `log`, `expm1`, `log1p`, `sqrt`,
-        `sinh`, `cosh`, `tanh`, `arcsin`, `arccos`, `arctan`,
-        `arccosh`, `arcsinh`, `arctanh`, `abs` and `arctan2`.
-    args : tuple, optional
-        A single positional argument that holds
-        ``('column', 2-expressions)`` pairs. This is useful if
-        the *column* is not a valid python variable name.
-    kwargs : dict, optional
-        ``{column: 2-expressions}`` pairs. If all the columns to
-        be adjusted are valid python variable names, then they
-        can be specified as keyword arguments.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5]})
-    >>> df >> define_where('x%2 == 0', parity=("'even'", "'odd'"))
-       x parity
-    0  0   even
-    1  1    odd
-    2  2   even
-    3  3    odd
-    4  4   even
-    5  5    odd
-
-    This is equivalent to
-
-    >>> (df
-    ...  >> define(parity="'odd'")
-    ...  >> modify_where('x%2 == 0', parity="'even'"))
-       x parity
-    0  0   even
-    1  1    odd
-    2  2   even
-    3  3    odd
-    4  4   even
-    5  5    odd
-
-    Note
-    ----
-    If :obj:`plydata.options.modify_input_data` is ``True``,
-    :class:`define_where` will modify the original dataframe.
-    """
-    new_columns = None
-    expressions = None  # Expressions to create the new columns
-
-    def __init__(self, where, *args, **kwargs):
-        self.set_env_from_verb_init()
-        self.where = where
-        cols = []
-        exprs = []
-        for arg in args:
-            try:
-                col, expr = arg
-            except (TypeError, ValueError):
-                raise ValueError(
-                    "Positional arguments must be a tuple of 2")
-            cols.append(col)
-            exprs.append(expr)
-        self.new_columns = list(itertools.chain(cols, kwargs.keys()))
-        self.expressions = list(itertools.chain(exprs, kwargs.values()))
-
-
-class dropna(DataOperator):
-    """
-    Remove rows or columns with missing values
-
-    This is a wrapper around :meth:`pandas.DataFrame.dropna`. It
-    is useful because you cannot :class:`query` ``NaN`` values.
-
-    Parameters
-    ----------
-    axis : {0 or 'index', 1 or 'columns'}, or tuple/list thereof
-        Pass tuple or list to drop on multiple axes
-    how : {'any', 'all'}
-        * any : if any NA values are present, drop that label
-        * all : if all values are NA, drop that label
-    thresh : int, default None
-        int value : require that many non-NA values
-    subset : array-like
-        Labels along other axis to consider, e.g. if you are
-        dropping rows these would be a list of columns to include
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> df = pd.DataFrame({
-    ...     'w': [1, 2, np.nan, 4, 5],
-    ...     'x': [np.nan, 2, np.nan, 4, 5],
-    ...     'y': [np.nan] * 4 + [5],
-    ...     'z': [np.nan] * 5
-    ... })
-    >>> df
-         w    x    y   z
-    0  1.0  NaN  NaN NaN
-    1  2.0  2.0  NaN NaN
-    2  NaN  NaN  NaN NaN
-    3  4.0  4.0  NaN NaN
-    4  5.0  5.0  5.0 NaN
-
-    Drop rows with any ``NaN`` values
-
-    >>> df >> dropna()
-    Empty DataFrame
-    Columns: [w, x, y, z]
-    Index: []
-
-    Drop rows with all ``NaN`` values
-
-    >>> df >> dropna(how='all')
-         w    x    y   z
-    0  1.0  NaN  NaN NaN
-    1  2.0  2.0  NaN NaN
-    3  4.0  4.0  NaN NaN
-    4  5.0  5.0  5.0 NaN
-
-    Drop rows with ``NaN`` values in the *x* column.
-
-    >>> df >> dropna(subset=['x'])
-         w    x    y   z
-    1  2.0  2.0  NaN NaN
-    3  4.0  4.0  NaN NaN
-    4  5.0  5.0  5.0 NaN
-
-    Drop and keep rows atleast 3 ``non-NaN`` values
-
-    >>> df >> dropna(thresh=3)
-         w    x    y   z
-    4  5.0  5.0  5.0 NaN
-
-    Drop columns with all ``NaN`` values
-
-    >>> df >> dropna(axis=1, how='all')
-         w    x    y
-    0  1.0  NaN  NaN
-    1  2.0  2.0  NaN
-    2  NaN  NaN  NaN
-    3  4.0  4.0  NaN
-    4  5.0  5.0  5.0
-
-    Drop columns with any ``NaN`` values in row 3.
-
-    >>> df >> dropna(axis=1, subset=[3])
-         w    x
-    0  1.0  NaN
-    1  2.0  2.0
-    2  NaN  NaN
-    3  4.0  4.0
-    4  5.0  5.0
-    """
-
-    def __init__(self, axis=0, how='any', thresh=None, subset=None):
-        self.axis = axis
-        self.how = how
-        self.thresh = thresh
-        self.subset = subset
-
-
-class fillna(DataOperator):
-    """
-    Fill NA/NaN values using the specified method
-
-    This is a wrapper around :meth:`pandas.DataFrame.fillna`. It
-    is useful because you cannot :class:`modify_where` ``NaN``
-    values.
-
-    Parameters
-    ----------
-    value : scalar, dict, Series, or DataFrame
-        Value to use to fill holes (e.g. 0), alternately a
-        dict/Series/DataFrame of values specifying which value to
-        use for each index (for a Series) or column (for a DataFrame).
-        (values not in the dict/Series/DataFrame will not be filled).
-        This value cannot be a list.
-    method : {'backfill', 'bfill', 'pad', 'ffill', None}, default None
-        Method to use for filling holes in reindexed Series
-        pad / ffill: propagate last valid observation forward to next
-        valid backfill / bfill: use NEXT valid observation to fill gap
-    axis : {0 or 'index', 1 or 'columns'}
-    inplace : boolean, default False
-        If True, fill in place. Note: this will modify any
-        other views on this object, (e.g. a no-copy slice for a column
-        in a DataFrame).
-    limit : int, default None
-        If method is specified, this is the maximum number of
-        consecutive NaN values to forward/backward fill. In other
-        words, if there is a gap with more than this number of
-        consecutive NaNs, it will only be partially filled. If method
-        is not specified, this is the maximum number of entries along
-        the entire axis where NaNs will be filled. Must be greater
-        than 0 if not None.
-    downcast : dict, default is None
-        a dict of item->dtype of what to downcast if possible, or the
-        string 'infer' which will try to downcast to an appropriate
-        equal type (e.g. float64 to int64 if possible)
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> df = pd.DataFrame({
-    ...     'w': [1, 2, np.nan, 4, 5],
-    ...     'x': [np.nan, 2, np.nan, 4, 5],
-    ...     'y': [np.nan] * 4 + [5],
-    ...     'z': [np.nan] * 5
-    ... })
-    >>> df
-         w    x    y   z
-    0  1.0  NaN  NaN NaN
-    1  2.0  2.0  NaN NaN
-    2  NaN  NaN  NaN NaN
-    3  4.0  4.0  NaN NaN
-    4  5.0  5.0  5.0 NaN
-
-    Replace all ``NaN`` values with -1.
-
-    >>> df >> fillna(-1)
-         w    x    y    z
-    0  1.0 -1.0 -1.0 -1.0
-    1  2.0  2.0 -1.0 -1.0
-    2 -1.0 -1.0 -1.0 -1.0
-    3  4.0  4.0 -1.0 -1.0
-    4  5.0  5.0  5.0 -1.0
-
-    Replace all ``NaN`` values with the first ``non-NaN`` value *above
-    in column*
-
-    >>> df >> fillna(method='ffill')
-         w    x    y   z
-    0  1.0  NaN  NaN NaN
-    1  2.0  2.0  NaN NaN
-    2  2.0  2.0  NaN NaN
-    3  4.0  4.0  NaN NaN
-    4  5.0  5.0  5.0 NaN
-
-    Replace all ``NaN`` values with the first ``non-NaN`` value *below
-    in column*
-
-    >>> df >> fillna(method='bfill')
-         w    x    y   z
-    0  1.0  2.0  5.0 NaN
-    1  2.0  2.0  5.0 NaN
-    2  4.0  4.0  5.0 NaN
-    3  4.0  4.0  5.0 NaN
-    4  5.0  5.0  5.0 NaN
-
-    Replace atmost 2 ``NaN`` values with the first ``non-NaN`` value
-    *below in column*
-
-    >>> df >> fillna(method='bfill', limit=2)
-         w    x    y   z
-    0  1.0  2.0  NaN NaN
-    1  2.0  2.0  NaN NaN
-    2  4.0  4.0  5.0 NaN
-    3  4.0  4.0  5.0 NaN
-    4  5.0  5.0  5.0 NaN
-
-    Replace all ``NaN`` values with the first ``non-NaN`` value to the
-    *left in the row*
-
-    >>> df >> fillna(method='ffill', axis=1)
-         w    x    y    z
-    0  1.0  1.0  1.0  1.0
-    1  2.0  2.0  2.0  2.0
-    2  NaN  NaN  NaN  NaN
-    3  4.0  4.0  4.0  4.0
-    4  5.0  5.0  5.0  5.0
-
-    Replace all ``NaN`` values with the first ``non-NaN`` value to the
-    *right in the row*
-
-    >>> df >> fillna(method='bfill', axis=1)
-         w    x    y   z
-    0  1.0  NaN  NaN NaN
-    1  2.0  2.0  NaN NaN
-    2  NaN  NaN  NaN NaN
-    3  4.0  4.0  NaN NaN
-    4  5.0  5.0  5.0 NaN
-
-    Note
-    ----
-    If :obj:`plydata.options.modify_input_data` is ``True``,
-    :class:`modify_where` will modify the original dataframe.
-    """
-
-    def __init__(self, value=None, method=None, axis=None, limit=None,
-                 downcast=None):
-        self.value = value
-        self.method = method
-        self.axis = axis
-        self.limit = limit
-        self.downcast = downcast
-
-
-class call(DataOperator):
-    """
-    Call external function or dataframe method
-
-    This is a special verb; it turns regular functions and
-    dataframe instance methods into verb instances that you
-    can pipe to. It reduces the times one needs to break out
-    of the piping workflow.
-
-    Parameters
-    ----------
-    func : callable or str
-        A function that accepts a dataframe as the first argument.
-        Dataframe methods are specified using strings and
-        preferrably they should start with a period,
-        e.g ``'.reset_index'``
-    *args : tuple
-        Second, third, fourth, ... arguments to ``func``
-    **kwargs : dict
-        Keyword arguments to ``func``
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> df = pd.DataFrame({
-    ...     'A': {0: 'a', 1: 'b', 2: 'c'},
-    ...     'B': {0: 1, 1: 3, 2: 5},
-    ...     'C': {0: 2, 1: 4, 2: np.nan}
-    ... })
-    >>> df
-       A  B    C
-    0  a  1  2.0
-    1  b  3  4.0
-    2  c  5  NaN
-
-    Using an external function
-
-    >>> df >> call(pd.melt)
-      variable value
-    0        A     a
-    1        A     b
-    2        A     c
-    3        B     1
-    4        B     3
-    5        B     5
-    6        C     2
-    7        C     4
-    8        C   NaN
-
-    An external function with arguments
-
-    >>> df >> call(pd.melt, id_vars=['A'], value_vars=['B'])
-       A variable  value
-    0  a        B      1
-    1  b        B      3
-    2  c        B      5
-
-    A method on the dataframe
-
-    >>> df >> call('.dropna', axis=1)
-       A  B
-    0  a  1
-    1  b  3
-    2  c  5
-
-    >>> (df
-    ...  >> call(pd.melt)
-    ...  >> query('variable != "B"')
-    ...  >> call('.reset_index', drop=True)
-    ...  )
-      variable value
-    0        A     a
-    1        A     b
-    2        A     c
-    3        C     2
-    4        C     4
-    5        C   NaN
-    """
-
-    def __init__(self, func, *args, **kwargs):
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
 
 # Multiple Table Verbs
 

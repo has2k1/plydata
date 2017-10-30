@@ -1,5 +1,8 @@
+import pandas as pd
 import pytest
+
 from plydata.utils import hasattrs, temporary_key, temporary_attr, Q
+from plydata.utils import Expression, get_empty_env
 
 
 def test_hasattrs():
@@ -55,3 +58,18 @@ def test_Q():
 
     with pytest.raises(NameError):
         Q('asdf')
+
+
+def test_Expression():
+    df = pd.DataFrame({'x': [1, 2, 3, 4]})
+
+    env = get_empty_env()
+    env = env.with_outer_namespace({'w': 3})
+
+    expr = Expression('sum(x)', 'x_sum')
+    assert str(expr) == "Expression('sum(x)', x_sum)"
+    assert expr.evaluate(df, env) == 10
+
+    expr = Expression('sum(x*w)', 'x_weighted_sum')
+    assert str(expr) == "Expression('sum(x*w)', x_weighted_sum)"
+    assert expr.evaluate(df, env) == 30

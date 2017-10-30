@@ -150,6 +150,20 @@ def test_select():
     result = df >> select(matches=('\w+opa', '\w+r$'))
     assert len(result.columns) == 4
 
+    # grouped on columns are never dropped
+    result = df >> group_by('cougar') >> select(startswith='c', drop=True)
+    assert len(result.columns) == 5
+    assert 'cougar' in result
+
+    # order depends on selection, and grouped columns are prepend
+    # if missing from selection
+    result1 = df >> select('jaguar', 'lion', 'caracal')
+    result2 = df >> select('caracal', 'jaguar', 'lion')
+    result3 = df >> group_by('tiger') >> select('caracal', 'jaguar', 'lion')
+    assert list(result1.columns) == ['jaguar', 'lion', 'caracal']
+    assert list(result2.columns) == ['caracal', 'jaguar', 'lion']
+    assert list(result3.columns) == ['tiger', 'caracal', 'jaguar', 'lion']
+
     # Numerical column names, and regex object
     df[123] = 1
     df[456] = 2
@@ -191,7 +205,7 @@ def test_distinct():
     # Index                  0, 1, 2, 3, 4, 5, 6
     df = pd.DataFrame({'x': [1, 1, 2, 3, 4, 4, 5],
                        'y': [1, 2, 3, 4, 5, 5, 6]})
-    I = pd.Index
+    I = pd.Index  # noqa: E741
 
     result = df >> distinct()
     assert result.index.equals(I([0, 1, 2, 3, 4, 6]))
@@ -256,6 +270,9 @@ def test_group_by():
     assert 'x-1' in result
     assert 'xsq' in result
     assert isinstance(result, GroupedDataFrame)
+
+    result = df >> group_by('x') >> group_by('y', add_=True)
+    assert result.plydata_groups == ['x', 'y']
 
 
 def test_ungroup():
@@ -625,6 +642,10 @@ def test_add_tally():
     assert all(result['n'] == [9]*n)
     assert not isinstance(result, GroupedDataFrame)
 
+    result = df >> add_tally(11)
+    assert all(result['n'] == [11]*n)
+    assert not isinstance(result, GroupedDataFrame)
+
     result = df >> group_by('y') >> add_tally()
     assert all(result['n'] == [3]*n)
     assert isinstance(result, GroupedDataFrame)
@@ -857,6 +878,8 @@ def test_data_mutability():
     df2 >> group_indices(z='x%2')
     assert 'z' not in df2
 
+    set_option('modify_input_data', False)
+
 
 def test_joins():
     cols = {'one', 'two', 'three', 'four'}
@@ -908,10 +931,10 @@ def test_Q():
         df >> create(y='var.name')
 
     with pytest.raises(SyntaxError):
-        df >> define(y='class')
+        df >> define(y='class+1')
 
     with pytest.raises(SyntaxError):
-        df >> create(y='class')
+        df >> create(y='class+1')
 
     with pytest.raises(SyntaxError):
         df >> arrange('class+1')
@@ -920,6 +943,8 @@ def test_Q():
     df >> create(y='Q("var.name")')
     df >> define(y='Q("class")')
     df >> create(y='Q("class")')
+    df >> define(y='class')
+    df >> create(y='class')
     df >> arrange('class')
     df >> arrange('Q("class")+1')
 
