@@ -14,20 +14,18 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      call,
                      arrange_all, arrange_at, arrange_if,
                      create_all, create_at, create_if,
-                     create_all, create_at, create_if,
                      group_by_all, group_by_at, group_by_if,
                      mutate_all, mutate_at, mutate_if,
                      query_all, query_at, query_if,
                      rename_all, rename_at, rename_if,
                      select_all, select_at, select_if,
                      summarize_all, summarize_at, summarize_if,
-                     transmute_all, transmute_at, transmute_if,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
 
 from plydata.options import set_option
-from plydata.grouped_datatypes import GroupedDataFrame
-from plydata.verbs import _at as _at_verb
+from plydata.types import GroupedDataFrame
+from plydata.helper_verbs import _at as _at_verb
 
 
 def test_define():

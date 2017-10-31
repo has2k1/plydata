@@ -1,491 +1,16 @@
 """
-Verb implementations for a :class:`pandas.DataFrame`
+Common functions and classes for implementing dataframe verbs
 """
-
 import itertools
 import re
-import warnings
 from contextlib import suppress
-from functools import wraps
 
-import numpy as np
 import pandas as pd
 import pandas.api.types as pdtypes
+import numpy as np
 
-from .grouped_datatypes import GroupedDataFrame
-from .options import get_option, options
-from .utils import Q, get_empty_env, regular_index, unique
-from .utils import Expression
-
-
-def define(verb):
-    if not get_option('modify_input_data'):
-        verb.data = verb.data.copy()
-
-    if not verb.expressions:
-        return verb.data
-
-    verb.env = verb.env.with_outer_namespace(_outer_namespace)
-    with regular_index(verb.data):
-        new_data = Evaluator(verb).process()
-        for col in new_data:
-            verb.data[col] = new_data[col]
-    return verb.data
-
-
-mutate = define
-
-
-def create(verb):
-    data = _get_base_dataframe(verb.data)
-    verb.env = verb.env.with_outer_namespace(_outer_namespace)
-    with regular_index(verb.data, data):
-        new_data = Evaluator(verb, drop=True).process()
-        for col in new_data:
-            data[col] = new_data[col]
-    return data
-
-
-def sample_n(verb):
-    return verb.data.sample(**verb.kwargs)
-
-
-def sample_frac(verb):
-    return verb.data.sample(**verb.kwargs)
-
-
-def select(verb):
-    columns = Selector.get(verb)
-    data = verb.data.loc[:, columns]
-    return data
-
-
-def rename(verb):
-    inplace = get_option('modify_input_data')
-    data = verb.data.rename(columns=verb.lookup, inplace=inplace)
-    return verb.data if inplace else data
-
-
-def distinct(verb):
-    data = define(verb)
-    return data.drop_duplicates(subset=verb.columns,
-                                keep=verb.keep)
-
-
-def arrange(verb):
-    # Do not evaluate if all statements correspond to
-    # columns already in the dataframe
-    stmts = [expr.stmt for expr in verb.expressions]
-    has_all_columns = all(stmt in verb.data for stmt in stmts)
-    if has_all_columns:
-        df = verb.data.loc[:, stmts]
-    else:
-        verb.env = verb.env.with_outer_namespace({'Q': Q})
-        df = Evaluator(verb, keep_index=True).process()
-
-    if len(df.columns):
-        sorted_index = df.sort_values(by=list(df.columns)).index
-        data = verb.data.loc[sorted_index, :]
-    else:
-        data = verb.data
-    return data
-
-
-def group_by(verb):
-    verb.data = define(verb)
-
-    copy = not get_option('modify_input_data')
-
-    try:
-        verb.add_
-    except AttributeError:
-        groups = verb.groups
-    else:
-        groups = _get_groups(verb) + verb.groups
-
-    if groups:
-        return GroupedDataFrame(verb.data, groups, copy=copy)
-    else:
-        return pd.DataFrame(verb.data, copy=copy)
-
-
-def ungroup(verb):
-    return pd.DataFrame(verb.data)
-
-
-def group_indices(verb):
-    data = verb.data
-    groups = verb.groups
-    if isinstance(data, GroupedDataFrame):
-        if groups:
-            msg = "GroupedDataFrame ignored extra groups {}"
-            warnings.warn(msg.format(groups))
-        else:
-            groups = data.plydata_groups
-    else:
-        data = create(verb)
-
-    indices_dict = data.groupby(groups, sort=False).indices
-    indices = -np.ones(len(data), dtype=int)
-    for i, (_, idx) in enumerate(sorted(indices_dict.items())):
-        indices[idx] = i
-
-    return indices
-
-
-def summarize(verb):
-    verb.env = verb.env.with_outer_namespace(_outer_namespace)
-    with regular_index(verb.data):
-        data = Evaluator(
-            verb,
-            keep_index=False,
-            keep_groups=False).process()
-    return data
-
-
-def query(verb):
-    data = verb.data.query(
-        verb.expression,
-        global_dict=verb.env.namespace,
-        **verb.kwargs)
-    data.is_copy = None
-    return data
-
-
-def do(verb):
-    verb.env = get_empty_env()
-    keep_index = verb.single_function
-    if verb.single_function:
-        if isinstance(verb.expressions[0].stmt, str):
-            raise TypeError(
-                "A single function for `do` cannot be a string")
-
-    with regular_index(verb.data):
-        data = Evaluator(verb, keep_index=keep_index).process()
-
-    if (len(verb.data.index) == len(data.index)):
-        data.index = verb.data.index
-
-    return data
-
-
-def head(verb):
-    if isinstance(verb.data, GroupedDataFrame):
-        grouper = verb.data.groupby(verb.data.plydata_groups, sort=False)
-        dfs = [gdf.head(verb.n) for _, gdf in grouper]
-        data = pd.concat(dfs, axis=0, ignore_index=True, copy=False)
-        data.plydata_groups = list(verb.data.plydata_groups)
-    else:
-        data = verb.data.head(verb.n)
-
-    return data
-
-
-def tail(verb):
-    if isinstance(verb.data, GroupedDataFrame):
-        grouper = verb.data.groupby(verb.data.plydata_groups, sort=False)
-        dfs = [gdf.tail(verb.n) for _, gdf in grouper]
-        data = pd.concat(dfs, axis=0, ignore_index=True, copy=False)
-        data.plydata_groups = list(verb.data.plydata_groups)
-    else:
-        data = verb.data.tail(verb.n)
-
-    return data
-
-
-def modify_where(verb):
-    if get_option('modify_input_data'):
-        data = verb.data
-    else:
-        data = verb.data.copy()
-
-    # Evaluation uses queried data
-    idx = data.query(verb.where, global_dict=verb.env.namespace).index
-    verb.data = data.loc[idx, :]
-    verb.env = verb.env.with_outer_namespace({'Q': Q})
-    new_data = Evaluator(verb).process()
-
-    for col in new_data:
-        # Do not create new columns, define does that
-        if col not in data:
-            raise KeyError("Column '{}' not in dataframe".format(col))
-        data.loc[idx, col] = new_data.loc[idx, col]
-
-    return data
-
-
-def define_where(verb):
-    if not get_option('modify_input_data'):
-        verb.data = verb.data.copy()
-
-    with options(modify_input_data=True):
-        verb.expressions = verb.define_expressions
-        verb.data = define(verb)
-
-        verb.expressions = verb.where_expressions
-        data = modify_where(verb)
-
-    return data
-
-
-def dropna(verb):
-    result = verb.data.dropna(
-        axis=verb.axis,
-        how=verb.how,
-        thresh=verb.thresh,
-        subset=verb.subset
-    )
-    return result
-
-
-def fillna(verb):
-    inplace = get_option('modify_input_data')
-    result = verb.data.fillna(
-        value=verb.value,
-        method=verb.method,
-        axis=verb.axis,
-        limit=verb.limit,
-        downcast=verb.downcast,
-        inplace=inplace
-    )
-    return result if not inplace else verb.data
-
-
-def call(verb):
-    if isinstance(verb.func, str):
-        func = getattr(verb.data, verb.func.lstrip('.'))
-        return func(*verb.args, **verb.kwargs)
-    else:
-        return verb.func(verb.data, *verb.args, **verb.kwargs)
-
-
-# Single table verb helpers
-
-
-def tally(verb):
-    # Prepare for summarize
-    if verb.weights is not None:
-        if isinstance(verb.weights, str):
-            # Summarize will evaluate and sum up the weights
-            stmt = 'sum({})'.format(verb.weights)
-        else:
-            # Do the summation here. The result does not depend
-            # on the dataframe.
-            stmt = np.sum(verb.weights)
-    else:
-        stmt = 'n()'
-
-    verb.expressions = [Expression(stmt, 'n')]
-    data = summarize(verb)
-    if verb.sort:
-        data = data.sort_values(by='n', ascending=False)
-        data.reset_index(drop=True, inplace=True)
-
-    return data
-
-
-def count(verb):
-    if (not isinstance(verb.data, GroupedDataFrame) and
-            verb.groups):
-        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
-    return tally(verb)
-
-
-def add_tally(verb):
-    if verb.weights:
-        if isinstance(verb.weights, str):
-            stmt = 'sum({})'.format(verb.weights)
-        else:
-            stmt = verb.weights
-    else:
-        stmt = 'n()'
-
-    verb.expressions = [Expression(stmt, 'n')]
-    data = define(verb)
-    if verb.sort:
-        data = data.sort_values(by='n')
-        data.reset_index(drop=True, inplace=True)
-
-    return data
-
-
-def add_count(verb):
-    remove_groups = False
-    if (not isinstance(verb.data, GroupedDataFrame) and
-            verb.groups):
-        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
-        remove_groups = True
-
-    data = add_tally(verb)
-    if remove_groups:
-        data = pd.DataFrame(data)
-    return data
-
-
-def _query_helper(verb):
-    columns = Selector.get(verb)
-
-    # Wrap the predicate in brackets
-    fmt = '({})'.format(verb.vars_predicate).format
-
-    # Create tokens expressions for each column
-    tokens = [fmt(_=col) for col in columns]
-
-    # Join the tokens into a compound expression
-    sep = ' | ' if verb.any_vars else ' & '
-    compound_expr = sep.join(tokens)
-
-    # Create final expression, execute and get boolean selectors
-    # for the rows
-    result_col = '_plydata_dummy_col_'
-    verb.expressions = [Expression(compound_expr, result_col)]
-    _data = create(verb)
-    # print(compound_expr)
-    # print(_data)
-    bool_idx = _data[result_col].values
-
-    data = verb.data.loc[bool_idx, :]
-    return data
-
-
-def _rename_helper(verb):
-    # The selector does all the work for the _all, _at & _if
-    columns = Selector.get(verb)
-    groups = set(_get_groups(verb))
-    columns = [c for c in columns if c not in groups]
-    func = verb.functions[0]
-    new_names = [func(name) for name in columns]
-    verb.lookup = {old: new for old, new in zip(columns, new_names)}
-    return rename(verb)
-
-
-def _select_helper(verb):
-    # The selector does all the work for the _all, _at & _if
-    columns = Selector.get(verb)
-    groups = _get_groups(verb)
-    groups_set = set(groups)
-    columns = [c for c in columns if c not in groups_set]
-    func = verb.functions[0]
-    new_names = [func(name) for name in columns]
-    verb.lookup = {old: new for old, new in zip(columns, new_names)}
-    data = rename(verb)
-    data = data.loc[:, groups+new_names]
-    return data
-
-
-def _make_verb_helper(verb_func, add_groups=False):
-    """
-    Create function that prepares verb for the verb function
-
-    The functions created add expressions to be evaluated to
-    the verb, then call the core verb function
-
-    Parameters
-    ----------
-    verb_func : function
-        Core verb function. This is the function called after
-        expressions created and added to the verb. The core
-        function should be one of those that implement verbs that
-        evaluate expressions.
-    add_groups : bool
-        If True, a groups attribute is added to the verb. The
-        groups are the columns created after evaluating the
-        expressions.
-
-    Returns
-    -------
-    out : function
-        A function that implements a helper verb.
-    """
-
-    @wraps(verb_func)
-    def _verb_func(verb):
-        verb.expressions, new_columns = make_expressions(verb)
-        if add_groups:
-            verb.groups = new_columns
-        return verb_func(verb)
-
-    return _verb_func
-
-
-arrange_all = _make_verb_helper(arrange)
-arrange_if = _make_verb_helper(arrange)
-arrange_at = _make_verb_helper(arrange)
-
-create_all = _make_verb_helper(create)
-create_if = _make_verb_helper(create)
-create_at = _make_verb_helper(create)
-
-group_by_all = _make_verb_helper(group_by, True)
-group_by_if = _make_verb_helper(group_by, True)
-group_by_at = _make_verb_helper(group_by, True)
-
-mutate_all = _make_verb_helper(mutate)
-mutate_if = _make_verb_helper(mutate)
-mutate_at = _make_verb_helper(mutate)
-
-query_all = _query_helper
-query_at = _query_helper
-query_if = _query_helper
-
-summarize_all = _make_verb_helper(summarize)
-summarize_if = _make_verb_helper(summarize)
-summarize_at = _make_verb_helper(summarize)
-
-rename_all = _rename_helper
-rename_at = _rename_helper
-rename_if = _rename_helper
-
-select_all = _select_helper
-select_at = _select_helper
-select_if = _select_helper
-
-
-# Two table verbs (joins)
-
-
-def inner_join(verb):
-    verb.kwargs['how'] = 'inner'
-    return _join(verb)
-
-
-def outer_join(verb):
-    verb.kwargs['how'] = 'outer'
-    return _join(verb)
-
-
-def left_join(verb):
-    verb.kwargs['how'] = 'left'
-    return _join(verb)
-
-
-def right_join(verb):
-    verb.kwargs['how'] = 'right'
-    return _join(verb)
-
-
-def anti_join(verb):
-    verb.kwargs['how'] = 'left'
-    verb.kwargs['suffixes'] = ('', '_y')
-    verb.kwargs['indicator'] = '_plydata_merge'
-    df = _join(verb)
-    data = df.query('_plydata_merge=="left_only"')[verb.x.columns]
-    data.is_copy = None
-    return data
-
-
-def semi_join(verb):
-    verb.kwargs['how'] = 'left'
-    verb.kwargs['suffixes'] = ('', '_y')
-    verb.kwargs['indicator'] = '_plydata_merge'
-    df = _join(verb)
-    data = df.query('_plydata_merge=="both"')[verb.x.columns]
-    data.is_copy = None
-    data.drop_duplicates(inplace=True)
-    return data
-
-
-# Helper functions
+from ..types import GroupedDataFrame
+from ..utils import get_empty_env, unique, Expression
 
 
 def _get_groups(verb):
@@ -635,6 +160,9 @@ class Evaluator:
     """
     Evaluator for expressions of a verb
 
+    The Evaluator is responsible for breaking up the data,
+    doing evaluations and putting the pieces together
+
     Parameters
     ----------
     verb : verb
@@ -684,12 +212,11 @@ class Evaluator:
         # group_by
         # evaluate expressions
         # combine columns
-        # concat group data
-        # clean up index and group
+        # concat evalutated group data and clean up index and group
         gdfs = self._get_group_dataframes()
-        gdfs = self._evaluate_expressions(gdfs)
-        data = self._concat(gdfs)
-        return data
+        egdfs = self._evaluate_expressions(gdfs)
+        edata = self._concat(egdfs)
+        return edata
 
     def _all_expressions_evaluated(self):
         """
@@ -759,29 +286,39 @@ class Evaluator:
         data = _add_group_columns(data, gdf)
         return data
 
-    def _concat(self, gdfs):
+    def _concat(self, egdfs):
         """
-        Concatenate group dataframes
+        Concatenate evaluated group dataframes
+
+        Parameters
+        ----------
+        egdfs : iterable
+            Evaluated dataframes
+
+        Returns
+        -------
+        edata : pandas.DataFrame
+            Evaluated data
         """
-        gdfs = list(gdfs)
-        data = pd.concat(gdfs, axis=0, ignore_index=False, copy=False)
+        egdfs = list(egdfs)
+        edata = pd.concat(egdfs, axis=0, ignore_index=False, copy=False)
 
         # groupby can mixup the rows. We try to maintain the original
         # order, but we can only do that if the result has a one to
         # one relationship with the original
         one2one = (
             self.keep_index and
-            not any(data.index.duplicated()) and
-            len(data.index) == len(self.data.index))
+            not any(edata.index.duplicated()) and
+            len(edata.index) == len(self.data.index))
         if one2one:
-            data = data.sort_index()
+            edata = edata.sort_index()
         else:
-            data.reset_index(drop=True, inplace=True)
+            edata.reset_index(drop=True, inplace=True)
 
         # Maybe this should happen in the verb functions
         if self.keep_groups and self.groups:
-            data = GroupedDataFrame(data, groups=self.groups)
-        return data
+            edata = GroupedDataFrame(edata, groups=self.groups)
+        return edata
 
 
 class Selector:
@@ -922,6 +459,24 @@ class Selector:
 
 
 def make_expressions(verb):
+    """
+    Make expressions
+
+    Parameters
+    ----------
+    verb : verb
+        A verb with a *functions* attribute.
+
+    Returns
+    -------
+    out : tuple
+        (List of Expressions, New columns). The expressions and the
+        new columns in which the results of those expressions will
+        be stored. Even when a result will stored in a column with
+        an existing label, that column is still considered new,
+        i.e An expression ``x='x+1'``, will create a new_column `x`
+        to replace an old column `x`.
+    """
     def partial(func, col, *args, **kwargs):
         """
         Make a function that acts on a column in a dataframe
@@ -1015,53 +570,3 @@ def make_expressions(verb):
     expressions = [Expression(stmt, col)
                    for stmt, col in zip(stmts, new_columns)]
     return expressions, new_columns
-
-
-def _join(verb):
-    """
-    Join helper
-    """
-    data = pd.merge(verb.x, verb.y, **verb.kwargs)
-
-    # Preserve x groups
-    if isinstance(verb.x, GroupedDataFrame):
-        data.plydata_groups = list(verb.x.plydata_groups)
-    return data
-
-
-# Aggregations functions
-
-def _nth(arr, n):
-    """
-    Return the nth value of array
-
-    If it is missing return NaN
-    """
-    try:
-        return arr.iloc[n]
-    except (KeyError, IndexError):
-        return np.nan
-
-
-def _n_distinct(arr):
-    """
-    Number of unique values in array
-    """
-    return len(pd.unique(arr))
-
-
-_outer_namespace = {
-    'min': np.min,
-    'max': np.max,
-    'sum': np.sum,
-    'cumsum': np.cumsum,
-    'mean': np.mean,
-    'median': np.median,
-    'std': np.std,
-    'first': lambda x: _nth(x, 0),
-    'last': lambda x: _nth(x, -1),
-    'nth': _nth,
-    'n_distinct': _n_distinct,
-    'n_unique': _n_distinct,
-    'Q': Q
-}

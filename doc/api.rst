@@ -4,10 +4,10 @@
 API Reference
 #############
 
-Single table verbs
-==================
+One table verbs
+===============
 
-.. currentmodule:: plydata.verbs
+.. currentmodule:: plydata.one_table_verbs
 
 .. autosummary::
    :toctree: generated/
@@ -15,7 +15,6 @@ Single table verbs
    :template: main.rst
 
    arrange
-   call
    create
    define
    define_where
@@ -42,6 +41,8 @@ Single table verbs
 Helpers
 -------
 
+.. currentmodule:: plydata.helper_verbs
+
 .. autosummary::
    :toctree: generated/
    :nosignatures:
@@ -51,6 +52,7 @@ Helpers
    add_tally
    count
    tally
+   call
    arrange_all
    arrange_at
    arrange_if
@@ -82,6 +84,8 @@ Helpers
 
 Two table verbs
 ===============
+
+.. currentmodule:: plydata.two_table_verbs
 
 .. autosummary::
    :toctree: generated/

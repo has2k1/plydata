@@ -5,26 +5,26 @@ v0.3.0
 ------
 *not-yet-released*
 
-- Fixed :class:`~plydata.verbs.define` (mutate) and
-  :class:`~plydata.verbs.create` (transmute), make them work with
+- Fixed :class:`~plydata.one_table_verbs.define` (mutate) and
+  :class:`~plydata.one_table_verbs.create` (transmute), make them work with
   ``group_by``.
 
-- Fixed :class:`~plydata.verbs.tally` to work with external arrays.
+- Fixed :class:`~plydata.helper_verbs.tally` to work with external arrays.
 
-- Fixed :class:`~plydata.verbs.tally` to sort in descending order.
+- Fixed :class:`~plydata.helper_verbs.tally` to sort in descending order.
 
-- Fixed the ``nth`` function of :class:`~plydata.verbs.summarize` to
+- Fixed the ``nth`` function of :class:`~plydata.one_table_verbs.summarize` to
   return *NaN* when the requested value is out of bounds.
 
 - The ``contains`` and ``matches`` parameters of
-  :class:`~plydata.verbs.select` can now accept a
+  :class:`~plydata.one_table_verbs.select` can now accept a
   :class:`tuple` of values.
 
 - Fixed verbs that create columns (i.e
-  :class:`~plydata.verbs.create`,
-  :class:`~plydata.verbs.define`,
-  :class:`~plydata.verbs.define_where` and
-  :class:`~plydata.verbs.do`)
+  :class:`~plydata.one_table_verbs.create`,
+  :class:`~plydata.one_table_verbs.define`,
+  :class:`~plydata.one_table_verbs.define_where` and
+  :class:`~plydata.one_table_verbs.do`)
   so that they can create categorical columns.
 
 - The ``join`` verbs gained *left_on* and *right_on* parameters.
@@ -32,49 +32,49 @@ v0.3.0
 - Fixed verb reuse. You can create a verb and assign it to a variable
   and pipe to the same variable in different operations.
 
-- Fixed issue where :class:`~plydata.verbs.select` does maintain the
+- Fixed issue where :class:`~plydata.one_table_verbs.select` does maintain the
   order in which the columns are listed.
 
 
 New Features
 ************
 
-- Added special verb :class:`~plydata.verbs.call`, it allows one to use
+- Added special verb :class:`~plydata.helper_verbs.call`, it allows one to use
   external functions that accept a dataframe as the first argument.
 
-- :class:`~plydata.verbs.define` You can now use the internal function
+- :class:`~plydata.one_table_verbs.define` You can now use the internal function
   ``n()`` to count the number of elements in current group.
 
 - Added the single table helper verbs:
 
-    * :class:`~plydata.verbs.add_count`
-    * :class:`~plydata.verbs.add_tally`
-    * :class:`~plydata.verbs.arrange_all`
-    * :class:`~plydata.verbs.arrange_at`
-    * :class:`~plydata.verbs.arrange_if`
-    * :class:`~plydata.verbs.create_all`
-    * :class:`~plydata.verbs.create_at`
-    * :class:`~plydata.verbs.create_if`
-    * :class:`~plydata.verbs.group_by_all`
-    * :class:`~plydata.verbs.group_by_at`
-    * :class:`~plydata.verbs.group_by_if`
-    * :class:`~plydata.verbs.mutate_all`
-    * :class:`~plydata.verbs.mutate_at`
-    * :class:`~plydata.verbs.mutate_if`
-    * :class:`~plydata.verbs.query_all`
-    * :class:`~plydata.verbs.query_at`
-    * :class:`~plydata.verbs.query_if`
-    * :class:`~plydata.verbs.rename_all`
-    * :class:`~plydata.verbs.rename_at`
-    * :class:`~plydata.verbs.rename_if`
-    * :class:`~plydata.verbs.summarize_all`
-    * :class:`~plydata.verbs.summarize_at`
-    * :class:`~plydata.verbs.summarize_if`
+    * :class:`~plydata.helper_verbs.add_count`
+    * :class:`~plydata.helper_verbs.add_tally`
+    * :class:`~plydata.helper_verbs.arrange_all`
+    * :class:`~plydata.helper_verbs.arrange_at`
+    * :class:`~plydata.helper_verbs.arrange_if`
+    * :class:`~plydata.helper_verbs.create_all`
+    * :class:`~plydata.helper_verbs.create_at`
+    * :class:`~plydata.helper_verbs.create_if`
+    * :class:`~plydata.helper_verbs.group_by_all`
+    * :class:`~plydata.helper_verbs.group_by_at`
+    * :class:`~plydata.helper_verbs.group_by_if`
+    * :class:`~plydata.helper_verbs.mutate_all`
+    * :class:`~plydata.helper_verbs.mutate_at`
+    * :class:`~plydata.helper_verbs.mutate_if`
+    * :class:`~plydata.helper_verbs.query_all`
+    * :class:`~plydata.helper_verbs.query_at`
+    * :class:`~plydata.helper_verbs.query_if`
+    * :class:`~plydata.helper_verbs.rename_all`
+    * :class:`~plydata.helper_verbs.rename_at`
+    * :class:`~plydata.helper_verbs.rename_if`
+    * :class:`~plydata.helper_verbs.summarize_all`
+    * :class:`~plydata.helper_verbs.summarize_at`
+    * :class:`~plydata.helper_verbs.summarize_if`
 
 
 API Changes
 ***********
-- Using internal function for :class:`~plydata.verbs.summarize` that
+- Using internal function for :class:`~plydata.one_table_verbs.summarize` that
   counts the number of elements in the current group changed from
   ``{n}`` to ``n()``.
 
@@ -83,14 +83,14 @@ v0.2.1
 ------
 *(2017-09-20)*
 
-- Fixed issue with :class:`~plydata.verbs.do` and
-  :class:`~plydata.verbs.summarize` where the categorical group columns
+- Fixed issue with :class:`~plydata.one_table_verbs.do` and
+  :class:`~plydata.one_table_verbs.summarize` where the categorical group columns
   are not categorical in the result.
 
 - Fixed issue with internal modules being imported with
   :py:`from plydata import *`.
 
-- Added :class:`~plydata.verbs.dropna` and :class:`~plydata.verbs.fillna`
+- Added :class:`~plydata.one_table_verbs.dropna` and :class:`~plydata.one_table_verbs.fillna`
   verbs. They both wrap around pandas methods of the same name. Now you
   man maintain the pipelining when dealing with most ``NaN`` values.
 
@@ -98,13 +98,13 @@ v0.2.0
 ------
 *(2017-05-06)*
 
-- :class:`~plydata.verbs.distinct` now uses `pandas.unique` instead of
+- :class:`~plydata.one_table_verbs.distinct` now uses `pandas.unique` instead of
   :func:`numpy.unique`.
 
 - Added function :func:`~plydata.utils.Q` for quote non-pythonic column
   names in a dataframe.
 
-- Fixed :class:`~plydata.verbs.query` and :class:`~plydata.verbs.modify_where`
+- Fixed :class:`~plydata.one_table_verbs.query` and :class:`~plydata.one_table_verbs.modify_where`
   query expressions to handle environment variables.
 
 - Added :class:`~plydata.options.options` context manager.
@@ -118,8 +118,8 @@ v0.2.0
      df >> v  # first use
      df >> v  # Reuse of v
 
-- Added :class:`~plydata.verbs.define_where` verb, a combination of
-  :class:`~plydata.verbs.define` and :class:`~plydata.verbs.modify_where`.
+- Added :class:`~plydata.one_table_verbs.define_where` verb, a combination of
+  :class:`~plydata.one_table_verbs.define` and :class:`~plydata.one_table_verbs.modify_where`.
 
 v0.1.1
 ------

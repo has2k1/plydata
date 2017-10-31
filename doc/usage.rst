@@ -3,7 +3,7 @@ Usage
 
 For data manipulation, there are two types of verbs;
 
-1. :ref:`Single table verbs`
+1. :ref:`One table verbs`
 2. :ref:`Two table verbs`
 
 We define the usage by how the verbs accept the data argument.
@@ -55,60 +55,108 @@ the documentation.
 Datastore Support
 -----------------
 
-+---------------------------------------+-----------+--------+
-| Verb                                  | Dataframe | Sqlite |
-+=======================================+===========+========+
-| :class:`~plydata.verbs.arrange`       | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.count`         | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.create`        | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.define`        | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.define_where`  | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.distinct`      | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.do`            | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.group_by`      | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.group_indices` | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.head`          | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.modify_where`  | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.query`         | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.rename`        | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.sample_frac`   | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.sample_n`      | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.select`        | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.summarize`     | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.tail`          | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.tally`         | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.ungroup`       | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.anti_join`     | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.inner_join`    | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.left_join`     | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.outer_join`    | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.right_join`    | Yes       | No     |
-+---------------------------------------+-----------+--------+
-| :class:`~plydata.verbs.semi_join`     | Yes       | No     |
-+---------------------------------------+-----------+--------+
+Single Table Verbs
+
++-------------------------------------------------+-----------+--------+
+| Verb                                            | Dataframe | Sqlite |
++=================================================+===========+========+
+| :class:`~plydata.one_table_verbs.arrange`       | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.create`        | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.define`        | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.define_where`  | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.distinct`      | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.do`            | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.group_by`      | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.group_indices` | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.head`          | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.modify_where`  | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.query`         | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.rename`        | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.sample_frac`   | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.sample_n`      | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.select`        | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.summarize`     | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.tail`          | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.ungroup`       | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+
+Helper verbs
+
++------------------------------------------------+-----------+--------+
+| Verb                                           | Dataframe | Sqlite |
++================================================+===========+========+
+| :class:`~plydata.helper_verbs.count`           | Yes       | No     |
++------------------------------------------------+-----------+--------+
+| :class:`~plydata.helper_verbs.tally`           | Yes       | No     |
++------------------------------------------------+-----------+--------+
+| :class:`~plydata.helper_verbs.add_count`       | Yes       | No     |
++------------------------------------------------+-----------+--------+
+| :class:`~plydata.helper_verbs.add_tally`       | Yes       | No     |
++------------------------------------------------+-----------+--------+
+| :class:`~plydata.helper_verbs.call`            | Yes       | No     |
++------------------------------------------------+-----------+--------+
+|  :class:`~plydata.helper_verbs.arrange_all`,   |           |        |
+|  :class:`~plydata.helper_verbs.arrange_at`,    | Yes       | No     |
+|  :class:`~plydata.helper_verbs.arrange_if`     |           |        |
++------------------------------------------------+-----------+--------+
+| :class:`~plydata.helper_verbs.create_all`,     |           |        |
+| :class:`~plydata.helper_verbs.create_at`,      | Yes       | No     |
+| :class:`~plydata.helper_verbs.create_if`       |           |        |
++------------------------------------------------+-----------+--------+
+|  :class:`~plydata.helper_verbs.group_by_all`,  |           |        |
+|  :class:`~plydata.helper_verbs.group_by_at`,   | Yes       | No     |
+|  :class:`~plydata.helper_verbs.group_by_if`    |           |        |
++------------------------------------------------+-----------+--------+
+|  :class:`~plydata.helper_verbs.mutate_all`,    |           |        |
+|  :class:`~plydata.helper_verbs.mutate_at`,     | Yes       | No     |
+|  :class:`~plydata.helper_verbs.mutate_if`      |           |        |
++------------------------------------------------+-----------+--------+
+|  :class:`~plydata.helper_verbs.query_all`,     |           |        |
+|  :class:`~plydata.helper_verbs.query_at`,      | Yes       | No     |
+|  :class:`~plydata.helper_verbs.query_if`       |           |        |
++------------------------------------------------+-----------+--------+
+|  :class:`~plydata.helper_verbs.rename_all`,    |           |        |
+|  :class:`~plydata.helper_verbs.rename_at`,     | Yes       | No     |
+|  :class:`~plydata.helper_verbs.rename_if`      |           |        |
++------------------------------------------------+-----------+--------+
+|  :class:`~plydata.helper_verbs.summarize_all`, |           |        |
+|  :class:`~plydata.helper_verbs.summarize_at`,  |  Yes      | No     |
+|  :class:`~plydata.helper_verbs.summarize_if`   |           |        |
++------------------------------------------------+-----------+--------+
+
+Two table verbs
+
++-------------------------------------------------+-----------+--------+
+| Verb                                            | Dataframe | Sqlite |
++=================================================+===========+========+
+| :class:`~plydata.two_table_verbs.py.anti_join`  | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.two_table_verbs.py.inner_join` | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.two_table_verbs.py.left_join`  | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.two_table_verbs.py.outer_join` | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.two_table_verbs.py.right_join` | Yes       | No     |
++-------------------------------------------------+-----------+--------+
+| :class:`~plydata.two_table_verbs.py.semi_join`  | Yes       | No     |
++-------------------------------------------------+-----------+--------+
 
 .. _zen of python: https://www.python.org/dev/peps/pep-0020/

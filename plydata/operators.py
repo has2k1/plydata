@@ -4,7 +4,7 @@ from copy import copy
 import pandas as pd
 
 from .eval import EvalEnvironment
-from .grouped_datatypes import GroupedDataFrame
+from .types import GroupedDataFrame
 from .utils import temporary_attr, custom_dict
 
 
