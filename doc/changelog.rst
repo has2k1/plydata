@@ -77,6 +77,7 @@ API Changes
 - Using internal function for :class:`~plydata.one_table_verbs.summarize` that
   counts the number of elements in the current group changed from
   ``{n}`` to ``n()``.
+- You can now use piping with the two table verbs (the joins).
 
 
 v0.2.1

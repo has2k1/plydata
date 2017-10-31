@@ -116,17 +116,31 @@ class DoubleDataDispatch(type):
 
     Makes it possible to do::
 
+        data1 >> verb(data2)
         verb(data1, data2)
 
     and have the same verb work for different types of data
     """
     def __call__(cls, *args, **kwargs):
-        verb = super().__call__(*args, **kwargs)
-        func = get_verb_function(args[0], cls.__name__)
-        return func(verb)
+        # When we have two arguments, we can proceed with
+        # the computation
+        if len(args) == 2:
+            verb = super().__call__(*args, **kwargs)
+            func = get_verb_function(verb.x, cls.__name__)
+            return func(verb)
+        else:
+            return super().__call__(*args, **kwargs)
 
 
 class DoubleDataOperator(metaclass=DoubleDataDispatch):
     """
     Base class for all verbs that operate two dataframes
     """
+    def __rrshift__(self, other):
+        """
+        Overload the >> operator
+        """
+        verb = copy(self)
+        verb.x = other
+        func = get_verb_function(verb.x, self.__class__.__name__)
+        return func(verb)

@@ -992,6 +992,15 @@ def test_joins():
     result = inner_join(df2, df1 >> group_by('col1'), on='col1')
     assert not isinstance(result, GroupedDataFrame)
 
+    # Piping
+    idf1 = inner_join(df1, df2, on='col1')
+    idf2 = df1 >> inner_join(df2, on='col1')
+    assert idf1.equals(idf2)
+
+    # Branches
+    with pytest.raises(ValueError):
+        idf1 = inner_join(df1, df2, 'col1')
+
 
 def test_Q():
     df = pd.DataFrame({'var.name': [1, 2, 3],

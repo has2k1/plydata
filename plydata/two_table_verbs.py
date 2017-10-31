@@ -13,10 +13,16 @@ class _join(DoubleDataOperator):
     Base class for join verbs
     """
 
-    def __init__(self, x, y, on=None, left_on=None, right_on=None,
+    def __init__(self, *args, on=None, left_on=None, right_on=None,
                  suffixes=('_x', '_y')):
-        self.x = x
-        self.y = y
+        if len(args) == 2:
+            self.x, self.y = args
+        elif len(args) == 1:
+            self.x, self.y = None, args[0]
+        else:
+            tpl = "{} cannot take more than two positional arguments"
+            raise ValueError(tpl.format(self.__class__.__name__))
+
         self.kwargs = dict(on=on, left_on=left_on, right_on=right_on,
                            suffixes=suffixes)
 
@@ -263,8 +269,8 @@ class anti_join(_join):
     preserves the grouping of x.
     """
 
-    def __init__(self, x, y, on=None, left_on=None, right_on=None):
-        super().__init__(x, y, on=on, left_on=left_on, right_on=right_on)
+    def __init__(self, *args, on=None, left_on=None, right_on=None):
+        super().__init__(*args, on=on, left_on=left_on, right_on=right_on)
 
 
 class semi_join(_join):
@@ -326,8 +332,8 @@ class semi_join(_join):
     Groups are ignored for the purpose of joining, but the result
     preserves the grouping of x.
     """
-    def __init__(self, x, y, on=None, left_on=None, right_on=None):
-        super().__init__(x, y, on=on, left_on=left_on, right_on=right_on)
+    def __init__(self, *args, on=None, left_on=None, right_on=None):
+        super().__init__(*args, on=on, left_on=left_on, right_on=right_on)
 
 
 full_join = outer_join
