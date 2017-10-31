@@ -32,6 +32,10 @@ v0.3.0
 - Fixed verb reuse. You can create a verb and assign it to a variable
   and pipe to the same variable in different operations.
 
+- Fixed issue where :class:`~plydata.verbs.select` does maintain the
+  order in which the columns are listed.
+
+
 New Features
 ************
 
@@ -41,8 +45,32 @@ New Features
 - :class:`~plydata.verbs.define` You can now use the internal function
   ``n()`` to count the number of elements in current group.
 
-- Added :class:`~plydata.verbs.add_tally` and
-  :class:`~plydata.verbs.add_count` verbs.
+- Added the single table helper verbs:
+
+    * :class:`~plydata.verbs.add_count`
+    * :class:`~plydata.verbs.add_tally`
+    * :class:`~plydata.verbs.arrange_all`
+    * :class:`~plydata.verbs.arrange_at`
+    * :class:`~plydata.verbs.arrange_if`
+    * :class:`~plydata.verbs.create_all`
+    * :class:`~plydata.verbs.create_at`
+    * :class:`~plydata.verbs.create_if`
+    * :class:`~plydata.verbs.group_by_all`
+    * :class:`~plydata.verbs.group_by_at`
+    * :class:`~plydata.verbs.group_by_if`
+    * :class:`~plydata.verbs.mutate_all`
+    * :class:`~plydata.verbs.mutate_at`
+    * :class:`~plydata.verbs.mutate_if`
+    * :class:`~plydata.verbs.query_all`
+    * :class:`~plydata.verbs.query_at`
+    * :class:`~plydata.verbs.query_if`
+    * :class:`~plydata.verbs.rename_all`
+    * :class:`~plydata.verbs.rename_at`
+    * :class:`~plydata.verbs.rename_if`
+    * :class:`~plydata.verbs.summarize_all`
+    * :class:`~plydata.verbs.summarize_at`
+    * :class:`~plydata.verbs.summarize_if`
+
 
 API Changes
 ***********

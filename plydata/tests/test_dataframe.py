@@ -12,11 +12,22 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      tally, count, add_tally, add_count,
                      modify_where, define_where, fillna,
                      call,
+                     arrange_all, arrange_at, arrange_if,
+                     create_all, create_at, create_if,
+                     create_all, create_at, create_if,
+                     group_by_all, group_by_at, group_by_if,
+                     mutate_all, mutate_at, mutate_if,
+                     query_all, query_at, query_if,
+                     rename_all, rename_at, rename_if,
+                     select_all, select_at, select_if,
+                     summarize_all, summarize_at, summarize_if,
+                     transmute_all, transmute_at, transmute_if,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join)
 
 from plydata.options import set_option
 from plydata.grouped_datatypes import GroupedDataFrame
+from plydata.verbs import _at as _at_verb
 
 
 def test_define():
@@ -382,6 +393,70 @@ def test_summarize():
     result = df1 >> group_by('y', 'z') >> summarize(mean_x='np.mean(x)')
     assert result['y'].dtype == np.int
     assert pdtypes.is_categorical_dtype(result['z'])
+
+
+def test_summarize_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> select('x', 'z') >> summarize_all(('mean', np.std))
+    expected_cols = ['x_mean', 'z_mean', 'x_std', 'z_std']
+    assert len(result.columns.intersection(expected_cols)) == 4
+    result.loc[0, 'x_mean'] = 3.5
+    result.loc[0, 'z_mean'] = 9.5
+    result.loc[0, 'x_std'] = result.loc[0, 'z_std']
+
+    # Group column is not summarized
+    result = (df
+              >> select('x', 'y', 'z')
+              >> group_by('x')
+              >> summarize_all(('mean')))
+    assert result['x'].equals(df['x'])
+
+
+def test_summarize_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+    result = (df
+              >> group_by('alpha')
+              >> summarize_at(dict(matches=r'x|y'), ('mean', np.std))
+              )
+    assert all(result.loc[:, 'x_mean'] == [2, 5])
+    assert all(result.loc[:, 'y_mean'] == [5, 2])
+    assert all(result.loc[:, 'x_std'] == result.loc[:, 'y_std'])
+
+
+def test_summarize_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    def has4(col):
+        return 4 in list(col)
+
+    result = df >> group_by('alpha') >> summarize_if(has4, np.mean)
+    assert len(result.columns) == 3
+    assert 'alpha' in result
+    assert 'x' in result
+    assert 'y' in result
+    assert 'z' not in result
 
 
 class TestAggregateFunctions:
@@ -980,3 +1055,418 @@ class TestVerbReuse:
     def test_tally(self):
         v = tally()
         self._test(v)
+
+
+def test__at_verb():
+    with pytest.raises(TypeError):
+        _at_verb(object(), np.add)
+
+
+def test_mutate_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = (df
+              >> group_by('alpha')
+              >> select('x', 'y', 'z')
+              >> mutate_all((np.add, np.subtract), 10)
+              )
+    assert 'alpha' in result
+
+
+def test_mutate_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = (df
+              >> group_by('alpha')
+              >> mutate_at(dict(matches=r'x|y'), np.add, 10))
+
+    assert 'alpha' in result
+    assert all(result['x'] == df['x'] + 10)
+    assert all(result['y'] == df['y'] + 10)
+    assert all(result['z'] == df['z'])
+    assert len(result.columns) == len(df.columns)
+
+    # branches
+    with pytest.raises(KeyError):
+        df >> mutate_at(('x', 'w'), np.add, 10)
+
+    with pytest.raises(TypeError):
+        df >> mutate_at(('x', 'y', 'z'), (object(),))
+
+
+def test_mutate_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    def is_x_or_y(col):
+        return col.name in ('x', 'y')
+
+    result = (df
+              >> group_by('x')
+              >> mutate_if(is_x_or_y, np.add, 10))
+
+    assert all(result['x'] == df['x'])  # Group column is not mutated
+    assert all(result['y'] == df['y'] + 10)
+    assert len(result.columns) == len(df.columns)
+
+
+def test_group_by_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> group_by_all()
+    assert len(df.columns) == len(result.columns)
+    assert len(df.columns) == len(result.plydata_groups)
+
+    result = df >> group_by_all(pd.Categorical)
+    assert len(df.columns) == len(result.columns)
+    assert len(df.columns) == len(result.plydata_groups)
+
+    result = df >> group_by_all(dict(cat=pd.Categorical))
+    assert len(df.columns)*2 == len(result.columns)
+    for col in df.columns:
+        col_cat = '{}_cat'.format(col)
+        assert not pdtypes.is_categorical_dtype(result[col])
+        assert pdtypes.is_categorical_dtype(result[col_cat])
+
+    result = (df
+              >> group_by('x')
+              >> group_by_all(dict(cat=pd.Categorical)))
+    assert result.plydata_groups == [
+        '{}_cat'.format(col) for col in df.columns if col != 'x']
+    assert len(df.columns)*2-1 == len(result.columns)
+    assert 'x_cat' not in result
+
+
+def test_group_by_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> group_by_if('is_integer')
+    assert result.plydata_groups == ['x', 'y', 'z']
+
+
+def test_group_by_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> group_by_at(())
+    assert not isinstance(result, GroupedDataFrame)
+
+    result = df >> group_by_at(dict(matches=r'beta|z'))
+    assert result.plydata_groups == ['beta', 'z']
+
+
+def test_create_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> create_all(())
+    assert df.equals(result)
+
+
+def test_create_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> create_at((), ())
+    assert len(result) == len(df)
+    assert len(result.columns) == 0
+
+
+def test_create_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> create_if('is_string')
+    assert len(result.columns) == 3
+
+
+def test_arrange_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> select('x', 'y', 'z') >> arrange_all(np.negative)
+    assert all(result['x'] == [6, 5, 4, 3, 2, 1])
+    assert all(result['y'] == [1, 2, 3, 4, 5, 6])
+    assert all(result['z'] == [12, 10, 8, 11, 9, 7])
+
+
+def test_arrange_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> arrange_if('is_integer', np.negative)
+    assert all(result['x'] == [6, 5, 4, 3, 2, 1])
+    assert all(result['y'] == [1, 2, 3, 4, 5, 6])
+    assert all(result['z'] == [12, 10, 8, 11, 9, 7])
+
+
+def test_arrange_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result1 = df >> arrange_at(dict(matches=r'.*'))
+    result2 = df >> arrange_all()
+    assert result1.equals(result2)
+
+
+def test_select_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> select_all(str.capitalize)
+    assert all(result.columns == ['Alpha', 'Beta', 'Theta', 'X', 'Y', 'Z'])
+
+
+def test_select_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    # order does matter
+    result = df >> select_at(('y', 'alpha', 'x'), str.capitalize)
+    assert all(result.columns == ['Y', 'Alpha', 'X'])
+
+    # Group is selected and not renamed. Group come before the
+    # other columns, which other maintain the listed order.
+    result = (df
+              >> group_by('beta')
+              >> select_at(('x', 'beta', 'alpha'), str.upper))
+    assert all(result.columns == ['beta', 'X', 'ALPHA'])
+
+
+def test_select_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> select_if('is_numeric', str.capitalize)
+    assert all(result.columns == ['X', 'Y', 'Z'])
+
+
+def test_rename_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = df >> group_by('alpha') >> rename_all(str.capitalize)
+    assert all(result.columns == ['alpha', 'Beta', 'Theta', 'X', 'Y', 'Z'])
+
+
+def test_rename_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    # Group is selected and not renamed
+    result = (df
+              >> group_by('beta', 'z')
+              >> rename_at(('alpha', 'beta', 'x'), str.upper))
+    assert all(result.columns == ['ALPHA', 'beta', 'theta', 'X', 'y', 'z'])
+
+
+def test_rename_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    result = (df
+              >> group_by('alpha', 'y')
+              >> rename_if('is_numeric', str.capitalize))
+    assert all(result.columns == ['alpha', 'beta', 'theta', 'X', 'y', 'Z'])
+
+
+def test_query_all():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+    # Can use a predicate that returns a single boolean value
+    # per column.
+    result = df >> query_all(any_vars='pdtypes.is_integer_dtype({_})')
+    assert result.equals(df)
+
+    # branches
+    with pytest.raises(ValueError):
+        result = df >> query_all()
+
+    with pytest.raises(ValueError):
+        result = df >> query_all(any_vars='sum({_})>4',
+                                 all_vars='sum({_})>4')
+
+
+def test_query_at():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+
+    # Where the last value of any column is equal to b
+    def last(col):
+        return col.iloc[-1]
+
+    result = (df
+              >> group_by('alpha')
+              >> query_at(dict(endswith='a'), any_vars='last({_}) == "b"'))
+    assert pd.DataFrame(result).equals(df.iloc[:3, :])  # alpha = a
+
+    # branches
+    with pytest.raises(ValueError):
+        result = df >> query_at('is_integer')
+
+    with pytest.raises(ValueError):
+        result = df >> query_at('is_integer',
+                                any_vars='sum({_})>4',
+                                all_vars='sum({_})>4')
+
+
+def test_query_if():
+    df = pd.DataFrame({
+        'alpha': list('aaabbb'),
+        'beta': list('babruq'),
+        'theta': list('cdecde'),
+        'x': [1, 2, 3, 4, 5, 6],
+        'y': [6, 5, 4, 3, 2, 1],
+        'z': [7, 9, 11, 8, 10, 12]
+    })
+    # This is probably a bad way to do such a comparison.
+    # Sum of the z column is not equal to the sum of any other
+    # integer column
+    result = (df
+              >> query_if(
+                  'is_integer',
+                  any_vars='("{_}" != "x") & (sum({_}) == sum(x))')
+              )
+    assert len(result) == 6
+
+    # Sum of the x column is equal to the sum at least one other
+    # integer column; i.e the y column
+    result = (df
+              >> query_if(
+                  'is_integer',
+                  any_vars='("{_}" != "z") & (sum({_}) == sum(z))')
+              )
+    assert len(result) == 0
+
+    # branches
+    with pytest.raises(ValueError):
+        result = df >> query_if('is_integer')
+
+    with pytest.raises(ValueError):
+        result = df >> query_if('is_integer',
+                                any_vars='sum({_})>4',
+                                all_vars='sum({_})>4')

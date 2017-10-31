@@ -51,6 +51,34 @@ Helpers
    add_tally
    count
    tally
+   arrange_all
+   arrange_at
+   arrange_if
+   create_all
+   create_at
+   create_if
+   group_by_all
+   group_by_at
+   group_by_if
+   mutate_all
+   mutate_at
+   mutate_if
+   query_all
+   query_at
+   query_if
+   rename_all
+   rename_at
+   rename_if
+   summarise_all
+   summarise_at
+   summarise_if
+   summarize_all
+   summarize_at
+   summarize_if
+   transmute_all
+   transmute_at
+   transmute_if
+
 
 Two table verbs
 ===============
