@@ -15,11 +15,11 @@ matrix:
       env:
         - JOB: 'PY36'
         - FULL_DEPS=true
-    - python: 3.5
+    - python: 3.6
       env:
         - JOB: 'DOCS'
         - FULL_DEPS=true
-    - python: 3.5
+    - python: 3.6
       env:
         - JOB: 'FLAKE8'
         - FULL_DEPS=false
