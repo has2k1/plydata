@@ -4,7 +4,7 @@ One table verb initializations
 import itertools
 
 from .operators import DataOperator
-from .utils import Expression
+from .expressions import Expression
 
 __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',

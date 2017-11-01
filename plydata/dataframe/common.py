@@ -9,8 +9,9 @@ import pandas as pd
 import pandas.api.types as pdtypes
 import numpy as np
 
+from ..expressions import Expression
 from ..types import GroupedDataFrame
-from ..utils import get_empty_env, unique, Expression
+from ..utils import get_empty_env, unique
 
 
 def _get_groups(verb):
@@ -458,9 +459,9 @@ class Selector:
             return cls._if(verb)
 
 
-def make_expressions(verb):
+def build_expressions(verb):
     """
-    Make expressions
+    Build expressions for helper verbs
 
     Parameters
     ----------

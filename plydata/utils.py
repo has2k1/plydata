@@ -1,11 +1,8 @@
 from contextlib import contextmanager
-import keyword
 
 import pandas as pd
 
 from .eval import EvalEnvironment
-
-KEYWORDS = set(keyword.kwlist)
 
 
 def hasattrs(obj, names):
@@ -120,6 +117,18 @@ def Q(name):
         return env.namespace[name]
     except KeyError:
         raise NameError("No data named {!r} found".format(name))
+
+
+def n():
+    """
+    Size of a group
+
+    It can be used in verbs like :class:`~plydata.verbs.summarize`,
+    :class:`~plydata.verbs.define`. and :class:`~plydata.verbs.create`.
+    This is special function that is internally created for each
+    group dataframe.
+    """
+    # For documentation purposes
 
 
 class custom_dict(dict):
@@ -243,72 +252,3 @@ def unique(lst):
         return x
 
     return [make_seen(x) for x in lst if x not in seen]
-
-
-class Expression:
-    """
-    An expression that will be evaluated
-
-    Parameters
-    ----------
-    stmt : str or function
-        Statement that will be evaluated. Some verbs
-        allow only one or the other.
-    column : str
-        Column in which the result of the statment
-        will be placed.
-    """
-    stmt = None
-    column = None
-
-    def __init__(self, stmt, column):
-        self.stmt = stmt
-        self.column = column
-
-    def __str__(self):
-        return 'Expression({!r}, {})'.format(self.stmt, self.column)
-
-    def __repr__(self):
-        return str(self)
-
-    def evaluate(self, data, env):
-        """
-        Evaluate statement
-
-        Parameters
-        ----------
-        data : pandas.DataFrame
-            Data in whose namespace the statement will be
-            evaluated. Typically, this is a group dataframe.
-
-        Returns
-        -------
-        out : object
-            Result of the evaluation.pandas.DataFrame
-        """
-        def n():
-            """
-            Return number of rows in groups
-
-            This function is part of the public API
-            """
-            return len(data)
-
-        if isinstance(self.stmt, str):
-            # Add function n() that computes the
-            # size of the group data to the inner namespace.
-            namespace = dict(data, n=n)
-            # Avoid obvious keywords e.g if a column
-            # is named class
-            if self.stmt not in KEYWORDS:
-                value = env.eval(
-                    self.stmt,
-                    source_name='Expression.evaluate',
-                    inner_namespace=namespace)
-            else:
-                value = namespace[self.stmt]
-        elif callable(self.stmt):
-            value = self.stmt(data)
-        else:
-            value = self.stmt
-        return value

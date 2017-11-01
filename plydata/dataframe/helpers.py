@@ -7,8 +7,8 @@ import pandas as pd
 import numpy as np
 
 from ..types import GroupedDataFrame
-from ..utils import Expression
-from .common import _get_groups, Selector, make_expressions
+from ..expressions import Expression
+from .common import _get_groups, Selector, build_expressions
 from .one_table import arrange, create, define, group_by
 from .one_table import mutate, rename, summarize
 
@@ -171,7 +171,7 @@ def _make_verb_helper(verb_func, add_groups=False):
 
     @wraps(verb_func)
     def _verb_func(verb):
-        verb.expressions, new_columns = make_expressions(verb)
+        verb.expressions, new_columns = build_expressions(verb)
         if add_groups:
             verb.groups = new_columns
         return verb_func(verb)

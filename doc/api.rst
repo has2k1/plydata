@@ -100,6 +100,23 @@ Two table verbs
    right_join
    semi_join
 
+
+Expression helpers
+==================
+These classes can be used construct complicated conditional assignment
+expressions.
+
+.. currentmodule:: plydata.expressions
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   case_when
+   if_else
+
+
 Options
 =======
 
@@ -126,10 +143,4 @@ Useful Functions
    :template: main.rst
 
    Q
-
-n()
----
-This is a special internal function that returns the number of
-rows in the current groups. It can be used in verbs like
-:class:`~plydata.verbs.summarize`, :class:`~plydata.verbs.define`.
-and :class:`~plydata.verbs.create`.
+   n
