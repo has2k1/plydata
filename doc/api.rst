@@ -17,7 +17,6 @@ One table verbs
    arrange
    create
    define
-   define_where
    distinct
    do
    dropna
@@ -25,7 +24,6 @@ One table verbs
    group_by
    group_indices
    head
-   modify_where
    mutate
    query
    rename

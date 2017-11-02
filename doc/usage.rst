@@ -66,8 +66,6 @@ Single Table Verbs
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.define`        | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
-| :class:`~plydata.one_table_verbs.define_where`  | Yes       | No     |
-+-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.distinct`      | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.do`            | Yes       | No     |
@@ -77,8 +75,6 @@ Single Table Verbs
 | :class:`~plydata.one_table_verbs.group_indices` | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.head`          | Yes       | No     |
-+-------------------------------------------------+-----------+--------+
-| :class:`~plydata.one_table_verbs.modify_where`  | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.query`         | Yes       | No     |
 +-------------------------------------------------+-----------+--------+

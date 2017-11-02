@@ -17,7 +17,7 @@ class GroupedDataFrame(pd.DataFrame):
     def __init__(self, data=None, groups=None, **kwargs):
         super().__init__(data=data, **kwargs)
         if groups is not None:
-            self.plydata_groups = list(groups)
+            self.plydata_groups = list(pd.unique(groups))
 
     @property
     def _constructor(self):

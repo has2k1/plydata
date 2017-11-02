@@ -12,11 +12,11 @@ from ..utils import Q, get_empty_env, regular_index, unique
 from .common import Evaluator, Selector
 from .common import _get_groups, _get_base_dataframe
 
-__all__ = ['arrange', 'create', 'define', 'define_where',
-           'distinct', 'do', 'dropna', 'fillna', 'group_by',
-           'group_indices', 'head', 'modify_where', 'mutate',
-           'query', 'rename', 'sample_frac', 'sample_n', 'select',
-           'summarize', 'tail', 'ungroup', 'unique']
+__all__ = ['arrange', 'create', 'define', 'distinct', 'do',
+           'dropna', 'fillna', 'group_by', 'group_indices',
+           'head',  'mutate', 'query', 'rename', 'sample_frac',
+           'sample_n', 'select', 'summarize', 'tail', 'ungroup',
+           'unique']
 
 
 def define(verb):
@@ -95,11 +95,14 @@ def group_by(verb):
     copy = not get_option('modify_input_data')
 
     try:
-        verb.add_
+        add = verb.add_
     except AttributeError:
-        groups = verb.groups
-    else:
+        add = False
+
+    if add:
         groups = _get_groups(verb) + verb.groups
+    else:
+        groups = verb.groups
 
     if groups:
         return GroupedDataFrame(verb.data, groups, copy=copy)
@@ -187,41 +190,6 @@ def tail(verb):
         data.plydata_groups = list(verb.data.plydata_groups)
     else:
         data = verb.data.tail(verb.n)
-
-    return data
-
-
-def modify_where(verb):
-    if get_option('modify_input_data'):
-        data = verb.data
-    else:
-        data = verb.data.copy()
-
-    # Evaluation uses queried data
-    idx = data.query(verb.where, global_dict=verb.env.namespace).index
-    verb.data = data.loc[idx, :]
-    verb.env = verb.env.with_outer_namespace({'Q': Q})
-    new_data = Evaluator(verb).process()
-
-    for col in new_data:
-        # Do not create new columns, define does that
-        if col not in data:
-            raise KeyError("Column '{}' not in dataframe".format(col))
-        data.loc[idx, col] = new_data.loc[idx, col]
-
-    return data
-
-
-def define_where(verb):
-    if not get_option('modify_input_data'):
-        verb.data = verb.data.copy()
-
-    with options(modify_input_data=True):
-        verb.expressions = verb.define_expressions
-        verb.data = define(verb)
-
-        verb.expressions = verb.where_expressions
-        data = modify_where(verb)
 
     return data
 

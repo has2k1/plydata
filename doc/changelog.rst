@@ -22,8 +22,7 @@ v0.3.0
 
 - Fixed verbs that create columns (i.e
   :class:`~plydata.one_table_verbs.create`,
-  :class:`~plydata.one_table_verbs.define`,
-  :class:`~plydata.one_table_verbs.define_where` and
+  :class:`~plydata.one_table_verbs.define` and
   :class:`~plydata.one_table_verbs.do`)
   so that they can create categorical columns.
 
@@ -78,6 +77,10 @@ API Changes
   counts the number of elements in the current group changed from
   ``{n}`` to ``n()``.
 - You can now use piping with the two table verbs (the joins).
+
+- ``modify_where`` and ``define_where`` helper verbs have been removed.
+  Using the new expression helper functions :class:`~plydata.expressions.case_when`
+  and :class:`~plydata.expressions.if_else` is more readable.
 
 
 v0.2.1

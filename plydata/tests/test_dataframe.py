@@ -10,8 +10,7 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
                      tally, count, add_tally, add_count,
-                     modify_where, define_where, fillna,
-                     call,
+                     fillna, call,
                      arrange_all, arrange_at, arrange_if,
                      create_all, create_at, create_if,
                      group_by_all, group_by_at, group_by_if,
@@ -270,7 +269,10 @@ def test_arrange():
 
 def test_group_by():
     df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],
-                       'y': [1, 2, 3, 4, 5, 6, 5]})
+                       'y': [1, 2, 3, 4, 5, 6, 5],
+                       'z': [1, 2, 3, 4, 5, 6, 5],
+                       'w': [1, 2, 3, 4, 5, 6, 5],
+                       })
     result = df >> group_by('x')
     assert isinstance(result, GroupedDataFrame)
     assert result.plydata_groups == ['x']
@@ -280,8 +282,14 @@ def test_group_by():
     assert 'xsq' in result
     assert isinstance(result, GroupedDataFrame)
 
+    result = df >> group_by('x') >> group_by('y')
+    assert result.plydata_groups == ['y']
+
     result = df >> group_by('x') >> group_by('y', add_=True)
     assert result.plydata_groups == ['x', 'y']
+
+    result = df >> group_by('x', 'w') >> group_by('y', 'x', add_=True)
+    assert result.plydata_groups == ['x', 'w', 'y']
 
 
 def test_ungroup():
@@ -753,45 +761,6 @@ def test_add_count():
     assert isinstance(result, GroupedDataFrame)
 
 
-def test_modify_where():
-    df = pd.DataFrame({
-        'x': [0, 1, 2, 3, 4, 5],
-        'y': [0, 1, 2, 3, 4, 5],
-        'z': [0, 1, 2, 3, 4, 5]})
-    c = 3  # noqa: F84
-
-    result = df >> modify_where('x%2 == 0', y='y*10', z=4)
-    assert result.loc[[0, 2, 4], 'y'].tolist() == [0, 20, 40]
-    assert result.loc[[0, 2, 4], 'z'].tolist() == [4, 4, 4]
-
-    result2 = df >> modify_where('x%2 == 0', ('y', 'y*10'), ('z', 4))
-    assert result.equals(result2)
-
-    with pytest.raises(KeyError):
-        df >> modify_where('x < 2', w=1)
-
-    result = df >> modify_where('x > @c', y=9)
-    assert all(result.loc[:, 'y'] == [0, 1, 2, 3, 9, 9])
-
-    # Branches
-    with pytest.raises(ValueError):
-        df >> modify_where('x%2 == 0', ('y', 'y*10', 'cause-error'))
-
-
-def test_define_where():
-    n = 6
-    df = pd.DataFrame({'x': range(n)})
-    result = df >> define_where('x%2 == 0', parity=("'even'", "'odd'"))
-    assert all(result['parity'] == ['even', 'odd']*(n//2))
-
-    result = df >> define_where('x<3', ('x<3', ('"Yes"', '"No"')))
-    assert all(result['x<3'] == np.repeat(['Yes', 'No'], 3))
-
-    # Branches
-    with pytest.raises(ValueError):
-        df >> define_where('x<3', ('x<3', (1, 0), 'cause-error'))
-
-
 def test_dropna():
     # wraps around pandas and doctests are sufficient
     pass
@@ -848,8 +817,6 @@ def test_data_as_first_argument():
     assert equals(summarize(df, 'sum(x)'), df >> summarize('sum(x)'))
     assert equals(query(df, 'x % 2'), df >> query('x % 2'))
     assert equals(tally(df, 'x'), df >> tally('x'))
-    assert equals(modify_where(df, 'x<3', y=10),
-                  df >> modify_where('x<3', y=10))
 
     def xsum(gdf):
         return [gdf['x'].sum()]
@@ -880,12 +847,6 @@ def test_data_mutability():
     df >> group_by(z='x**2')
     assert 'z' not in df
 
-    df >> modify_where('x<3', y=9)
-    assert df.loc[0, 'y'] != 9
-
-    df >> define_where('x<3', z=(10, 100))
-    assert 'z' not in df
-
     df2 = df.copy()
     df2['x'] = np.nan
     df2 >> fillna(-1)
@@ -899,14 +860,6 @@ def test_data_mutability():
 
     df2 = df.copy()
     df2 >> group_by(z='x**2')
-    assert 'z' in df2
-
-    df2 = df.copy()
-    df2 >> modify_where('x<3', y=9)
-    assert df2.loc[0, 'y'] == 9
-
-    df2 = df.copy()
-    df2 >> define_where('x<3', z=(10, 100))
     assert 'z' in df2
 
     df2 = df.copy()
@@ -1049,14 +1002,6 @@ class TestVerbReuse:
 
     def test_define(self):
         v = define(y='x*2')
-        self._test(v)
-
-    def test_define_where(self):
-        v = define_where('x%2 == 0', parity=("'even'", "'odd'"))
-        self._test(v)
-
-    def test_modify_where(self):
-        v = modify_where('x%2 == 0', x='x*10')
         self._test(v)
 
     def test_tally(self):
