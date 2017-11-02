@@ -14,6 +14,7 @@ from .common import _get_groups, _get_base_dataframe
 
 __all__ = ['arrange', 'create', 'define', 'distinct', 'do',
            'group_by', 'group_indices', 'head',  'mutate',
+           'pull',
            'query', 'rename', 'sample_frac', 'sample_n',
            'select', 'summarize', 'tail', 'ungroup', 'unique']
 
@@ -191,6 +192,20 @@ def tail(verb):
         data = verb.data.tail(verb.n)
 
     return data
+
+
+def pull(verb):
+    copy = not get_option('modify_input_data')
+
+    if verb.use_index:
+        s = verb.data.iloc[:, verb.column]
+    else:
+        s = verb.data.loc[:, verb.column]
+
+    if copy:
+        s = s.copy()
+
+    return np.asarray(s)
 
 
 # Aggregations functions

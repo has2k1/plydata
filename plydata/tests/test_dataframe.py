@@ -9,8 +9,8 @@ import pandas.api.types as pdtypes
 from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
-                     tally, count, add_tally, add_count,
-                     call,
+                     pull,
+                     tally, count, add_tally, add_count, call,
                      arrange_all, arrange_at, arrange_if,
                      create_all, create_at, create_if,
                      group_by_all, group_by_at, group_by_if,
@@ -837,6 +837,10 @@ def test_data_mutability():
     df >> group_by(z='x**2')
     assert 'z' not in df
 
+    arr = df >> pull('x')
+    arr[0] = 99
+    assert df.loc[0, 'x'] != 99
+
     set_option('modify_input_data', True)
 
     df2 = df.copy()
@@ -846,6 +850,11 @@ def test_data_mutability():
     df2 = df.copy()
     df2 >> group_by(z='x**2')
     assert 'z' in df2
+
+    df2 = df.copy()
+    arr = df2 >> pull('x')
+    arr[0] = 99
+    assert df2.loc[0, 'x'] == 99
 
     # Not mutable
     df2 = df.copy()

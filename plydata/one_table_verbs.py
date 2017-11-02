@@ -9,7 +9,7 @@ from .expressions import Expression
 __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize',
-           'query', 'do', 'head', 'tail',
+           'query', 'do', 'head', 'tail', 'pull',
            # Aliases
            'summarise', 'mutate', 'transmute',
            ]
@@ -985,6 +985,54 @@ class tail(DataOperator):
     """
     def __init__(self, n=5):
         self.n = n
+
+
+class pull(DataOperator):
+    """
+    Pull a single column from the dataframe
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    column : name
+        Column name or index id.
+    use_index : bool
+        Whether to pull column by name or by its integer
+        index. Default is False.
+
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'x': [1, 2, 3],
+    ...     'y': [4, 5, 6],
+    ...     'z': [7, 8, 9]
+    ... })
+    >>> df
+       x  y  z
+    0  1  4  7
+    1  2  5  8
+    2  3  6  9
+    >>> df >> pull('y')
+    array([4, 5, 6])
+    >>> df >> pull(0, True)
+    array([1, 2, 3])
+    >>> df >> pull(-1, True)
+    array([7, 8, 9])
+
+
+    Note
+    ----
+    Always returns a numpy array.
+
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`pull` will not make a copy the original column.
+    """
+    def __init__(self, column, use_index=False):
+        self.column = column
+        self.use_index = use_index
 
 
 # Aliases

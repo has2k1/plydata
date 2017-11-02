@@ -76,6 +76,8 @@ Single Table Verbs
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.head`          | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.pull`          | Yes       | No     |
++-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.query`         | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.rename`        | Yes       | No     |

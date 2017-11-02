@@ -34,7 +34,6 @@ v0.3.0
 - Fixed issue where :class:`~plydata.one_table_verbs.select` does maintain the
   order in which the columns are listed.
 
-
 New Features
 ************
 
@@ -70,6 +69,7 @@ New Features
     * :class:`~plydata.helper_verbs.summarize_at`
     * :class:`~plydata.helper_verbs.summarize_if`
 
+- Add :class:`~plydata.one_table_verbs.pull`.
 
 API Changes
 ***********

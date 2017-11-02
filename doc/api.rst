@@ -23,6 +23,7 @@ One table verbs
    group_indices
    head
    mutate
+   pull
    query
    rename
    sample_frac
