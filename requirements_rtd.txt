@@ -1,3 +1,4 @@
 pandas
 sphinx>=1.6.1
 nbsphinx
+ipython
