@@ -10,7 +10,7 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
                      tally, count, add_tally, add_count,
-                     fillna, call,
+                     call,
                      arrange_all, arrange_at, arrange_if,
                      create_all, create_at, create_if,
                      group_by_all, group_by_at, group_by_if,
@@ -761,16 +761,6 @@ def test_add_count():
     assert isinstance(result, GroupedDataFrame)
 
 
-def test_dropna():
-    # wraps around pandas and doctests are sufficient
-    pass
-
-
-def test_fillna():
-    # wraps around pandas and doctests are adequate
-    pass
-
-
 def test_call():
     def remove_column_a(df):
         _df = df.copy()
@@ -847,11 +837,6 @@ def test_data_mutability():
     df >> group_by(z='x**2')
     assert 'z' not in df
 
-    df2 = df.copy()
-    df2['x'] = np.nan
-    df2 >> fillna(-1)
-    assert all(df2['x'].isnull())
-
     set_option('modify_input_data', True)
 
     df2 = df.copy()
@@ -861,11 +846,6 @@ def test_data_mutability():
     df2 = df.copy()
     df2 >> group_by(z='x**2')
     assert 'z' in df2
-
-    df2 = df.copy()
-    df2['x'] = np.nan
-    df2 >> fillna(-1)
-    assert all(df2['x'] == -1)
 
     # Not mutable
     df2 = df.copy()

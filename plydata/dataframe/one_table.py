@@ -7,16 +7,15 @@ import numpy as np
 import pandas as pd
 
 from ..types import GroupedDataFrame
-from ..options import get_option, options
+from ..options import get_option
 from ..utils import Q, get_empty_env, regular_index, unique
 from .common import Evaluator, Selector
 from .common import _get_groups, _get_base_dataframe
 
 __all__ = ['arrange', 'create', 'define', 'distinct', 'do',
-           'dropna', 'fillna', 'group_by', 'group_indices',
-           'head',  'mutate', 'query', 'rename', 'sample_frac',
-           'sample_n', 'select', 'summarize', 'tail', 'ungroup',
-           'unique']
+           'group_by', 'group_indices', 'head',  'mutate',
+           'query', 'rename', 'sample_frac', 'sample_n',
+           'select', 'summarize', 'tail', 'ungroup', 'unique']
 
 
 def define(verb):
@@ -192,29 +191,6 @@ def tail(verb):
         data = verb.data.tail(verb.n)
 
     return data
-
-
-def dropna(verb):
-    result = verb.data.dropna(
-        axis=verb.axis,
-        how=verb.how,
-        thresh=verb.thresh,
-        subset=verb.subset
-    )
-    return result
-
-
-def fillna(verb):
-    inplace = get_option('modify_input_data')
-    result = verb.data.fillna(
-        value=verb.value,
-        method=verb.method,
-        axis=verb.axis,
-        limit=verb.limit,
-        downcast=verb.downcast,
-        inplace=inplace
-    )
-    return result if not inplace else verb.data
 
 
 # Aggregations functions

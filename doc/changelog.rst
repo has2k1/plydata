@@ -76,11 +76,16 @@ API Changes
 - Using internal function for :class:`~plydata.one_table_verbs.summarize` that
   counts the number of elements in the current group changed from
   ``{n}`` to ``n()``.
+
 - You can now use piping with the two table verbs (the joins).
 
 - ``modify_where`` and ``define_where`` helper verbs have been removed.
   Using the new expression helper functions :class:`~plydata.expressions.case_when`
   and :class:`~plydata.expressions.if_else` is more readable.
+
+- Removed ``dropna`` and ``fillna`` in favour of using
+  :class:`~plydata.helper_verbs.call` with :meth:`pandas.DataFrame.dropna` and
+  :meth:`pandas.DataFrame.fillna`.
 
 
 v0.2.1

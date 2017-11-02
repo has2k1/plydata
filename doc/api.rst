@@ -19,8 +19,6 @@ One table verbs
    define
    distinct
    do
-   dropna
-   fillna
    group_by
    group_indices
    head
