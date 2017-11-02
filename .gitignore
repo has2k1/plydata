@@ -58,3 +58,7 @@ doc/generated/
 
 # PyBuilder
 target/
+
+# ipynb
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*

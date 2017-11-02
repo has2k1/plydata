@@ -60,6 +60,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
 
     'sphinxext.inline_code_highlight',
+    'nbsphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -113,7 +114,10 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = [
+    '_build',
+    '**.ipynb_checkpoints',
+]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -340,6 +344,7 @@ intersphinx_mapping = {
 # -- Extension configuration ----------------------------------------------
 autodoc_member_order = 'bysource'
 autosummary_generate = True
+nbsphinx_execute = 'never'
 
 
 def setup(app):

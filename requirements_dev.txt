@@ -4,6 +4,7 @@ tox
 
 # Documentation
 sphinx
+nbsphinx
 
 # Release
 wheel

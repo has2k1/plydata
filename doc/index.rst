@@ -74,6 +74,7 @@ Documentation
    api
    usage
    installation
+   tutorials
    changelog
 
 
