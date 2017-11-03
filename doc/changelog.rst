@@ -1,9 +1,13 @@
 Changelog
 =========
 
+v0.3.1
+------
+*(not-released-yet)*
+
 v0.3.0
 ------
-*not-yet-released*
+*(2017-11-03)*
 
 - Fixed :class:`~plydata.one_table_verbs.define` (mutate) and
   :class:`~plydata.one_table_verbs.create` (transmute), make them work with
