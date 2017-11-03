@@ -31,7 +31,7 @@ def get_required_packages():
 
     Plus any version tests and warnings
     """
-    install_requires = ['pandas']
+    install_requires = ['pandas >= 0.21.0']
     return install_requires
 
 
