@@ -504,10 +504,12 @@ class _all(DataOperator):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -581,10 +583,12 @@ class _if(DataOperator):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -644,10 +648,12 @@ class _at(select):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -705,10 +711,12 @@ class arrange_all(_all):
     functions : callable or tuple or dict or str
         Functions to alter the columns before they are sorted:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -816,10 +824,12 @@ class arrange_if(_if):
     functions : callable or tuple or dict or str
         Functions to alter the columns before they are sorted:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -920,10 +930,12 @@ class arrange_at(_at):
     functions : callable or tuple or dict or str, optional
         Functions to alter the columns before they are sorted:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1000,9 +1012,9 @@ class arrange_at(_at):
     they corrupt the data. Use function(s) that return values that
     can be sorted.
     """
-    def __init__(self, columns, functions=None, *args, **kwargs):
+    def __init__(self, names, functions=None, *args, **kwargs):
         self.set_env_from_verb_init()
-        super().__init__(columns, functions, *args, **kwargs)
+        super().__init__(names, functions, *args, **kwargs)
 
 
 class create_all(_all):
@@ -1016,10 +1028,12 @@ class create_all(_all):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1135,10 +1149,12 @@ class create_if(_if):
     functions : callable or tuple or dict or str, optional
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1251,10 +1267,12 @@ class create_at(_at):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1354,10 +1372,12 @@ class group_by_all(_all):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1484,10 +1504,12 @@ class group_by_if(_if):
     functions : callable or tuple or dict or str, optional
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1586,10 +1608,12 @@ class group_by_at(_at):
     functions : callable or tuple or dict or str, optional
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1645,9 +1669,9 @@ class group_by_at(_at):
     4     b   uu    dd  5  2  10
     5     b   qq    ee  6  1  12
     """
-    def __init__(self, columns, functions=None, *args, **kwargs):
+    def __init__(self, names, functions=None, *args, **kwargs):
         self.set_env_from_verb_init()
-        super().__init__(columns, functions, *args, **kwargs)
+        super().__init__(names, functions, *args, **kwargs)
 
 
 class mutate_all(_all):
@@ -1661,10 +1685,12 @@ class mutate_all(_all):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1792,10 +1818,12 @@ class mutate_if(_if):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -1919,10 +1947,12 @@ class mutate_at(_at):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -2384,10 +2414,12 @@ class rename_all(_all):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -2482,10 +2514,12 @@ class rename_if(_if):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -2569,10 +2603,12 @@ class rename_at(_at):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -2638,10 +2674,12 @@ class select_all(_all):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -2735,10 +2773,12 @@ class select_if(_if):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -2824,10 +2864,12 @@ class select_at(_at):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -2903,10 +2945,12 @@ class summarize_all(_all):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
@@ -3124,10 +3168,12 @@ class summarize_at(_at):
     functions : callable or tuple or dict or str
         Functions to alter the columns:
 
-            - function (any callable) - The name (``__name__``) of the
-              function is postfixed to resulting column names.
+            - function (any callable) - Function is applied to the
+              column and the result columns replace the original
+              columns.
             - :class:`tuple` of functions - Each function is applied to
-              all of the columns, with the names determined as above.
+              all of the columns and the name (``__name__``) of the
+              function is postfixed to resulting column names.
             - :class:`dict` of the form ``{'name': function}`` - Allows
               you to apply one or more functions and also control the
               postfix to the name.
