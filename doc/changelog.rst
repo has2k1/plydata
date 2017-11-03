@@ -40,8 +40,11 @@ New Features
 - Added special verb :class:`~plydata.helper_verbs.call`, it allows one to use
   external functions that accept a dataframe as the first argument.
 
-- :class:`~plydata.one_table_verbs.define` You can now use the internal function
-  ``n()`` to count the number of elements in current group.
+- For :class:`~plydata.one_table_verbs.define`,
+  :class:`~plydata.one_table_verbs.create` and
+  :class:`~plydata.one_table_verbs.group_by`, you can now use the
+  special function ``n()`` to count the number of elements in current
+  group.
 
 - Added the single table helper verbs:
 
