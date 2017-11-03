@@ -29,6 +29,7 @@ One table verbs
    sample_frac
    sample_n
    select
+   slice_rows
    summarize
    tail
    transmute

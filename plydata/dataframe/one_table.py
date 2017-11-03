@@ -14,9 +14,9 @@ from .common import _get_groups, _get_base_dataframe
 
 __all__ = ['arrange', 'create', 'define', 'distinct', 'do',
            'group_by', 'group_indices', 'head',  'mutate',
-           'pull',
-           'query', 'rename', 'sample_frac', 'sample_n',
-           'select', 'summarize', 'tail', 'ungroup', 'unique']
+           'pull', 'query', 'rename', 'sample_frac', 'sample_n',
+           'select', 'slice_rows', 'summarize', 'tail',
+           'ungroup', 'unique']
 
 
 def define(verb):
@@ -206,6 +206,14 @@ def pull(verb):
         s = s.copy()
 
     return np.asarray(s)
+
+
+def slice_rows(verb):
+    copy = not get_option('modify_input_data')
+    data = verb.data.iloc[verb.slice, :]
+    if copy:
+        data = data.copy()
+    return data
 
 
 # Aggregations functions

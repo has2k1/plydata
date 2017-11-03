@@ -88,6 +88,8 @@ Single Table Verbs
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.select`        | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
+| :class:`~plydata.one_table_verbs.slice_rows`    | Yes       | No     |
++-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.summarize`     | Yes       | No     |
 +-------------------------------------------------+-----------+--------+
 | :class:`~plydata.one_table_verbs.tail`          | Yes       | No     |

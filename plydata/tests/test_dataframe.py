@@ -9,7 +9,7 @@ import pandas.api.types as pdtypes
 from plydata import (define, create, sample_n, sample_frac, select,
                      rename, distinct, arrange, group_by, ungroup,
                      group_indices, summarize, query, do, head, tail,
-                     pull,
+                     pull, slice_rows,
                      tally, count, add_tally, add_count, call,
                      arrange_all, arrange_at, arrange_if,
                      create_all, create_at, create_if,
@@ -840,6 +840,10 @@ def test_data_mutability():
     arr = df >> pull('x')
     arr[0] = 99
     assert df.loc[0, 'x'] != 99
+
+    df2 = df >> slice_rows(3)
+    df2.loc[0, 'x'] = 999
+    assert df.loc[0, 'x'] != 999
 
     set_option('modify_input_data', True)
 

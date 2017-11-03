@@ -9,7 +9,7 @@ from .expressions import Expression
 __all__ = ['define', 'create', 'sample_n', 'sample_frac', 'select',
            'rename', 'distinct', 'unique', 'arrange', 'group_by',
            'ungroup', 'group_indices', 'summarize',
-           'query', 'do', 'head', 'tail', 'pull',
+           'query', 'do', 'head', 'tail', 'pull', 'slice_rows',
            # Aliases
            'summarise', 'mutate', 'transmute',
            ]
@@ -1022,7 +1022,6 @@ class pull(DataOperator):
     >>> df >> pull(-1, True)
     array([7, 8, 9])
 
-
     Note
     ----
     Always returns a numpy array.
@@ -1033,6 +1032,63 @@ class pull(DataOperator):
     def __init__(self, column, use_index=False):
         self.column = column
         self.use_index = use_index
+
+
+class slice_rows(DataOperator):
+    """
+    Select rows
+
+    A wrapper around :class:`slice` to use when piping.
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    *args : tuple
+        (start, stop, step) as expected by the builtin :class:`slice`
+        type.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'x': range(10), 'y': range(100, 110)})
+    >>> df >> slice_rows(5)
+       x    y
+    0  0  100
+    1  1  101
+    2  2  102
+    3  3  103
+    4  4  104
+
+    >>> df >> slice_rows(3, 7)
+       x    y
+    3  3  103
+    4  4  104
+    5  5  105
+    6  6  106
+
+    >>> df >> slice_rows(None, None, 3)
+       x    y
+    0  0  100
+    3  3  103
+    6  6  106
+    9  9  109
+
+    The above examples are equivalent to::
+
+        df[slice(5)]
+        df[slice(3, 7)]
+        df[slice(None, None, 3)]
+
+    respectively.
+
+    Note
+    ----
+    If :obj:`plydata.options.modify_input_data` is ``True``,
+    :class:`slice_rows` will not make a copy the original dataframe.
+    """
+    def __init__(self, *args):
+        self.slice = slice(*args)
 
 
 # Aliases

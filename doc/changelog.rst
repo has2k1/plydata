@@ -69,7 +69,9 @@ New Features
     * :class:`~plydata.helper_verbs.summarize_at`
     * :class:`~plydata.helper_verbs.summarize_if`
 
-- Add :class:`~plydata.one_table_verbs.pull`.
+- Added :class:`~plydata.one_table_verbs.pull` verb.
+
+- Added :class:`~plydata.one_table_verbs.slice_rows` verb.
 
 API Changes
 ***********
