@@ -6,6 +6,7 @@ from functools import wraps
 import pandas as pd
 import numpy as np
 
+from ..options import options
 from ..types import GroupedDataFrame
 from ..expressions import Expression
 from .common import _get_groups, Selector, build_expressions
@@ -56,10 +57,17 @@ def tally(verb):
 
 
 def count(verb):
-    if (not isinstance(verb.data, GroupedDataFrame) and
-            verb.groups):
-        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
-    return tally(verb)
+    groups = _get_groups(verb)
+
+    # When grouping, add to the any current groups
+    verb.add_ = True
+    verb.data = group_by(verb)
+    data = tally(verb)
+
+    # Restore original groups
+    if groups:
+        data = GroupedDataFrame(data, groups, copy=False)
+    return data
 
 
 def add_tally(verb):
@@ -81,15 +89,19 @@ def add_tally(verb):
 
 
 def add_count(verb):
-    remove_groups = False
-    if (not isinstance(verb.data, GroupedDataFrame) and
-            verb.groups):
-        verb.data = GroupedDataFrame(verb.data, verb.groups, copy=True)
-        remove_groups = True
+    groups = _get_groups(verb)
 
+    # When grouping, add to the any current groups
+    verb.add_ = True
+    verb.data = group_by(verb)
     data = add_tally(verb)
-    if remove_groups:
-        data = pd.DataFrame(data)
+
+    if groups:
+        # Restore original groups
+        data = GroupedDataFrame(data, groups, copy=False)
+    else:
+        # Remove counted groups
+        data = pd.DataFrame(data, copy=False)
     return data
 
 
@@ -111,8 +123,6 @@ def _query_helper(verb):
     result_col = '_plydata_dummy_col_'
     verb.expressions = [Expression(compound_expr, result_col)]
     _data = create(verb)
-    # print(compound_expr)
-    # print(_data)
     bool_idx = _data[result_col].values
 
     data = verb.data.loc[bool_idx, :]

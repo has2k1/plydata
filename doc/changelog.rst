@@ -7,6 +7,13 @@ v0.3.1
 
 - Fixed exception with evaluation of grouped categorical columns when
   there are missing categories in the data.
+
+- Fixed issue with ignored groups when
+  :class:`~plydata.helper_verbs.count` and
+  :class:`~plydata.helper_verbs.add_count` are used with
+  a grouped dataframe. The groups list in the verb
+  call were ignored.
+
 v0.3.0
 ------
 *(2017-11-03)*

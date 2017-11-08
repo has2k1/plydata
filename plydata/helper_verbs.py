@@ -2,7 +2,7 @@
 Helper verbs
 """
 from .operators import DataOperator
-from .one_table_verbs import select
+from .one_table_verbs import select, group_by
 
 
 __all__ = ['call', 'tally', 'count', 'add_tally', 'add_count',
@@ -182,7 +182,7 @@ class tally(DataOperator):
         self.sort = sort
 
 
-class count(DataOperator):
+class count(group_by):
     """
     Count observations by group
 
@@ -256,12 +256,8 @@ class count(DataOperator):
 
     def __init__(self, *args, weights=None, sort=False):
         self.set_env_from_verb_init()
-        if len(args) == 1:
-            self.groups = [args[0]]
-        elif len(args) > 1:
-            self.groups = list(args)
-        else:
-            self.groups = []
+        super().__init__(*args)
+        self.add_ = True
         self.weights = weights
         self.sort = sort
 

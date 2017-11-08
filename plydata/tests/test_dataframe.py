@@ -707,6 +707,14 @@ def test_count():
     result2 = df >> group_by('y') >> summarize(n='sum(w)')
     assert result.equals(result2)
 
+    result = df >> count('w-1')
+    assert result.loc[:, 'w-1'].tolist() == [0, 1]
+    assert result.loc[:, 'n'].tolist() == [3, 3]
+
+    result1 = df >> group_by('y') >> count('w')
+    result2 = df >> count('y', 'w')
+    assert result1.plydata_groups == ['y']
+    assert pd.DataFrame(result1).equals(result2)
 
 def test_add_tally():
     df = pd.DataFrame({
@@ -759,6 +767,12 @@ def test_add_count():
     result = df >> group_by('y') >> add_count()
     assert all(result['n'] == [3]*n)
     assert isinstance(result, GroupedDataFrame)
+
+    result1 = df >> add_count('w', 'y')
+    result2 = df >> group_by('w') >> add_count('y')
+    assert not isinstance(result1, GroupedDataFrame)
+    assert result2.plydata_groups == ['w']
+    assert pd.DataFrame(result2).equals(result1)
 
 
 def test_call():
