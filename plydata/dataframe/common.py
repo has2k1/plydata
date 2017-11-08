@@ -240,7 +240,10 @@ class Evaluator:
         """
         if self.groups:
             grouper = self.data.groupby(self.groups, sort=False)
-            return (gdf for _, gdf in grouper)
+            # groupby on categorical columns uses the categories
+            # even if they are not present in the data. This
+            # leads to empty groups. We exclude them.
+            return (gdf for _, gdf in grouper if not gdf.empty)
         else:
             return (self.data, )
 
@@ -258,7 +261,7 @@ class Evaluator:
         out : list
             Result dataframes for each group
         """
-        return (self._evaluate_group_dataframe(gdf)for gdf in gdfs)
+        return (self._evaluate_group_dataframe(gdf) for gdf in gdfs)
 
     def _evaluate_group_dataframe(self, gdf):
         """

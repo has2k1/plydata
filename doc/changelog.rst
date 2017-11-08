@@ -5,6 +5,8 @@ v0.3.1
 ------
 *(not-released-yet)*
 
+- Fixed exception with evaluation of grouped categorical columns when
+  there are missing categories in the data.
 v0.3.0
 ------
 *(2017-11-03)*
