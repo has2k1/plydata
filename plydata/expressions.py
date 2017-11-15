@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import keyword
+import re
 
 import pandas as pd
 import pandas.api.types as pdtypes
@@ -8,6 +9,10 @@ import numpy as np
 __all__ = ['case_when', 'if_else']
 
 KEYWORDS = set(keyword.kwlist)
+
+# A pattern that matches the function 'n()'
+# anywhere in an expression
+n_func_pattern = re.compile(r'\bn\(\)')
 
 
 # Internal expression classes
@@ -28,9 +33,17 @@ class BaseExpression:
     stmt = None
     column = None
 
+    # Whether the statement uses the special function n()
+    _has_n_func = False
+
     def __init__(self, stmt, column):
         self.stmt = stmt
         self.column = column
+
+        # Check for n() in the statement
+        if isinstance(stmt, str):
+            if n_func_pattern.search(stmt):
+                self._has_n_func = True
 
     def __repr__(self):
         fmt = '{}({!r}, {!r})'.format
@@ -68,7 +81,10 @@ class BaseExpression:
         if isinstance(self.stmt, str):
             # Add function n() that computes the
             # size of the group data to the inner namespace.
-            namespace = dict(data, n=n)
+            if self._has_n_func:
+                namespace = dict(data, n=n)
+            else:
+                namespace = data
             # Avoid obvious keywords e.g if a column
             # is named class
             if self.stmt not in KEYWORDS:

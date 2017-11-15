@@ -123,8 +123,10 @@ def n():
     """
     Size of a group
 
-    It can be used in verbs like :class:`~plydata.verbs.summarize`,
-    :class:`~plydata.verbs.define`. and :class:`~plydata.verbs.create`.
+    It can be used in verbs like
+    :class:`~plydata.one_table_verbs.summarize`,
+    :class:`~plydata.one_table_verbs.define`. and
+    :class:`~plydata.one_table_verbs.create`.
     This is special function that is internally created for each
     group dataframe.
     """

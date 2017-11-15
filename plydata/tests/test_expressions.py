@@ -53,3 +53,25 @@ def test_IfElseExpression():
     expr = IfElseExpression(if_else('x%2==0', 2, -1), 'y')
     assert str(expr) == \
         "IfElseExpression(if_else('x%2==0', 2, -1), 'y')"
+
+
+def test_n():
+    df = pd.DataFrame({'n': [1, 2, 3, 4],
+                       'x': [1, 1, 2, 2]})
+    env = get_empty_env()
+
+    expr = BaseExpression('n', 'n')
+    value = expr.evaluate(df, env)
+    assert all(value == df['n'])
+
+    expr = BaseExpression('n()', 'n')
+    value = expr.evaluate(df, env)
+    assert value == len(df)
+
+    expr = BaseExpression('x/n()', 'x_ratio')
+    value = expr.evaluate(df, env)
+    assert all(value == df['x']/len(df))
+
+    with pytest.raises(TypeError):
+        expr = BaseExpression('n/n()', 'n_ratio')
+        value = expr.evaluate(df, env)

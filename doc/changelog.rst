@@ -14,6 +14,9 @@ v0.3.1
   a grouped dataframe. The groups list in the verb
   call were ignored.
 
+- Fixed issue where a dataframe with a column named `n`, the column could
+  not be referenced (:issue:`6`).
+
 v0.3.0
 ------
 *(2017-11-03)*
