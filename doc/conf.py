@@ -346,6 +346,10 @@ autodoc_member_order = 'bysource'
 autosummary_generate = True
 nbsphinx_execute = 'never'
 
+extlinks = {
+    'issue': ('https://github.com/has2k1/plotnine/issues/%s', 'GH')
+}
+
 
 def setup(app):
     app.add_javascript('copybutton.js')
