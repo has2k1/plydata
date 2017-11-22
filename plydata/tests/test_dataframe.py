@@ -716,6 +716,7 @@ def test_count():
     assert result1.plydata_groups == ['y']
     assert pd.DataFrame(result1).equals(result2)
 
+
 def test_add_tally():
     df = pd.DataFrame({
         'x': [1, 2, 3, 4, 5, 6],

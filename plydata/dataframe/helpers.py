@@ -6,7 +6,6 @@ from functools import wraps
 import pandas as pd
 import numpy as np
 
-from ..options import options
 from ..types import GroupedDataFrame
 from ..expressions import Expression
 from .common import _get_groups, Selector, build_expressions
