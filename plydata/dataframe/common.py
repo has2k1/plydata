@@ -329,6 +329,43 @@ class Selector:
     """
     Helper to select columns of a verb
     """
+    @staticmethod
+    def _resolve_slices(data_columns, names):
+        """
+        Convert any slices into column names
+
+        Parameters
+        ----------
+        data_columns : pandas.Index
+            Dataframe columns
+        names : tuple
+            Names (including slices) of columns in the
+            dataframe.
+
+        Returns
+        -------
+        out : tuple
+            Names of columns in the dataframe. Has no
+            slices.
+        """
+        def _get_slice_cols(sc):
+            """
+            Convert slice to list of names
+            """
+            # Just like pandas.DataFrame.loc the stop
+            # column is included
+            idx_start = data_columns.get_loc(sc.start)
+            idx_stop = data_columns.get_loc(sc.stop) + 1
+            return data_columns[idx_start:idx_stop:sc.step]
+
+        result = []
+        for col in names:
+            if isinstance(col, slice):
+                result.extend(_get_slice_cols(col))
+            else:
+                result.append(col)
+        return tuple(result)
+
     @classmethod
     def select(cls, verb):
         """
@@ -350,7 +387,7 @@ class Selector:
         matches = verb.matches
 
         groups = _get_groups(verb)
-        names = verb.names
+        names = cls._resolve_slices(columns, verb.names)
         names_set = set(names)
         groups_set = set(groups)
         lst = [[]]

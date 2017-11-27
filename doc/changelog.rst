@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v0.3.2
+------
+*(not-yet-released)*
+
+New Features
+************
+- You can now use slices to :class:`~plydata.one_table_verbs.select`
+  columns (:issue:`9`).
+
 v0.3.1
 ------
 *(2017-11-21)*

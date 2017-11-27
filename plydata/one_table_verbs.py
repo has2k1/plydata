@@ -235,7 +235,8 @@ class select(DataOperator):
     data : dataframe, optional
         Useful when not using the ``>>`` operator.
     names : tuple, optional
-        Names of columns in dataframe. Normally, they are strings.
+        Names of columns in dataframe. Normally, they are strings
+        can include slice e.g :py:`slice('col2', 'col5')`.
     startswith : str or tuple, optional
         All column names that start with this string will be included.
     endswith : str or tuple, optional
@@ -274,6 +275,22 @@ class select(DataOperator):
     0     1        1
     1     2        2
     2     3        3
+
+    You can select column slices too. Like :meth:`~pandas.DataFrame.loc`,
+    the stop column is included.
+
+    >>> df = pd.DataFrame({'a': x, 'b': x, 'c': x, 'd': x,
+    ...                    'e': x, 'f': x, 'g': x, 'h': x})
+    >>> df
+       a  b  c  d  e  f  g  h
+    0  1  1  1  1  1  1  1  1
+    1  2  2  2  2  2  2  2  2
+    2  3  3  3  3  3  3  3  3
+    >>> df >> select('a', slice('c', 'e'), 'g')
+       a  c  d  e  g
+    0  1  1  1  1  1
+    1  2  2  2  2  2
+    2  3  3  3  3  3
     """
     def __init__(self, *names, startswith=None, endswith=None,
                  contains=None, matches=None, drop=False):
