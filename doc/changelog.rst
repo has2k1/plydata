@@ -3,7 +3,7 @@ Changelog
 
 v0.3.2
 ------
-*(not-yet-released)*
+*(2017-11-27)*
 
 New Features
 ************
