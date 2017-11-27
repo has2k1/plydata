@@ -49,6 +49,7 @@ needs_sphinx = '1.6.1'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -347,7 +348,7 @@ autosummary_generate = True
 nbsphinx_execute = 'never'
 
 extlinks = {
-    'issue': ('https://github.com/has2k1/plotnine/issues/%s', 'GH')
+    'issue': ('https://github.com/has2k1/plydata/issues/%s', 'GH')
 }
 
 
