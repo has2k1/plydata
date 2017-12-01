@@ -30,15 +30,20 @@ class GroupedDataFrame(pd.DataFrame):
             super().__str__())
         return s
 
-    def groupby(self, **kwargs):
+    def groupby(self, by=None, **kwargs):
         """
-        Group by
+        Group by and do not sort (unless specified)
 
-        No need of specifying groups
+        For plydata use cases, there is no need to specify
+        group columns.
         """
-        by = self.plydata_groups
+        if by is None:
+            by = self.plydata_groups
+
+        # Turn off sorting by groups messes with some verbs
         if 'sort' not in kwargs:
             kwargs['sort'] = False
+
         return super().groupby(by, **kwargs)
 
     def group_indices(self):
