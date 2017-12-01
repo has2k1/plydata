@@ -238,8 +238,8 @@ class Evaluator:
         out : tuple or generator
             Group dataframes
         """
-        if self.groups:
-            grouper = self.data.groupby(self.groups, sort=False)
+        if isinstance(self.data, GroupedDataFrame):
+            grouper = self.data.groupby()
             # groupby on categorical columns uses the categories
             # even if they are not present in the data. This
             # leads to empty groups. We exclude them.

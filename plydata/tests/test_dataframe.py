@@ -310,6 +310,9 @@ def test_group_indices():
     results = df >> group_indices('y % 2')
     assert all(results == [1, 0, 1, 0, 1, 0, 1])
 
+    results = df >> group_indices()
+    assert all(results == [1, 1, 1, 1, 1, 1, 1])
+
     # Branches
     with pytest.warns(UserWarning):
         df >> group_by('x') >> group_indices('y')

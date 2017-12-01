@@ -125,13 +125,9 @@ def group_indices(verb):
             groups = data.plydata_groups
     else:
         data = create(verb)
+        data = GroupedDataFrame(data, groups, copy=False)
 
-    indices_dict = data.groupby(groups, sort=False).indices
-    indices = -np.ones(len(data), dtype=int)
-    for i, (_, idx) in enumerate(sorted(indices_dict.items())):
-        indices[idx] = i
-
-    return indices
+    return data.group_indices()
 
 
 def summarize(verb):
@@ -172,7 +168,7 @@ def do(verb):
 
 def head(verb):
     if isinstance(verb.data, GroupedDataFrame):
-        grouper = verb.data.groupby(verb.data.plydata_groups, sort=False)
+        grouper = verb.data.groupby()
         dfs = [gdf.head(verb.n) for _, gdf in grouper]
         data = pd.concat(dfs, axis=0, ignore_index=True, copy=False)
         data.plydata_groups = list(verb.data.plydata_groups)
@@ -184,7 +180,7 @@ def head(verb):
 
 def tail(verb):
     if isinstance(verb.data, GroupedDataFrame):
-        grouper = verb.data.groupby(verb.data.plydata_groups, sort=False)
+        grouper = verb.data.groupby()
         dfs = [gdf.tail(verb.n) for _, gdf in grouper]
         data = pd.concat(dfs, axis=0, ignore_index=True, copy=False)
         data.plydata_groups = list(verb.data.plydata_groups)

@@ -1,5 +1,10 @@
 Changelog
 =========
+v0.3.3
+------
+*(not-yet-released)*
+- Fixed :class:`~plydata.one_table_verbs.group_indices` for the case
+  with no groups.
 
 v0.3.2
 ------

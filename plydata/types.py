@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 class GroupedDataFrame(pd.DataFrame):
@@ -28,6 +29,31 @@ class GroupedDataFrame(pd.DataFrame):
             self.plydata_groups,
             super().__str__())
         return s
+
+    def groupby(self, **kwargs):
+        """
+        Group by
+
+        No need of specifying groups
+        """
+        by = self.plydata_groups
+        if 'sort' not in kwargs:
+            kwargs['sort'] = False
+        return super().groupby(by, **kwargs)
+
+    def group_indices(self):
+        """
+        Return group indices
+        """
+        # No groups
+        if not self.plydata_groups:
+            return np.ones(len(self), dtype=int)
+
+        grouper = self.groupby()
+        indices = np.empty(len(self), dtype=int)
+        for i, (_, idx) in enumerate(sorted(grouper.indices.items())):
+            indices[idx] = i
+        return indices
 
     def to_html(self, *args, **kwargs):
         cell = '<td>{}</td>'
