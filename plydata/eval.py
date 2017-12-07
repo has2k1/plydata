@@ -4,6 +4,7 @@ import __future__
 import sys
 import numbers
 import inspect
+from functools import lru_cache
 
 
 __all__ = ["EvalEnvironment"]
@@ -19,6 +20,14 @@ def _all_future_flags():
 
 
 _ALL_FUTURE_FLAGS = _all_future_flags()
+
+
+@lru_cache(maxsize=256)
+def _compile(source, filename, mode, flags=0, dont_inherit=False, optimize=-1):
+    """
+    Cached compile
+    """
+    return compile(source, filename, mode, flags, dont_inherit)
 
 
 # This is just a minimal dict-like object that does lookup in a 'stack' of
@@ -93,7 +102,7 @@ class EvalEnvironment(object):
           when `expr` attempts to access any variables.
         :returns: The value of `expr`.
         """
-        code = compile(expr, source_name, "eval", self.flags, False)
+        code = _compile(expr, source_name, 'eval', self.flags)
         return eval(code, {}, VarLookupDict([inner_namespace]
                                             + self._namespaces))
 
