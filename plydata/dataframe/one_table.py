@@ -145,7 +145,7 @@ def query(verb):
         verb.expression,
         global_dict=verb.env.namespace,
         **verb.kwargs)
-    data.is_copy = None
+    data._is_copy = None
     return data
 
 

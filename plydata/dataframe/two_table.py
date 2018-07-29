@@ -32,7 +32,7 @@ def anti_join(verb):
     verb.kwargs['indicator'] = '_plydata_merge'
     df = _join(verb)
     data = df.query('_plydata_merge=="left_only"')[verb.x.columns]
-    data.is_copy = None
+    data._is_copy = None
     return data
 
 
@@ -42,7 +42,7 @@ def semi_join(verb):
     verb.kwargs['indicator'] = '_plydata_merge'
     df = _join(verb)
     data = df.query('_plydata_merge=="both"')[verb.x.columns]
-    data.is_copy = None
+    data._is_copy = None
     data.drop_duplicates(inplace=True)
     return data
 

@@ -277,7 +277,7 @@ class Evaluator:
         out : pandas.DataFrame
             Result data
         """
-        gdf.is_copy = None
+        gdf._is_copy = None
         result_index = gdf.index if self.keep_index else []
         data = pd.DataFrame(index=result_index)
         for expr in self.expressions:
