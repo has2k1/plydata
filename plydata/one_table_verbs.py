@@ -261,10 +261,10 @@ class select(DataOperator):
     1     2     2
     2     3     3
     >>> df >> select('bell', 'nail', drop=True)
-       tail  whistle
-    0     1        1
-    1     2        2
-    2     3        3
+       whistle  tail
+    0        1     1
+    1        2     2
+    2        3     3
     >>> df >> select('whistle',  endswith='ail')
        whistle nail  tail
     0        1    1     1
@@ -337,15 +337,15 @@ class rename(DataOperator):
     >>> df = pd.DataFrame({'bell': x, 'whistle': x,
     ...                    'nail': x, 'tail': x})
     >>> df >> rename(gong='bell', pin='nail')
-       gong  pin  tail  whistle
-    0     1    1     1        1
-    1     2    2     2        2
-    2     3    3     3        3
+       gong  whistle  pin  tail
+    0     1        1    1     1
+    1     2        2    2     2
+    2     3        3    3     3
     >>> df >> rename({'flap': 'tail'}, pin='nail')
-       bell  pin  flap  whistle
-    0     1    1     1        1
-    1     2    2     2        2
-    2     3    3     3        3
+       bell  whistle  pin  flap
+    0     1        1    1     1
+    1     2        2    2     2
+    2     3        3    3     3
 
     Note
     ----
@@ -861,7 +861,7 @@ class do(DataOperator):
     >>> def least_squares(gdf):
     ...     X = np.vstack([gdf.x, np.ones(len(gdf))]).T
     ...     (m, c), _, _, _ = np.linalg.lstsq(X, gdf.y)
-    ...     return pd.DataFrame({'slope': [m], 'intercept': c})
+    ...     return pd.DataFrame({'intercept': c, 'slope': [m]})
 
     Define functions that take x and y values and compute the
     intercept and slope.
@@ -883,10 +883,9 @@ class do(DataOperator):
     We can get the same result, by passing separate functions
     that calculate the columns independently.
 
-    >>> df2 = df >> group_by('z') >> do(
-    ...     slope=lambda gdf: slope(gdf.x, gdf.y),
-    ...     intercept=lambda gdf: intercept(gdf.x, gdf.y))
-    >>> df2[['z', 'intercept', 'slope']]  # Ordered the same as above
+    >>> df >> group_by('z') >> do(
+    ...     intercept=lambda gdf: intercept(gdf.x, gdf.y),
+    ...     slope=lambda gdf: slope(gdf.x, gdf.y))
     groups: ['z']
        z  intercept  slope
     0  a        1.0    1.0

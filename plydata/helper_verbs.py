@@ -291,83 +291,83 @@ class add_tally(tally):
     Without groups it is one large group
 
     >>> df >> add_tally()
-       w  x  y  n
-    0  1  1  a  6
-    1  2  2  b  6
-    2  1  3  a  6
-    3  2  4  b  6
-    4  1  5  a  6
-    5  2  6  b  6
+       x  y  w  n
+    0  1  a  1  6
+    1  2  b  2  6
+    2  3  a  1  6
+    3  4  b  2  6
+    4  5  a  1  6
+    5  6  b  2  6
 
     Sum of the weights
 
     >>> df >> add_tally('w')
-       w  x  y  n
-    0  1  1  a  9
-    1  2  2  b  9
-    2  1  3  a  9
-    3  2  4  b  9
-    4  1  5  a  9
-    5  2  6  b  9
+       x  y  w  n
+    0  1  a  1  9
+    1  2  b  2  9
+    2  3  a  1  9
+    3  4  b  2  9
+    4  5  a  1  9
+    5  6  b  2  9
 
     With groups
 
     >>> df >> group_by('y') >> add_tally()
     groups: ['y']
-       w  x  y  n
-    0  1  1  a  3
-    1  2  2  b  3
-    2  1  3  a  3
-    3  2  4  b  3
-    4  1  5  a  3
-    5  2  6  b  3
+       x  y  w  n
+    0  1  a  1  3
+    1  2  b  2  3
+    2  3  a  1  3
+    3  4  b  2  3
+    4  5  a  1  3
+    5  6  b  2  3
 
     With groups and weights
 
     >>> df >> group_by('y') >> add_tally('w')
     groups: ['y']
-       w  x  y  n
-    0  1  1  a  3
-    1  2  2  b  6
-    2  1  3  a  3
-    3  2  4  b  6
-    4  1  5  a  3
-    5  2  6  b  6
+       x  y  w  n
+    0  1  a  1  3
+    1  2  b  2  6
+    2  3  a  1  3
+    3  4  b  2  6
+    4  5  a  1  3
+    5  6  b  2  6
 
     Applying the weights to a column
 
     >>> df >> group_by('y') >> add_tally('x*w')
     groups: ['y']
-       w  x  y   n
-    0  1  1  a   9
-    1  2  2  b  24
-    2  1  3  a   9
-    3  2  4  b  24
-    4  1  5  a   9
-    5  2  6  b  24
+       x  y  w   n
+    0  1  a  1   9
+    1  2  b  2  24
+    2  3  a  1   9
+    3  4  b  2  24
+    4  5  a  1   9
+    5  6  b  2  24
 
     Add tally is equivalent to using :func:`sum` or ``n()``
     in :class:`~plydata.verbs.define`.
 
     >>> df >> group_by('y') >> define(n='sum(x*w)')
     groups: ['y']
-       w  x  y   n
-    0  1  1  a   9
-    1  2  2  b  24
-    2  1  3  a   9
-    3  2  4  b  24
-    4  1  5  a   9
-    5  2  6  b  24
+       x  y  w   n
+    0  1  a  1   9
+    1  2  b  2  24
+    2  3  a  1   9
+    3  4  b  2  24
+    4  5  a  1   9
+    5  6  b  2  24
 
     >>> df >> group_by('y') >> define(n='n()')
     groups: ['y']
-       w  x  y  n
-    0  1  1  a  3
-    1  2  2  b  3
-    2  1  3  a  3
-    3  2  4  b  3
-    4  1  5  a  3
-    5  2  6  b  3
+       x  y  w  n
+    0  1  a  1  3
+    1  2  b  2  3
+    2  3  a  1  3
+    3  4  b  2  3
+    4  5  a  1  3
+    5  6  b  2  3
 
     Which is the same result as
     :py:`df >> group_by('y') >> add_tally()` above.
@@ -410,78 +410,78 @@ class add_count(count):
     Without groups it is one large group
 
     >>> df >> add_count()
-       w  x  y  n
-    0  1  1  a  6
-    1  2  2  b  6
-    2  1  3  a  6
-    3  2  4  b  6
-    4  1  5  a  6
-    5  2  6  b  6
+       x  y  w  n
+    0  1  a  1  6
+    1  2  b  2  6
+    2  3  a  1  6
+    3  4  b  2  6
+    4  5  a  1  6
+    5  6  b  2  6
 
     Sum of the weights
 
     >>> df >> add_count(weights='w')
-       w  x  y  n
-    0  1  1  a  9
-    1  2  2  b  9
-    2  1  3  a  9
-    3  2  4  b  9
-    4  1  5  a  9
-    5  2  6  b  9
+       x  y  w  n
+    0  1  a  1  9
+    1  2  b  2  9
+    2  3  a  1  9
+    3  4  b  2  9
+    4  5  a  1  9
+    5  6  b  2  9
 
     With groups
 
     >>> df >> add_count('y')
-       w  x  y  n
-    0  1  1  a  3
-    1  2  2  b  3
-    2  1  3  a  3
-    3  2  4  b  3
-    4  1  5  a  3
-    5  2  6  b  3
+       x  y  w  n
+    0  1  a  1  3
+    1  2  b  2  3
+    2  3  a  1  3
+    3  4  b  2  3
+    4  5  a  1  3
+    5  6  b  2  3
 
     >>> df >> group_by('y') >> add_count()
     groups: ['y']
-       w  x  y  n
-    0  1  1  a  3
-    1  2  2  b  3
-    2  1  3  a  3
-    3  2  4  b  3
-    4  1  5  a  3
-    5  2  6  b  3
+       x  y  w  n
+    0  1  a  1  3
+    1  2  b  2  3
+    2  3  a  1  3
+    3  4  b  2  3
+    4  5  a  1  3
+    5  6  b  2  3
 
     With groups and weights
 
     >>> df >> add_count('y', weights='w')
-       w  x  y  n
-    0  1  1  a  3
-    1  2  2  b  6
-    2  1  3  a  3
-    3  2  4  b  6
-    4  1  5  a  3
-    5  2  6  b  6
+       x  y  w  n
+    0  1  a  1  3
+    1  2  b  2  6
+    2  3  a  1  3
+    3  4  b  2  6
+    4  5  a  1  3
+    5  6  b  2  6
 
     Applying the weights to a column
 
     >>> df >> add_count('y', weights='x*w')
-       w  x  y   n
-    0  1  1  a   9
-    1  2  2  b  24
-    2  1  3  a   9
-    3  2  4  b  24
-    4  1  5  a   9
-    5  2  6  b  24
+       x  y  w   n
+    0  1  a  1   9
+    1  2  b  2  24
+    2  3  a  1   9
+    3  4  b  2  24
+    4  5  a  1   9
+    5  6  b  2  24
 
     You can do that with :class:`add_tally`
 
     >>> df >> group_by('y') >> add_tally('x*w') >> ungroup()
-       w  x  y   n
-    0  1  1  a   9
-    1  2  2  b  24
-    2  1  3  a   9
-    3  2  4  b  24
-    4  1  5  a   9
-    5  2  6  b  24
+       x  y  w   n
+    0  1  a  1   9
+    1  2  b  2  24
+    2  3  a  1   9
+    3  4  b  2  24
+    4  5  a  1   9
+    5  6  b  2  24
 
     See Also
     --------

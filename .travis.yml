@@ -11,10 +11,6 @@ matrix:
       env:
         - JOB: 'UNITTEST'
         - FULL_DEPS=true
-    - python: 3.7
-      env:
-        - JOB: 'UNITTEST'
-        - FULL_DEPS=true
     - python: 3.6
       env:
         - JOB: 'DOCS'
