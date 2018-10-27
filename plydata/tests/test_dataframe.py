@@ -615,18 +615,6 @@ def test_do():
             slope=lambda gdf: slope(gdf.x, gdf.y),
             intercept=lambda gdf: intercept(gdf.x, gdf.y))
 
-    with pytest.raises(ValueError):
-        # More than one arg
-        df >> group_by('w') >> do(
-            least_squares,
-            least_squares)
-
-    with pytest.raises(ValueError):
-        # More than one arg
-        df >> group_by('w') >> do(
-            least_squares,
-            least_squares)
-
     with pytest.raises(TypeError):
         df >> group_by('w') >> do('len(x)')
 

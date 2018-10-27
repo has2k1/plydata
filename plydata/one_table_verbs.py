@@ -836,7 +836,7 @@ class do(DataOperator):
     ----------
     data : dataframe, optional
         Useful when not using the ``>>`` operator.
-    args : function, optional
+    func : function, optional
         A single function to apply to each group. *The
         function should accept a dataframe and return a
         dataframe*.
@@ -904,18 +904,18 @@ class do(DataOperator):
     """
     single_function = False
 
-    def __init__(self, *args, **kwargs):
-        if args and kwargs:
-            raise ValueError(
-                "Unexpected positional and keyword arguments.")
+    def __init__(self, func=None, **kwargs):
+        if func is not None:
+            if kwargs:
+                raise ValueError(
+                    "Unexpected positional and keyword arguments.")
+            if not callable(func):
+                raise TypeError(
+                    "func should be a callable object")
 
-        if len(args) > 1:
-            raise ValueError(
-                "Got more than one positional argument.")
-
-        if args:
+        if func:
             self.single_function = True
-            self.expressions = [Expression(args[0], None)]
+            self.expressions = [Expression(func, None)]
         else:
             stmts_cols = zip(kwargs.values(), kwargs.keys())
             self.expressions = [
