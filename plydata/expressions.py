@@ -210,6 +210,7 @@ class case_when(OrderedDict):
     --------
     >>> import pandas as pd
     >>> from plydata import define
+    >>> from plydata.expressions import case_when
     >>> df = pd.DataFrame({'x': range(10)})
 
     Here we use an iterable of tuples with key-value pairs
@@ -350,6 +351,7 @@ class if_else:
     --------
     >>> import pandas as pd
     >>> from plydata import define
+    >>> from plydata.expressions import if_else
     >>> df = pd.DataFrame({'x': range(10)})
 
     y takes on a value that depends on a predicate expression.
