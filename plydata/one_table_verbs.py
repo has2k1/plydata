@@ -270,7 +270,7 @@ class select(DataOperator):
     0        1    1     1
     1        2    2     2
     2        3    3     3
-    >>> df >> select('bell',  matches='\w+tle$')
+    >>> df >> select('bell',  matches=r'\\w+tle$')
        bell  whistle
     0     1        1
     1     2        2

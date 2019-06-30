@@ -149,13 +149,13 @@ def test_select():
     assert len(result.columns) == 3
 
     result = df >> select('caracal', endswith='ar', contains='ee',
-                          matches='\w+opa')
+                          matches=r'\w+opa')
     assert len(result.columns) == 5
 
     result = df >> select(contains=['ee', 'ion', '23'])
     assert len(result.columns) == 2
 
-    result = df >> select(matches=('\w+opa', '\w+r$'))
+    result = df >> select(matches=(r'\w+opa', r'\w+r$'))
     assert len(result.columns) == 4
 
     # grouped on columns are never dropped
@@ -176,7 +176,7 @@ def test_select():
     df[123] = 1
     df[456] = 2
     df[789] = 3
-    pattern = re.compile('\w+opa')
+    pattern = re.compile(r'\w+opa')
     result = df >> select(startswith='t', matches=pattern)
     assert len(result.columns) == 2
 

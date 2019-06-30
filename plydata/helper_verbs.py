@@ -1655,7 +1655,7 @@ class group_by_at(_at):
     group columns.
 
     >>> def double(s): return s + s
-    >>> df >> group_by_at(dict(matches=r'\w+eta$'), double)
+    >>> df >> group_by_at(dict(matches=r'\\w+eta$'), double)
     groups: ['beta', 'theta']
       alpha beta theta  x  y   z
     0     a   bb    cc  1  6   7
