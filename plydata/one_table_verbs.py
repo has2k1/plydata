@@ -814,6 +814,12 @@ class query(DataOperator):
 
     For more information see :meth:`pandas.DataFrame.query`. To query
     rows and columns with ``NaN`` values, use :class:`dropna`
+
+    Notes
+    -----
+    :class:`~plydata.one_table_verbs.query` is the equivalent of
+    dplyr's `filter` verb but with slightly different python syntax
+    the expressions.
     """
     expression = None
 

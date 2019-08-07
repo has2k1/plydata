@@ -19,6 +19,9 @@ Example
     import pandas as pd
     from plydata import define, query
 
+    # NOTE: query is the equivalent of dplyr's filter but with
+    #      slightly different python syntax  for the expressions
+
     df = pd.DataFrame({
         'x': [0, 1, 2, 3],
         'y': ['zero', 'one', 'two', 'three']})
