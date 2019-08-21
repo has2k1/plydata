@@ -17,7 +17,7 @@ Example
 
     import numpy as np
     import pandas as pd
-    from plydata import define, query
+    from plydata import define, query, if_else
 
     # NOTE: query is the equivalent of dplyr's filter but with
     #      slightly different python syntax  for the expressions
@@ -45,7 +45,7 @@ Example
     """
 
     # You can pass the dataframe as the # first argument
-    query(df, 'x > 1')  # same as `df >> query('x > 2')`
+    query(df, 'x > 1')  # same as `df >> query('x > 1')`
     """
        x      y
     2  2    two
