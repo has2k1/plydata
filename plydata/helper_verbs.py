@@ -8,7 +8,6 @@ from .one_table_verbs import select, group_by
 __all__ = ['call', 'tally', 'count', 'add_tally', 'add_count',
            'arrange_all', 'arrange_at', 'arrange_if',
            'create_all', 'create_at', 'create_if',
-           'create_all', 'create_at', 'create_if',
            'group_by_all', 'group_by_at', 'group_by_if',
            'mutate_all', 'mutate_at', 'mutate_if',
            'query_all', 'query_at', 'query_if',
@@ -19,6 +18,8 @@ __all__ = ['call', 'tally', 'count', 'add_tally', 'add_count',
            'summarise_all', 'summarise_at', 'summarise_if',
            'transmute_all', 'transmute_at', 'transmute_if',
            ]
+
+MANY = float('inf')
 
 
 class call(DataOperator):
@@ -520,16 +521,26 @@ class _all(DataOperator):
         passed to *all* functions.
     """
     selector = '_all'
+    n_functions = MANY   # Maximum number of functions
 
-    def __init__(self, functions, *args, **kwargs):
+    def __init__(self, functions=None, *args, **kwargs):
         if functions is None:
-            functions = tuple()
+            functions = (lambda x: x, )
         elif isinstance(functions, str) or callable(functions):
             functions = (functions,)
         elif isinstance(functions, dict):
             functions = functions
         else:
             functions = tuple(functions)
+
+        n = len(functions)
+
+        if n > self.n_functions:
+            raise ValueError(
+                "{} expected {} function(s) got {}".format(
+                    self.__class__.__name__, self.n_functions, n
+                )
+            )
 
         self.set_env_from_verb_init()
         self.functions = functions
@@ -599,16 +610,26 @@ class _if(DataOperator):
         passed to *all* functions.
     """
     selector = '_if'
+    n_functions = MANY   # Maximum number of functions
 
     def __init__(self, predicate, functions=None, *args, **kwargs):
         if functions is None:
-            functions = tuple()
+            functions = (lambda x: x, )
         elif isinstance(functions, str) or callable(functions):
             functions = (functions,)
         elif isinstance(functions, dict):
             functions = functions
         else:
             functions = tuple(functions)
+
+        n = len(functions)
+
+        if n > self.n_functions:
+            raise ValueError(
+                "{} expected {} function(s) got {}".format(
+                    self.__class__.__name__, self.n_functions, n
+                )
+            )
 
         self.set_env_from_verb_init()
         self.predicate = predicate
@@ -664,8 +685,9 @@ class _at(select):
         passed to *all* functions.
     """
     selector = '_at'
+    n_functions = MANY   # Maximum number of functions
 
-    def __init__(self, names, functions, *args, **kwargs):
+    def __init__(self, names, functions=None, *args, **kwargs):
         # Sort out the arguments to select
         if isinstance(names, (tuple, list)):
             args_select = names
@@ -681,13 +703,22 @@ class _at(select):
                 "Unexpected type for the names specification.")
 
         if functions is None:
-            functions = tuple()
+            functions = (lambda x: x, )
         elif isinstance(functions, str) or callable(functions):
             functions = (functions,)
         elif isinstance(functions, dict):
             functions = functions
         else:
             functions = tuple(functions)
+
+        n = len(functions)
+
+        if n > self.n_functions:
+            raise ValueError(
+                "{} expected {} function(s) got {}".format(
+                    self.__class__.__name__, self.n_functions, n
+                )
+            )
 
         self.set_env_from_verb_init()
         super().__init__(*args_select, **kwargs_select)
@@ -2407,20 +2438,8 @@ class rename_all(_all):
     ----------
     data : dataframe, optional
         Useful when not using the ``>>`` operator.
-    functions : callable or tuple or dict or str
-        Functions to alter the columns:
-
-            - function (any callable) - Function is applied to the
-              column and the result columns replace the original
-              columns.
-            - :class:`tuple` of functions - Each function is applied to
-              all of the columns and the name (``__name__``) of the
-              function is postfixed to resulting column names.
-            - :class:`dict` of the form ``{'name': function}`` - Allows
-              you to apply one or more functions and also control the
-              postfix to the name.
-            - :class:`str` - String can be used for more complex
-              statements, but the resulting names will be terrible.
+    functions : callable
+        Useful when not using the ``>>`` operator.
 
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
@@ -2466,6 +2485,7 @@ class rename_all(_all):
     4     b    u     d  5  2  10
     5     b    q     e  6  1  12
     """
+    n_functions = 1
 
 
 class rename_if(_if):
@@ -2507,21 +2527,8 @@ class rename_if(_if):
             'is_unsigned_integer' # pandas.api.types.is_unsigned_integer_dtype
 
         No other string values are allowed.
-    functions : callable or tuple or dict or str
-        Functions to alter the columns:
-
-            - function (any callable) - Function is applied to the
-              column and the result columns replace the original
-              columns.
-            - :class:`tuple` of functions - Each function is applied to
-              all of the columns and the name (``__name__``) of the
-              function is postfixed to resulting column names.
-            - :class:`dict` of the form ``{'name': function}`` - Allows
-              you to apply one or more functions and also control the
-              postfix to the name.
-            - :class:`str` - String can be used for more complex
-              statements, but the resulting names will be terrible.
-
+    functions : callable
+        Useful when not using the ``>>`` operator.
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
@@ -2570,6 +2577,7 @@ class rename_if(_if):
     4     b    u     d  5  2  10
     5     b    q     e  6  1  12
     """
+    n_functions = 1
 
 
 class rename_at(_at):
@@ -2596,21 +2604,8 @@ class rename_at(_at):
         - drop : bool, optional
             If ``True``, the selection is inverted. The unspecified/unmatched
             columns are returned instead. Default is ``False``.
-    functions : callable or tuple or dict or str
-        Functions to alter the columns:
-
-            - function (any callable) - Function is applied to the
-              column and the result columns replace the original
-              columns.
-            - :class:`tuple` of functions - Each function is applied to
-              all of the columns and the name (``__name__``) of the
-              function is postfixed to resulting column names.
-            - :class:`dict` of the form ``{'name': function}`` - Allows
-              you to apply one or more functions and also control the
-              postfix to the name.
-            - :class:`str` - String can be used for more complex
-              statements, but the resulting names will be terrible.
-
+    function : callable
+        Function to rename the column(s).
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
@@ -2657,6 +2652,7 @@ class rename_at(_at):
     4     b    u     d  5  2  10
     5     b    q     e  6  1  12
     """
+    n_functions = 1
 
 
 class select_all(_all):
@@ -2667,21 +2663,8 @@ class select_all(_all):
     ----------
     data : dataframe, optional
         Useful when not using the ``>>`` operator.
-    functions : callable or tuple or dict or str
-        Functions to alter the columns:
-
-            - function (any callable) - Function is applied to the
-              column and the result columns replace the original
-              columns.
-            - :class:`tuple` of functions - Each function is applied to
-              all of the columns and the name (``__name__``) of the
-              function is postfixed to resulting column names.
-            - :class:`dict` of the form ``{'name': function}`` - Allows
-              you to apply one or more functions and also control the
-              postfix to the name.
-            - :class:`str` - String can be used for more complex
-              statements, but the resulting names will be terrible.
-
+    function : callable
+        Function to rename the column(s).
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
@@ -2725,6 +2708,7 @@ class select_all(_all):
     4    u     b     d  5  2  10
     5    q     b     e  6  1  12
     """
+    n_functions = 1
 
 
 class select_if(_if):
@@ -2766,21 +2750,8 @@ class select_if(_if):
             'is_unsigned_integer' # pandas.api.types.is_unsigned_integer_dtype
 
         No other string values are allowed.
-    functions : callable or tuple or dict or str
-        Functions to alter the columns:
-
-            - function (any callable) - Function is applied to the
-              column and the result columns replace the original
-              columns.
-            - :class:`tuple` of functions - Each function is applied to
-              all of the columns and the name (``__name__``) of the
-              function is postfixed to resulting column names.
-            - :class:`dict` of the form ``{'name': function}`` - Allows
-              you to apply one or more functions and also control the
-              postfix to the name.
-            - :class:`str` - String can be used for more complex
-              statements, but the resulting names will be terrible.
-
+    function : callable
+        Function to rename the column(s).
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
@@ -2830,6 +2801,7 @@ class select_if(_if):
     4    u     b  5
     5    q     b  6
     """
+    n_functions = 1
 
 
 class select_at(_at):
@@ -2857,21 +2829,8 @@ class select_at(_at):
             If ``True``, the selection is inverted. The unspecified/unmatched
             columns are returned instead. Default is ``False``.
 
-    functions : callable or tuple or dict or str
-        Functions to alter the columns:
-
-            - function (any callable) - Function is applied to the
-              column and the result columns replace the original
-              columns.
-            - :class:`tuple` of functions - Each function is applied to
-              all of the columns and the name (``__name__``) of the
-              function is postfixed to resulting column names.
-            - :class:`dict` of the form ``{'name': function}`` - Allows
-              you to apply one or more functions and also control the
-              postfix to the name.
-            - :class:`str` - String can be used for more complex
-              statements, but the resulting names will be terrible.
-
+    function : callable
+        Functions to rename the column(s).
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
@@ -2928,6 +2887,7 @@ class select_at(_at):
     4    u     b  5
     5    q     b  6
     """
+    n_functions = 1
 
 
 class summarize_all(_all):

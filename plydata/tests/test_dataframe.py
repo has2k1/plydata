@@ -1249,6 +1249,9 @@ def test_select_all():
     result = df >> select_all(str.capitalize)
     assert all(result.columns == ['Alpha', 'Beta', 'Theta', 'X', 'Y', 'Z'])
 
+    with pytest.raises(ValueError):
+        df >> select_all((str.capitalize, str.upper))
+
 
 def test_select_at():
     df = pd.DataFrame({
@@ -1271,6 +1274,9 @@ def test_select_at():
               >> select_at(('x', 'beta', 'alpha'), str.upper))
     assert all(result.columns == ['beta', 'X', 'ALPHA'])
 
+    with pytest.raises(ValueError):
+        df >> select_all(('x', 'beta', 'alpha'), (str.capitalize, str.upper))
+
 
 def test_select_if():
     df = pd.DataFrame({
@@ -1285,6 +1291,9 @@ def test_select_if():
     result = df >> select_if('is_numeric', str.capitalize)
     assert all(result.columns == ['X', 'Y', 'Z'])
 
+    with pytest.raises(ValueError):
+        df >> select_if('is_numeric', (str.capitalize, str.upper))
+
 
 def test_rename_all():
     df = pd.DataFrame({
@@ -1298,6 +1307,9 @@ def test_rename_all():
 
     result = df >> group_by('alpha') >> rename_all(str.capitalize)
     assert all(result.columns == ['alpha', 'Beta', 'Theta', 'X', 'Y', 'Z'])
+
+    with pytest.raises(ValueError):
+        df >> rename_all((str.capitalize, str.upper))
 
 
 def test_rename_at():
@@ -1316,6 +1328,9 @@ def test_rename_at():
               >> rename_at(('alpha', 'beta', 'x'), str.upper))
     assert all(result.columns == ['ALPHA', 'beta', 'theta', 'X', 'y', 'z'])
 
+    with pytest.raises(ValueError):
+        df >> rename_at(('alpha', 'beta', 'x'), (str.capitalize, str.upper))
+
 
 def test_rename_if():
     df = pd.DataFrame({
@@ -1331,6 +1346,9 @@ def test_rename_if():
               >> group_by('alpha', 'y')
               >> rename_if('is_numeric', str.capitalize))
     assert all(result.columns == ['alpha', 'beta', 'theta', 'X', 'y', 'Z'])
+
+    with pytest.raises(ValueError):
+        df >> rename_if('is_numeric', (str.capitalize, str.upper))
 
 
 def test_query_all():
