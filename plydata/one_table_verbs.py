@@ -237,6 +237,9 @@ class select(DataOperator):
     names : tuple, optional
         Names of columns in dataframe. Normally, they are strings
         can include slice e.g :py:`slice('col2', 'col5')`.
+        You can also exclude columns by prepending a ``-`` e.g
+        py:`select('-col1')`, will include all columns minus than
+        *col1*.
     startswith : str or tuple, optional
         All column names that start with this string will be included.
     endswith : str or tuple, optional
@@ -291,6 +294,29 @@ class select(DataOperator):
     0  1  1  1  1  1
     1  2  2  2  2  2
     2  3  3  3  3  3
+
+    You can exclude columns by prepending ``-``
+
+    >>> df >> select('-a', '-c', '-e')
+       b  d  f  g  h
+    0  1  1  1  1  1
+    1  2  2  2  2  2
+    2  3  3  3  3  3
+
+    Remove and place column at the end
+
+    >>> df >> select('-a', '-c', '-e', 'a')
+       b  d  f  g  h  a
+    0  1  1  1  1  1  1
+    1  2  2  2  2  2  2
+    2  3  3  3  3  3  3
+
+    Note
+    ----
+    To exclude columns by prepending a minus, the first column
+    passed to :class:`select` must be prepended with minus.
+    :py:`select('-a', 'c')` will exclude column ``a``, while
+    :py:`select('c', '-a')` will not exclude column ``a``.
     """
     def __init__(self, *names, startswith=None, endswith=None,
                  contains=None, matches=None, drop=False):

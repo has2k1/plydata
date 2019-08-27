@@ -11,7 +11,7 @@ import numpy as np
 
 from ..expressions import Expression
 from ..types import GroupedDataFrame
-from ..utils import get_empty_env, unique
+from ..utils import get_empty_env
 
 
 def _get_groups(verb):
@@ -367,6 +367,25 @@ class Selector:
         return tuple(result)
 
     @classmethod
+    def verify_columns(cls, selected, data_columns):
+        missing_columns = selected.difference(
+            data_columns,
+            sort=False
+        )
+        if len(missing_columns):
+            raise KeyError(
+                "Unknown columns: "
+                + ', '.join(missing_columns)
+            )
+        return selected
+
+    @classmethod
+    def has_minus(cls, col, data_columns):
+        if isinstance(col, str) and col.startswith('-'):
+            return col[1:] in data_columns
+        return False
+
+    @classmethod
     def select(cls, verb):
         """
         Return selected columns for the select verb
@@ -391,6 +410,9 @@ class Selector:
         names_set = set(names)
         groups_set = set(groups)
         lst = [[]]
+
+        if names and cls.has_minus(names[0], columns):
+            return cls.select_minus(verb)
 
         if names or groups:
             # group variable missing from the selection are prepended
@@ -428,13 +450,37 @@ class Selector:
 
             lst.append(c5)
 
-        selected = unique(list(itertools.chain(*lst)))
+        selected = pd.Index(list(itertools.chain(*lst))).drop_duplicates()
 
         if verb.drop:
             to_drop = [col for col in selected if col not in groups_set]
-            selected = [col for col in columns if col not in to_drop]
+            selected = pd.Index(
+                [col for col in columns if col not in to_drop]
+            )
+        return cls.verify_columns(selected, columns)
 
-        return selected
+    @classmethod
+    def select_minus(cls, verb):
+        columns = verb.data.columns
+        names = pd.Index(verb.names).drop_duplicates()
+        # Columns preceeded with minus
+        exclude_columns = pd.Index([
+            col[1:]
+            for col in names
+            if cls.has_minus(col, columns)
+        ])
+        # Any other columns
+        include_columns = pd.Index([
+            col
+            for col in names
+            if not cls.has_minus(col, columns)
+        ])
+        selected = columns.difference(exclude_columns, sort=False)
+
+        # For cases like select('-col1', 'col2', 'col1')
+        # col1 has to be included
+        selected = selected.append(include_columns).drop_duplicates()
+        return cls.verify_columns(selected, columns)
 
     @classmethod
     def _all(cls, verb):

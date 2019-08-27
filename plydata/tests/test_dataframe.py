@@ -197,6 +197,22 @@ def test_select():
     result = df >> select()
     assert len(result.columns) == 0
     assert len(result.index) == len(df.index)
+    df = pd.DataFrame({
+        'lion': x, 'tiger': x, 'cheetah': x,
+        'leopard': x, 'jaguar': x, 'cougar': x,
+        'caracal': x})
+
+    # Exclude with minus
+    result = df >> select('-jaguar', '-lion')
+    assert 'jaguar' not in result
+    assert 'lion' not in result
+
+    result = df >> select('-jaguar', '-lion', 'jaguar')
+    assert result.columns[-1] == 'jaguar'
+
+    # Wrong way to exclude
+    with pytest.raises(KeyError):
+        df >> select('jaguar', '-lion')
 
 
 def test_rename():

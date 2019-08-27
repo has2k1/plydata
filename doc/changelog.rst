@@ -17,6 +17,8 @@ Enhancements
     df >> define(x='2*x')                   # Correct
     df >> group_by('x') >> define(x='2*x')  # Error
 
+- Fixed :class:`~plydata.one_table_verbs.select` can now exclude columns
+  that are prepend with a ``-``
 
 v0.3.3
 ------
