@@ -83,6 +83,10 @@ def test_define():
               >> define(y='x'))
     assert all(result['x'] == result['y'])
 
+    # Do not modify group column
+    with pytest.raises(ValueError):
+        df >> group_by('x') >> define(x='2*x')
+
 
 def test_create():
     x = np.array([1, 2, 3])
@@ -290,6 +294,10 @@ def test_group_by():
 
     result = df >> group_by('x', 'w') >> group_by('y', 'x', add_=True)
     assert result.plydata_groups == ['x', 'w', 'y']
+
+    result = df >> group_by(x='2*x', y='2*y')
+    assert result.plydata_groups == ['x', 'y']
+    npt.assert_array_equal(result['x'], 2*df['x'])
 
 
 def test_ungroup():
@@ -1057,6 +1065,10 @@ def test_mutate_at():
 
     with pytest.raises(TypeError):
         df >> mutate_at(('x', 'y', 'z'), (object(),))
+
+    # Do not modify groups
+    with pytest.raises(ValueError):
+        df >> group_by('x') >> mutate_at(('x', 'y'), np.sin)
 
 
 def test_mutate_if():

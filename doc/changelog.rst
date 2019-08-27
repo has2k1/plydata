@@ -1,8 +1,27 @@
 Changelog
 =========
+
+v0.4.0
+------
+*(Not Yet Released)*
+
+Enhancements
+************
+
+- You cannot modify variables that have been grouped on, an exception is
+  raised.
+
+.. code-block:: python
+
+    df = pd.DataFrame({'x': [1, 1, 2], 'y': [1, 2, 3]])})
+    df >> define(x='2*x')                   # Correct
+    df >> group_by('x') >> define(x='2*x')  # Error
+
+
 v0.3.3
 ------
 *(2018-08-02)*
+
 - Fixed :class:`~plydata.one_table_verbs.group_indices` for the case
   with no groups.
 

@@ -19,6 +19,30 @@ __all__ = ['arrange', 'create', 'define', 'distinct', 'do',
            'ungroup', 'unique']
 
 
+def _check_modify_groups(verb):
+    """
+    Return True if expressions modify existing groups
+
+    Parameters
+    ----------
+    verb : DataOperator
+        Verb to modify dataframe
+    """
+    groups = _get_groups(verb)
+
+    # Data has no groups or verb authorises modification
+    if not groups or getattr(verb, '_modify_groups', False):
+        return
+
+    new_cols = [e.column for e in verb.expressions if e.column != e.stmt]
+    overwritten_groups = list(set(new_cols) & set(groups))
+    if overwritten_groups:
+        raise ValueError(
+            "Columns {} cannot be modified because they are "
+            "grouping variables.".format(overwritten_groups)
+        )
+
+
 def define(verb):
     if not get_option('modify_input_data'):
         verb.data = verb.data.copy()
@@ -26,6 +50,7 @@ def define(verb):
     if not verb.expressions:
         return verb.data
 
+    _check_modify_groups(verb)
     verb.env = verb.env.with_outer_namespace(_outer_namespace)
     with regular_index(verb.data):
         new_data = Evaluator(verb).process()
@@ -90,6 +115,7 @@ def arrange(verb):
 
 
 def group_by(verb):
+    verb._overwrite_groups = True
     verb.data = define(verb)
 
     copy = not get_option('modify_input_data')
