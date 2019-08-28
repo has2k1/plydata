@@ -547,7 +547,7 @@ def test_do():
 
     def least_squares(gdf):
         X = np.vstack([gdf.x, np.ones(len(gdf))]).T
-        (m, c), _, _, _ = np.linalg.lstsq(X, gdf.y)
+        (m, c), _, _, _ = np.linalg.lstsq(X, gdf.y, None)
         return pd.DataFrame({'slope': [m], 'intercept': c})
 
     def slope(x, y):

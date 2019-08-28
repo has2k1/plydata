@@ -892,7 +892,7 @@ class do(DataOperator):
 
     >>> def least_squares(gdf):
     ...     X = np.vstack([gdf.x, np.ones(len(gdf))]).T
-    ...     (m, c), _, _, _ = np.linalg.lstsq(X, gdf.y)
+    ...     (m, c), _, _, _ = np.linalg.lstsq(X, gdf.y, None)
     ...     return pd.DataFrame({'intercept': c, 'slope': [m]})
 
     Define functions that take x and y values and compute the
