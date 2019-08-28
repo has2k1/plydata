@@ -115,6 +115,19 @@ expressions.
    if_else
 
 
+Tidy Verbs
+==========
+These verbs help create `tidy data <https://en.wikipedia.org/wiki/Tidy_data>`_.
+
+.. currentmodule:: plydata.tidy
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   gather
+
 Options
 =======
 

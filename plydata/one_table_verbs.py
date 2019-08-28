@@ -337,6 +337,43 @@ class select(DataOperator):
         self.matches = as_tuple(matches)
         self.drop = drop
 
+    @staticmethod
+    def from_columns(*columns):
+        """
+        Create a select verb from the columns specification
+
+        Parameters
+        ----------
+        *columns : list-like | select | str | slice
+            Column names to be gathered and whose contents will
+            make values.
+
+        Return
+        ------
+        out : select
+            Select verb representation of the columns.
+        """
+        from .helper_verbs import select_all, select_at, select_if
+        n = len(columns)
+        if n == 0:
+            return select_all()
+        elif n == 1:
+            obj = columns[0]
+            if isinstance(obj, (select, select_all, select_at, select_if)):
+                return obj
+            elif isinstance(obj, slice):
+                return select(obj)
+            elif isinstance(obj, (list, tuple)):
+                return select(*obj)
+            elif isinstance(obj, str):
+                return select(obj)
+            else:
+                raise TypeError(
+                    "Unrecognised type {}".format(type(obj))
+                )
+        else:
+            return select(*columns)
+
 
 class rename(DataOperator):
     """

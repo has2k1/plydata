@@ -5,6 +5,12 @@ v0.4.0
 ------
 *(Not Yet Released)*
 
+New Features
+************
+- Added :class:`~plydata.tidy_verbs.gather` to transform dataframe from
+  wide-form to long-form.
+
+
 Enhancements
 ************
 

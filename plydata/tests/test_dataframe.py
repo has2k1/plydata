@@ -19,8 +19,12 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      rename_all, rename_at, rename_if,
                      select_all, select_at, select_if,
                      summarize_all, summarize_at, summarize_if,
+                     # Two table verbs
                      inner_join, outer_join, left_join, right_join,
-                     anti_join, semi_join)
+                     anti_join, semi_join,
+                     # tidy verbs
+                     gather
+                     )
 
 from plydata.options import set_option
 from plydata.types import GroupedDataFrame
@@ -213,6 +217,9 @@ def test_select():
     # Wrong way to exclude
     with pytest.raises(KeyError):
         df >> select('jaguar', '-lion')
+
+    with pytest.raises(TypeError):
+        select.from_columns({})
 
 
 def test_rename():
@@ -1467,3 +1474,24 @@ def test_query_if():
         result = df >> query_if('is_integer',
                                 any_vars='sum({_})>4',
                                 all_vars='sum({_})>4')
+
+
+# tidy verbs
+def test_gather():
+    df = pd.DataFrame({
+        'name': ['mary', 'oscar', 'martha', 'john'],
+        'math': [92, 83, 85, 90],
+        'art': [75, 95, 80, 72],
+        'pe': [85, 75, 82, 84]
+    })
+    result = df >> gather('subject', 'grade')
+    assert all(result.columns == ['subject', 'grade'])
+    assert len(result) == 16
+
+    result1 = df >> gather('subject', 'grade', select('-name'))
+    result2 = df >> gather('subject', 'grade', slice('math', 'pe'))
+    result3 = df >> gather('subject', 'grade', ['math', 'art', 'pe'])
+    result4 = df >> gather('subject', 'grade', '-name')
+    assert result2.equals(result1)
+    assert result3.equals(result1)
+    assert result4.equals(result1)
