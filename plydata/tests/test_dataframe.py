@@ -23,7 +23,7 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join,
                      # tidy verbs
-                     gather
+                     gather, spread
                      )
 
 from plydata.options import set_option
@@ -1495,3 +1495,64 @@ def test_gather():
     assert result2.equals(result1)
     assert result3.equals(result1)
     assert result4.equals(result1)
+
+
+def test_spread():
+    # long form
+    df = pd.DataFrame({
+        'name': ['mary', 'oscar', 'martha', 'john'],
+        'math': [92, 83, 85, 90],
+        'art': [75, 95, 80, 72],
+        'pe': [85, 75, 82, 84]
+    })
+
+    # Test spread-gather round trip
+    # df -> gather -> spread -> df
+    sdf = df >> gather('subject', 'grade', '-name')
+    ldf = sdf >> spread('subject', 'grade')
+
+    # sort and compare
+    df1 = df.sort_index(axis=1).sort_values('name').reset_index(drop=True)
+    df2 = ldf.sort_index(axis=1).sort_values('name').reset_index(drop=True)
+    assert df1.equals(df2)
+
+    # Test convert
+    df = pd.DataFrame({
+        'variable': np.tile(['a', 'b', 'c', 'd'], 10),
+        'types': np.repeat([
+            'ints',
+            'ints_nans',
+            'int_floats',
+            'floats',
+            'floats_nans',
+            'bools',
+            'bools_nans',
+            'datetime',
+            'timedelta',
+            'string'
+        ], 4),
+        'value': [
+            1, 2, 3, 4,
+            5, 8, np.nan, 8,
+            1.0, 2.0, 3.0, 4.0,
+            1.3, 2.5, 3.7, 4.9,
+            1.3, np.nan, 3.7, 4.9,
+            False, True, True, False,
+            True, False, True, None,
+            *([np.datetime64('2010-01-01'), None]*2),
+            *([np.timedelta64('2', 'D'), None]*2),
+            'red', 'blue', 'green', 'yellow'
+        ]
+    })
+
+    result = df >> spread('types', 'value')
+    assert result['ints'].dtype == int
+    assert result['ints_nans'].dtype == float
+    assert result['int_floats'].dtype == float
+    assert result['floats'].dtype == float
+    assert result['floats_nans'].dtype == float
+    assert result['bools'].dtype == bool
+    assert result['bools_nans'].dtype == object
+    assert result['datetime'].dtype == 'datetime64[ns]'
+    assert result['timedelta'].dtype == 'timedelta64[ns]'
+    assert result['string'].dtype == object

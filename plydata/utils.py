@@ -254,3 +254,108 @@ def unique(lst):
         return x
 
     return [make_seen(x) for x in lst if x not in seen]
+
+
+def identity(*args):
+    """
+    Return whatever is passed in
+
+    Examples
+    --------
+    >>> x = 1
+    >>> y = 2
+    >>> identity(x)
+    1
+    >>> identity(x, y)
+    (1, 2)
+    >>> identity(*(x, y))
+    (1, 2)
+    """
+    return args if len(args) > 1 else args[0]
+
+
+def clean_indices(df, sep='_', inplace=False):
+    """
+    Clearup any multi/fancy indices
+
+    1. columns multiindices are flattened
+    2. Fancy multivariable row indices are turned into
+       columns and the row index set regular form (0..n)
+
+    Parameters
+    ----------
+    df : dataframe
+        Dataframe
+    sep : str
+        Separator for the new column names
+
+    Returns
+    -------
+    out : dataframe
+        Dataframe
+    """
+    if not inplace:
+        df = df.copy()
+
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = collapse_multiindex(df.columns, sep)
+
+    df.reset_index(inplace=True)
+    df.columns.name = None
+    df.index.name = None
+    return None if inplace else df
+
+
+def collapse_multiindex(midx, sep='_'):
+    """
+    Collapse a MultiIndex into a minimal Index
+
+    Parameters
+    ----------
+    midx : pandas.MultiIndex
+        MultiIndex to be collapsed
+
+    Returns
+    -------
+    out : pandas.Index
+        Flat Index
+
+    Examples
+    --------
+    >>> m1 = pd.MultiIndex.from_product([list('a'), list('12')])
+    >>> m1
+    MultiIndex([('a', '1'),
+                ('a', '2')],
+               )
+    >>> collapse_multiindex(m1)
+    Index(['1', '2'], dtype='object')
+    >>> m2 = pd.MultiIndex.from_product([list('ab'), list('12')])
+    >>> m2
+    MultiIndex([('a', '1'),
+                ('a', '2'),
+                ('b', '1'),
+                ('b', '2')],
+               )
+    >>> collapse_multiindex(m2)
+    Index(['a_1', 'a_2', 'b_1', 'b_2'], dtype='object')
+    """
+    def is_unique(lst):
+        return len(set(lst)) == len(lst)
+
+    # Minimum tokens required to uniquely identify columns.
+    # We start with the columns in the inner most level of
+    # the multiindex.
+    # - [(a, 1), (a, 2)] -> [(1,), (2,)]
+    # - [(a, 1), (a, 2), (b, 1), (b, 2)] ->
+    #       [(a, 1), (a, 2), (b, 1), (b, 2)]
+    # - [(z, a, 1), (z, a, 2), (z, b, 1), (z, b, 2)] ->
+    #       [(a, 1), (a, 2), (b, 1), (b, 2)]
+    for i in range(midx.nlevels):
+        id_tokens = [x[-(1+i):] for x in midx]
+        if is_unique(id_tokens):
+            break
+    else:
+        raise ValueError("Cannot create unique column names.")
+
+    columns = [sep.join(toks) for toks in id_tokens]
+    return pd.Index(columns)

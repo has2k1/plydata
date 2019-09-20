@@ -10,6 +10,8 @@ New Features
 - Added :class:`~plydata.tidy_verbs.gather` to transform dataframe from
   wide-form to long-form.
 
+- Added :class:`~plydata.tidy_verbs.spread` to transform dataframe from
+  long-form to wide-form
 
 Enhancements
 ************
