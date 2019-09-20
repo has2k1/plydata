@@ -23,7 +23,7 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join,
                      # tidy verbs
-                     gather, spread
+                     gather, spread, separate
                      )
 
 from plydata.options import set_option
@@ -1556,3 +1556,48 @@ def test_spread():
     assert result['datetime'].dtype == 'datetime64[ns]'
     assert result['timedelta'].dtype == 'timedelta64[ns]'
     assert result['string'].dtype == object
+
+
+def test_separate():
+    df = pd.DataFrame({
+        'alpha': 1,
+        'x': ['a,1,1.1,True', 'b,2,2.2,False', 'c,3,3.3,True'],
+        'zeta': 2
+    })
+
+    result = df >> separate(
+        'x', into=['A', 'B', 'C', 'D'], sep=',', convert=True)
+    assert len(result.columns) == 6
+    assert result['A'].dtype == object
+    assert result['B'].dtype == int
+    assert result['C'].dtype == float
+    assert result['D'].dtype == bool
+    assert (result['D'] == [True, False, True]).all()
+
+    # Few separation indices
+    with pytest.raises(ValueError):
+        df >> separate('x', into=['A', 'B', 'C', 'D'], sep=(1, 3))
+
+    # Additional Pieces & Missing Pieces
+    df = pd.DataFrame({
+        'alpha': 1,
+        'x': ['a,1', 'b', 'c,3,d'],
+        'zeta': 6
+    })
+    with pytest.warns(UserWarning) as record:
+        df >> separate('x', into=['A', 'B'])
+
+    messages = [r.message.args[0] for r in record]
+    assert len(record) >= 2
+    assert any("Additional pieces" in m for m in messages)
+    assert any("Missing pieces" in m for m in messages)
+
+    # Missing values
+    df = pd.DataFrame({
+        'alpha': 1,
+        'x': ['a,1', np.nan, 'c,3'],
+        'zeta': 6
+    })
+    result = df >> separate('x', into=['A', 'B'])
+    assert np.isnan(result.loc[1, 'A'])
+    assert np.isnan(result.loc[1, 'B'])

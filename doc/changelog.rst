@@ -13,6 +13,9 @@ New Features
 - Added :class:`~plydata.tidy_verbs.spread` to transform dataframe from
   long-form to wide-form
 
+- Added :class:`~plydata.tidy_verbs.separate` to split a string variable/
+  column into different variables/columns.
+
 Enhancements
 ************
 

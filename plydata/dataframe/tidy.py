@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .common import Selector
-from ..utils import identity, clean_indices
+from ..utils import convert_str, identity, clean_indices
 
 
 def gather(verb):
@@ -42,4 +42,98 @@ def spread(verb):
 
     clean_indices(data, verb.sep, inplace=True)
     data = data.infer_objects()
+    return data
+
+
+def separate(verb):
+    data = verb.data
+    col = data[verb.col]
+    npieces = len(verb.into)
+    nsplits = npieces - 1
+    exclude_columns = pd.isnull(verb.into)
+    pattern = verb._pattern
+    positions = verb._positions
+
+    # bookkeeping for extra or fewer pieces than npieces
+    warn_extra = verb.extra == 'warn'
+    warn_fewer = verb.fill == 'warn'
+    extra_rows = []
+    fewer_rows = []
+    fill_side = 'right' if warn_fewer else verb.fill
+
+    if verb.extra == 'merge':
+        maxsplit = nsplits
+    else:
+        maxsplit = 0
+
+    def split_at_pattern(s, i):
+        """Split and note any indices for the warnings"""
+        if pd.isnull(s):
+            return [s] * npieces
+
+        res = pattern.split(s, maxsplit=maxsplit)
+        diff = npieces - len(res)
+
+        if diff < 0:
+            if warn_extra:
+                extra_rows.append(i)
+            res = res[:npieces]
+        elif diff > 0:
+            if warn_fewer:
+                fewer_rows.append(i)
+            if fill_side == 'right':
+                res += [None] * diff
+            else:
+                res = [None] * diff + res
+        return res
+
+    def split_at_positions(s):
+        """Split"""
+        return [s[i:j] for i, j in zip(positions[:-1], positions[1:])]
+
+    if pattern:
+        splits = [split_at_pattern(s, i) for i, s in enumerate(col)]
+    else:
+        splits = [split_at_positions(s) for s in col]
+
+    split_df = pd.DataFrame(splits, columns=verb.into)
+    if exclude_columns.any():
+        split_df = split_df.loc[:, ~exclude_columns]
+
+    if warn_extra and extra_rows:
+        warn("Expected {} pieces: Additional pieces discarded "
+             "in {} rows: {}".format(
+                 npieces,
+                 len(extra_rows),
+                 extra_rows
+             ))
+
+    if warn_fewer and fewer_rows:
+        warn("Expected {} pieces: Missing pieces filled with "
+             "`None` in {} rows: {}".format(
+                 npieces,
+                 len(fewer_rows),
+                 fewer_rows
+             ))
+
+    if verb.convert:
+        split_df = convert_str(split_df)
+
+    # Insert the created columns
+    col_location = data.columns.get_loc(verb.col)
+    if verb.remove:
+        stop, start = col_location, col_location+1
+    else:
+        stop, start = col_location+1, col_location+1
+
+    data = pd.concat(
+        [
+            data.iloc[:, :stop],
+            split_df,
+            data.iloc[:, start:]
+        ],
+        axis=1,
+        copy=False
+    )
+    return data
     return data

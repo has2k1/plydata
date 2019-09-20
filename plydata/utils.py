@@ -1,8 +1,11 @@
+import re
 from contextlib import contextmanager
 
 import pandas as pd
 
 from .eval import EvalEnvironment
+
+BOOL_PATTERN = re.compile(r'True|False')
 
 
 def hasattrs(obj, names):
@@ -293,6 +296,64 @@ def clean_indices(df, sep='_', inplace=False):
     -------
     out : dataframe
         Dataframe
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> ridx = pd.MultiIndex.from_tuples(
+    ...     [(1, 'red'), (1, 'blue'),
+    ...      (2, 'red'), (2, 'blue')],
+    ...     names=('number', 'color')
+    ... )
+    >>> cidx = pd.MultiIndex.from_product(
+    ...     [['part1', 'part2'], ['numeric', 'char']],
+    ...     names=('parts','types')
+    ... )
+    >>> df = pd.DataFrame({
+    ...     'w': [1, 2, 3, 4],
+    ...     'x': list('aabb'),
+    ...     'y': [5, 6, 7, 8],
+    ...     'z': list('ccdd')
+    ...     }, index=ridx
+    ... )
+    >>> df.columns = cidx
+    >>> df
+    parts          part1        part2
+    types        numeric char numeric char
+    number color
+    1      red         1    a       5    c
+           blue        2    a       6    c
+    2      red         3    b       7    d
+           blue        4    b       8    d
+    >>> clean_indices(df)
+       number color  part1_numeric part1_char  part2_numeric part2_char
+    0       1   red              1          a              5          c
+    1       1  blue              2          a              6          c
+    2       2   red              3          b              7          d
+    3       2  blue              4          b              8          d
+
+    When the inner levels are unique, the names are not joined
+
+    >>> cidx2 = pd.MultiIndex.from_tuples(
+    ...     [('part1', 'numeric1'), ('part1', 'char1'),
+    ...      ('part2', 'numeric2'), ('part2', 'char2')],
+    ...     names=('parts','types')
+    ... )
+    >>> df.columns = cidx2
+    >>> df
+    parts           part1          part2
+    types        numeric1 char1 numeric2 char2
+    number color
+    1      red          1     a        5     c
+           blue         2     a        6     c
+    2      red          3     b        7     d
+           blue         4     b        8     d
+    >>> clean_indices(df)
+       number color  numeric1 char1  numeric2 char2
+    0       1   red         1     a         5     c
+    1       1  blue         2     a         6     c
+    2       2   red         3     b         7     d
+    3       2  blue         4     b         8     d
     """
     if not inplace:
         df = df.copy()
@@ -338,6 +399,20 @@ def collapse_multiindex(midx, sep='_'):
                )
     >>> collapse_multiindex(m2)
     Index(['a_1', 'a_2', 'b_1', 'b_2'], dtype='object')
+    >>> m3 = pd.MultiIndex.from_tuples(
+    ...     [('a', '1'), ('a', '2'),
+    ...      ('b', '1'), ('b', '1')]
+    ... )
+    >>> m3
+    MultiIndex([('a', '1'),
+                ('a', '2'),
+                ('b', '1'),
+                ('b', '1')],
+               )
+    >>> collapse_multiindex(m3)
+    Traceback (most recent call last):
+        ...
+    ValueError: Cannot create unique column names.
     """
     def is_unique(lst):
         return len(set(lst)) == len(lst)
@@ -359,3 +434,91 @@ def collapse_multiindex(midx, sep='_'):
 
     columns = [sep.join(toks) for toks in id_tokens]
     return pd.Index(columns)
+
+
+def convert_str(data, columns=None):
+    """
+    Try converting string/object columns in data to more specific dtype
+
+    This function modifies the input data.
+
+    Parameters
+    ----------
+    data : dataframe
+        Data
+    columns : list-like or None
+        Names of columns to check and maybe convert.
+        If ``None``, all the string columns are converted.
+
+    Returns
+    -------
+    data : dataframe
+        Data
+    """
+    if columns is None:
+        columns = [
+            name
+            for name, col in data.items()
+            if hasattr(col, 'str')
+        ]
+
+    def is_numeric(col):
+        return col.str.isnumeric().all()
+
+    def is_float(col):
+        try:
+            col.astype(float)
+        except ValueError:
+            return False
+        else:
+            return True
+
+    def is_bool(col):
+        return col.str.match(BOOL_PATTERN).all()
+
+    for name in columns:
+        col = data[name]
+
+        if is_numeric(col) or is_float(col):
+            data[name] = pd.to_numeric(col)
+        elif is_bool(col):
+            data[name] = col.replace({
+                'True': True,
+                'False': False
+            })
+
+    return data
+
+
+def verify_arg(value, name, options):
+    """
+    Verify Argument
+
+    Parameter
+    ---------
+    value : int | str
+        Value of argument
+    name : str
+        Name of argument
+    options : list-like | set
+        Allowed values of argument
+
+    Raises
+    ------
+    ValueError
+        If value is not in the allowed options.
+
+    Examples
+    --------
+    >>> verify_arg('dog', 'pet', ('fish', 'dog', 'cat'))
+    >>> verify_arg('snail', 'pet', ('fish', 'dog', 'cat'))
+    Traceback (most recent call last):
+        ...
+    ValueError: Got pet='snail'. Should be one of ('dog', 'fish', 'cat')
+    """
+    if value not in options:
+        raise ValueError(
+            "Got {}={!r}. Should be one of {!r}".format(
+                name, value, options
+            )
+        )
