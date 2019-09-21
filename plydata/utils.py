@@ -1,6 +1,7 @@
 import re
 from contextlib import contextmanager
 
+import numpy as np
 import pandas as pd
 
 from .eval import EvalEnvironment
@@ -417,6 +418,15 @@ def collapse_multiindex(midx, sep='_'):
     def is_unique(lst):
         return len(set(lst)) == len(lst)
 
+    def make_name(toks):
+        if len(toks) == 1:
+            # Preserves integer column names for basic
+            # simple case when they will not be joined up
+            # with another name up the hierarchy
+            return toks[0]
+        else:
+            return sep.join(str(t) for t in toks)
+
     # Minimum tokens required to uniquely identify columns.
     # We start with the columns in the inner most level of
     # the multiindex.
@@ -432,7 +442,7 @@ def collapse_multiindex(midx, sep='_'):
     else:
         raise ValueError("Cannot create unique column names.")
 
-    columns = [sep.join(toks) for toks in id_tokens]
+    columns = [make_name(toks) for toks in id_tokens]
     return pd.Index(columns)
 
 
@@ -522,3 +532,43 @@ def verify_arg(value, name, options):
                 name, value, options
             )
         )
+
+
+def mean_if_many(x):
+    """
+    Compute mean of x if x has more than 1 element
+
+    If x has one element, return that element.
+    By only computing the mean if x is greater than 1;
+
+        - singular integer values remain integers
+        - a single string value passes through so this can be used as
+          an aggregate function (aggfunc) when pivoting. This avoids an
+          unnecessary error.
+
+    Parameters
+    ----------
+    x : list-like
+        Values whose mean to compute
+
+    Returns
+    -------
+    out : object
+        Mean of x or the only value in x
+
+    Examples
+    --------
+    >>> mean_if_many([4])
+    4
+    >>> mean_if_many([4, 4])
+    4.0
+    >>> mean_if_many([4, 5, 6, 7])
+    5.5
+    >>> mean_if_many(['string_1'])
+    'string_1'
+    >>> mean_if_many(['string_1', 'string_2'])
+    Traceback (most recent call last):
+        ...
+    TypeError: cannot perform reduce with flexible type
+    """
+    return list(x)[0] if len(x) == 1 else np.mean(x)

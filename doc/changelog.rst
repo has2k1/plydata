@@ -16,6 +16,13 @@ New Features
 - Added :class:`~plydata.tidy_verbs.separate` to split a string variable/
   column into different variables/columns.
 
+- Added :class:`~plydata.tidy_verbs.extract` which uses a regular expression
+  with groups to extract one or more variables different columns.
+
+- Added :class:`~plydata.tidy_verbs.pivot_wider` to transform dataframe from
+  long-form to wide-form. This is a more general version of
+  :class:`~plydata.tidy_verbs.spread`.
+
 Enhancements
 ************
 

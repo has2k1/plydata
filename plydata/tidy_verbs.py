@@ -3,11 +3,13 @@ Tidy verb initializations
 """
 import re
 
+import pandas.api.types as pdtypes
+
 from .operators import DataOperator
 from .one_table_verbs import select
-from .utils import verify_arg, hasattrs
+from .utils import verify_arg, hasattrs, mean_if_many
 
-__all__ = ['gather', 'spread', 'separate']
+__all__ = ['gather', 'spread', 'separate', 'pivot_wider']
 
 
 class gather(DataOperator):
@@ -351,3 +353,160 @@ class separate(DataOperator):
         self.convert = convert
         self.extra = extra
         self.fill = fill
+
+
+class pivot_wider(DataOperator):
+    """
+    Spread a key-value pair across multiple columns
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    names_from : str
+        Column where to get the wide column names.
+    values_from : str | list-like
+        Column(s) where to get observation values that will
+        be placed in the wide columns.
+    id_cols : list-like
+        Columns that uniquely identify each observation. The default
+        is all columns in the data except those in ``names_from`` and
+        ``values_from``. Typically used when you have additional
+        variables that is directly related.
+    names_prefix : str
+        String added to the start of every variable name. This is
+        particularly useful if ``names_from`` is a numeric vector and you
+        want to create syntactic variable names.
+    names_sep : str
+        If ``names_from`` or ``values_from`` contains multiple variables,
+        with the same name this will be used to join their values together
+        into a single string to use as a column name.
+    values_fill : object
+        What to fill in if there are missing values.j
+    values_fn : callable | dict
+        A function to be applied to each cell if  ``names_from`` &
+        ``values_from`` or ``id_cols`` do not uniquely identify an
+        observation. The function is used to aggregate the multiple
+        observations. A ``dict`` can be used to apply a different
+        function to each of the columns. The default is to compute
+        the mean for all.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'name': ['mary', 'oscar', 'martha', 'john'] * 2,
+    ...     'initials': ['M.K', 'O.S', 'M.J', 'J.T'] * 2,
+    ...     'subject': np.repeat(['math', 'art'], 4),
+    ...     'grade': [92, 83, 85, 90, 75, 95, 80, 72],
+    ...     'midterm': [88, 83, 89, 93, 85, 95, 76, 79]
+    ... })
+    >>> df
+         name initials subject  grade  midterm
+    0    mary      M.K    math     92       88
+    1   oscar      O.S    math     83       83
+    2  martha      M.J    math     85       89
+    3    john      J.T    math     90       93
+    4    mary      M.K     art     75       85
+    5   oscar      O.S     art     95       95
+    6  martha      M.J     art     80       76
+    7    john      J.T     art     72       79
+    >>> df >> pivot_wider(
+    ...     names_from='subject',
+    ...     values_from=('grade', 'midterm')
+    ... )
+      initials    name  grade_art  grade_math  midterm_art  midterm_math
+    0      J.T    john         72          90           79            93
+    1      M.J  martha         80          85           76            89
+    2      M.K    mary         75          92           85            88
+    3      O.S   oscar         95          83           95            83
+
+    Be specific about the identifier column.
+
+    >>> df >> pivot_wider(
+    ...     names_from='subject',
+    ...     values_from=('grade', 'midterm'),
+    ...     id_cols='name'
+    ... )
+         name  grade_art  grade_math  midterm_art  midterm_math
+    0    john         72          90           79            93
+    1  martha         80          85           76            89
+    2    mary         75          92           85            88
+    3   oscar         95          83           95            83
+
+    When there is no ambiguity about the column names, the previous
+    column names are not prepended onto the new names
+
+    >>> df >> pivot_wider(
+    ...     names_from='subject',
+    ...     values_from='grade',
+    ...     id_cols='name'
+    ... )
+         name  art  math
+    0    john   72    90
+    1  martha   80    85
+    2    mary   75    92
+    3   oscar   95    83
+
+    *Dealing with non-syntactic column names in the result*
+
+    >>> np.random.seed(123)
+    >>> df = pd.DataFrame({
+    ...     'name': ['mary', 'oscar'] * 6,
+    ...     'face': np.repeat([1, 2, 3, 4, 5, 6], 2),
+    ...     'rolls': np.random.randint(5, 21, 12)
+    ... })
+    >>> df
+         name  face  rolls
+    0    mary     1     19
+    1   oscar     1     18
+    2    mary     2     19
+    3   oscar     2      7
+    4    mary     3     17
+    5   oscar     3      7
+    6    mary     4     11
+    7   oscar     4      6
+    8    mary     5      8
+    9   oscar     5     15
+    10   mary     6     16
+    11  oscar     6     14
+    >>> df >> pivot_wider(
+    ...     names_from='face',
+    ...     values_from='rolls'
+    ... )
+        name   1   2   3   4   5   6
+    0   mary  19  19  17  11   8  16
+    1  oscar  18   7   7   6  15  14
+    >>> df >> pivot_wider(
+    ...     names_from='face',
+    ...     values_from='rolls',
+    ...     names_prefix='rolled_',
+    ... )
+        name  rolled_1  rolled_2  rolled_3  rolled_4  rolled_5  rolled_6
+    0   mary        19        19        17        11         8        16
+    1  oscar        18         7         7         6        15        14
+    """
+
+    def __init__(
+            self,
+            names_from,
+            values_from,
+            id_cols=None,
+            names_prefix='',
+            names_sep='_',
+            values_fill=None,
+            values_fn=mean_if_many
+    ):
+        def as_list_like(x):
+            if x is not None and not pdtypes.is_list_like(x):
+                return [x]
+            return x
+
+        self.id_cols = as_list_like(id_cols)
+        self.names_from = as_list_like(names_from)
+        self.values_from = as_list_like(values_from)
+        self.names_prefix = names_prefix
+        self.names_sep = names_sep
+        self.values_fill = values_fill
+        self.values_fn = values_fn

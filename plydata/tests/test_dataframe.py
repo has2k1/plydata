@@ -23,7 +23,7 @@ from plydata import (define, create, sample_n, sample_frac, select,
                      inner_join, outer_join, left_join, right_join,
                      anti_join, semi_join,
                      # tidy verbs
-                     gather, spread, separate
+                     gather, spread, separate, pivot_wider
                      )
 
 from plydata.options import set_option
@@ -1601,3 +1601,72 @@ def test_separate():
     result = df >> separate('x', into=['A', 'B'])
     assert np.isnan(result.loc[1, 'A'])
     assert np.isnan(result.loc[1, 'B'])
+
+
+def test_pivot_wider():
+    random_state = np.random.RandomState(123)
+
+    df = pd.DataFrame({
+        'name': ['mary', 'oscar'] * 6,
+        'face': np.repeat([1, 2, 3, 4, 5, 6], 2),
+        'rolls': random_state.randint(5, 21, 12)
+    })
+    result = df >> pivot_wider(
+        names_from='face',
+        values_from='rolls',
+    )
+    assert (result.columns == ['name', 1, 2, 3, 4, 5, 6]).all()
+
+    result = df >> pivot_wider(
+        names_from='face',
+        values_from='rolls',
+        names_prefix='r'
+    )
+    assert (
+        result.columns == ['name', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6']
+    ).all()
+
+    # Test convert
+    df = pd.DataFrame({
+        'variable': np.tile(['a', 'b', 'c', 'd'], 10),
+        'types': np.repeat([
+            'ints',
+            'ints_nans',
+            'int_floats',
+            'floats',
+            'floats_nans',
+            'bools',
+            'bools_nans',
+            'datetime',
+            'timedelta',
+            'string'
+        ], 4),
+        'value': [
+            1, 2, 3, 4,
+            5, 8, np.nan, 8,
+            1.0, 2.0, 3.0, 4.0,
+            1.3, 2.5, 3.7, 4.9,
+            1.3, np.nan, 3.7, 4.9,
+            False, True, True, False,
+            True, False, True, None,
+            *([np.datetime64('2010-01-01'), None]*2),
+            *([np.timedelta64('2', 'D'), None]*2),
+            'red', 'blue', 'green', 'yellow'
+        ]
+    })
+
+    result = df >> pivot_wider(
+        names_from='types',
+        values_from='value',
+
+    )
+    assert result['ints'].dtype == int
+    assert result['ints_nans'].dtype == float
+    assert result['int_floats'].dtype == float
+    assert result['floats'].dtype == float
+    assert result['floats_nans'].dtype == float
+    assert result['bools'].dtype == bool
+    assert result['bools_nans'].dtype == object
+    assert result['datetime'].dtype == 'datetime64[ns]'
+    assert result['timedelta'].dtype == 'timedelta64[ns]'
+    assert result['string'].dtype == object

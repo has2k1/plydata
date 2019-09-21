@@ -136,4 +136,42 @@ def separate(verb):
         copy=False
     )
     return data
+
+
+def pivot_wider(verb):
+    if verb.id_cols:
+        index = verb.id_cols
+    else:
+        index = verb.data.columns.difference(
+            set(verb.names_from) | set(verb.values_from)
+        ).tolist()
+
+    # Any extra columns should not appear in the output
+    exclude = verb.data.columns.difference(
+        list(chain(index, verb.names_from, verb.values_from))
+    )
+    data = verb.data.drop(exclude, axis=1) if len(exclude) else verb.data
+    data = pd.pivot_table(
+        data,
+        index=index,
+        columns=verb.names_from,
+        aggfunc=verb.values_fn,
+        fill_value=verb.values_fill,
+    )
+
+    if verb.names_prefix:
+        # Get innermost (last) level,
+        # add prefix to it and create a new level
+        # add the new (renamed) level to the previous levels
+        levels = data.columns.levels
+        last_level = levels[-1]
+        renamed_last_level = pd.Index(
+            (verb.names_prefix + str(x) for x in last_level),
+            name=last_level.name
+        )
+        renamed_levels = tuple(levels[:-1]) + (renamed_last_level,)
+        data.columns = data.columns.set_levels(renamed_levels)
+
+    clean_indices(data, verb.names_sep, inplace=True)
+    data = data.infer_objects()
     return data
