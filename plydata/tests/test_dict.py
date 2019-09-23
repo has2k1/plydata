@@ -1,5 +1,6 @@
 import numpy as np
 
+import plydata.dict  # noqa register dict implementation
 from plydata import define
 from plydata.utils import custom_dict
 

@@ -8,6 +8,7 @@ import pandas as pd
 
 from ..types import GroupedDataFrame
 from ..options import get_option
+from ..operators import register_implementations
 from ..utils import Q, get_empty_env, regular_index, unique
 from .common import Evaluator, Selector
 from .common import _get_groups, _get_base_dataframe
@@ -277,3 +278,5 @@ _outer_namespace = {
 
 # Aliases
 mutate = define
+
+register_implementations(globals(), __all__, 'dataframe')

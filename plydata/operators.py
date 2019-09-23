@@ -1,5 +1,5 @@
-from importlib import import_module
 from copy import copy
+from collections import defaultdict
 
 import pandas as pd
 
@@ -7,14 +7,35 @@ from .eval import EvalEnvironment
 from .types import GroupedDataFrame
 from .utils import temporary_attr, custom_dict
 
+# Registry for the verb implementations
+# It is of the form {'datatype': {'verbname': verbimplementation}}
+REGISTRY = defaultdict(dict)
 
-type_lookup = {
-    pd.DataFrame: import_module('.dataframe', __package__),
-    GroupedDataFrame: import_module('.dataframe', __package__),
-    custom_dict: import_module('.dict', __package__)
+dataclass_lookup = {
+    pd.DataFrame: 'dataframe',
+    GroupedDataFrame: 'dataframe',
+    custom_dict: 'dict'
 }
 
-DATASTORE_TYPES = tuple(type_lookup.keys())
+DATASTORE_TYPES = tuple(dataclass_lookup.keys())
+
+
+def register_implementations(module, verb_names, datatype):
+    """
+    Register verb implementations in the module
+
+    Parameters
+    ----------
+    module : module
+        Module with the implementations.
+    verb_names : list
+        Names of verbs implemented in the module.
+    datatype : str
+        A name of the datatype implemented. e.g 'dataframe',
+        'dict'
+    """
+    for name in verb_names:
+        REGISTRY[datatype][name] = module[name]
 
 
 # We use this for "single dispatch" instead of maybe
@@ -25,18 +46,25 @@ def get_verb_function(data, verb):
     Return function that implements the verb for given data type
     """
     try:
-        module = type_lookup[type(data)]
+        datatype = dataclass_lookup[type(data)]
     except KeyError:
         # Some guess work for subclasses
-        for type_, mod in type_lookup.items():
-            if isinstance(data, type_):
-                module = mod
+        for klass, type_ in dataclass_lookup.items():
+            if isinstance(data, klass):
+                datatype = type_
                 break
+        else:
+            raise TypeError(
+                "Data of type {} is not supported.".format(type(data))
+            )
     try:
-        return getattr(module, verb)
-    except (NameError, AttributeError):
-        msg = "Data source of type '{}' is not supported."
-        raise TypeError(msg.format(type(data)))
+        return REGISTRY[datatype][verb]
+    except KeyError:
+        raise TypeError(
+            "Could not find a {} implementation for the verb {} ".format(
+                datatype, verb
+            )
+        )
 
 
 # Note: An alternate implementation would be to use a decorator
@@ -91,12 +119,7 @@ class DataOperator(metaclass=OptionalSingleDataFrameArgument):
         """
         # Makes verb reuseable
         self = copy(self)
-        if isinstance(other, DATASTORE_TYPES):
-            self.data = other
-        else:
-            msg = "Unknown type of data {}"
-            raise TypeError(msg.format(type(other)))
-
+        self.data = other
         func = get_verb_function(self.data, self.__class__.__name__)
         return func(self)
 

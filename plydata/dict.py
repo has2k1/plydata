@@ -5,6 +5,12 @@
 Verb implementations for a :class:`custom_dict`
 """
 
+from .operators import register_implementations
+
+__all__ = [
+    'define'
+]
+
 
 def define(verb):
     verb.data = verb.data.copy()
@@ -16,3 +22,6 @@ def define(verb):
             value = expr.stmt
         verb.data[expr.column] = value
     return verb.data
+
+
+register_implementations(globals(), __all__, 'dict')

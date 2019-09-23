@@ -5,9 +5,9 @@ import re
 
 import pandas.api.types as pdtypes
 
-from .operators import DataOperator
-from .one_table_verbs import select
-from .utils import verify_arg, hasattrs, mean_if_many
+from plydata.operators import DataOperator
+from plydata.one_table_verbs import select
+from plydata.utils import verify_arg, hasattrs, mean_if_many
 
 __all__ = ['gather', 'spread', 'separate', 'pivot_wider']
 

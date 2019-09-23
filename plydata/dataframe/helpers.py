@@ -8,6 +8,7 @@ import numpy as np
 
 from ..types import GroupedDataFrame
 from ..expressions import Expression
+from ..operators import register_implementations
 from .common import _get_groups, Selector, build_expressions
 from .one_table import arrange, create, define, group_by
 from .one_table import mutate, rename, summarize
@@ -219,3 +220,5 @@ select_if = _select_helper
 summarize_all = _make_verb_helper(summarize)
 summarize_if = _make_verb_helper(summarize)
 summarize_at = _make_verb_helper(summarize)
+
+register_implementations(globals(), __all__, 'dataframe')

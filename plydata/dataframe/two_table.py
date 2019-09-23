@@ -4,6 +4,12 @@ Two table verb implementations for a :class:`pandas.DataFrame`
 import pandas as pd
 
 from ..types import GroupedDataFrame
+from ..operators import register_implementations
+
+__all__ = [
+    'inner_join', 'outer_join', 'left_join',
+    'right_join', 'anti_join', 'semi_join'
+]
 
 
 def inner_join(verb):
@@ -57,3 +63,6 @@ def _join(verb):
     if isinstance(verb.x, GroupedDataFrame):
         data.plydata_groups = list(verb.x.plydata_groups)
     return data
+
+
+register_implementations(globals(), __all__, 'dataframe')

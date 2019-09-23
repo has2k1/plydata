@@ -7,8 +7,13 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from .common import Selector
-from ..utils import convert_str, identity, clean_indices
+from plydata.dataframe.common import Selector
+from plydata.operators import register_implementations
+from plydata.utils import convert_str, identity, clean_indices
+
+__all__ = [
+    'gather', 'spread', 'separate', 'pivot_wider'
+]
 
 
 def gather(verb):
@@ -175,3 +180,6 @@ def pivot_wider(verb):
     clean_indices(data, verb.names_sep, inplace=True)
     data = data.infer_objects()
     return data
+
+
+register_implementations(globals(), __all__, 'dataframe')
