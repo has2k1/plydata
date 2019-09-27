@@ -13,6 +13,7 @@ __all__ = [
     'gather',
     'spread',
     'separate',
+    'separate_rows',
     'extract',
     'pivot_wider',
     'pivot_longer'
@@ -366,6 +367,88 @@ class separate(DataOperator):
         self.fill = fill
 
 
+class separate_rows(DataOperator):
+    r"""
+    Separate values of a variable along multiple rows
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    *cols : list-like | select | str | slice
+        Columns to be gathered and whose contents will
+        make values.
+    sep : str | regex
+        The pattern at which to separate the variable.
+        The default value separates on a string of
+        non-alphanumeric characters.
+    convert : bool
+        If ``True`` convert result columns to int, float or bool
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'parent': ['martha', 'james', 'alice'],
+    ...     'child': ['leah', 'joe,vinny,laura', 'pat,lee'],
+    ...     'age': ['3', '12,6,4', '2,7']
+    ... })
+    >>> df
+       parent            child     age
+    0  martha             leah       3
+    1   james  joe,vinny,laura  12,6,4
+    2   alice          pat,lee     2,7
+    >>> df >> separate_rows('child', 'age')
+       parent  child age
+    0  martha   leah   3
+    1   james    joe  12
+    2   james  vinny   6
+    3   james  laura   4
+    4   alice    pat   2
+    5   alice    lee   7
+
+    Column selection uses :class:`plydata.one_table_verbs.select`, so you
+    can do:
+
+    >>> df >> separate_rows('-parent')
+       parent  child age
+    0  martha   leah   3
+    1   james    joe  12
+    2   james  vinny   6
+    3   james  laura   4
+    4   alice    pat   2
+    5   alice    lee   7
+
+    or
+
+    >>> df >> separate_rows(select(matches=r'^[ac]'))
+       parent  child age
+    0  martha   leah   3
+    1   james    joe  12
+    2   james  vinny   6
+    3   james  laura   4
+    4   alice    pat   2
+    5   alice    lee   7
+
+    You can separate all columns by specifying any column. All columns
+    should be separable.
+
+    >>> df[['child', 'age']] >> separate_rows()
+       child age
+    0   leah   3
+    1    joe  12
+    2  vinny   6
+    3  laura   4
+    4    pat   2
+    5    lee   7
+    """
+
+    def __init__(self, *cols, sep=r'[^A-Za-z0-9]+', convert=False):
+        self.sep = sep
+        self.convert = convert
+        self._select_verb = select.from_columns(*cols)
+
+
 class extract(DataOperator):
     r"""
     Split a column using a regular expression with capturing groups.
@@ -374,6 +457,8 @@ class extract(DataOperator):
 
     Parameters
     ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
     col : str | int
         Column name or position of variable to separate.
     into : list-like

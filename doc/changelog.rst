@@ -27,6 +27,9 @@ New Features
   wide-form to long-form. This is a more general version of
   :class:`~plydata.tidy_verbs.gather`.
 
+- Added :class:`~plydata.tidy_verbs.separate_rows` to split multiple delimited
+  values and place each one in its own row.
+
 Enhancements
 ************
 

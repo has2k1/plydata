@@ -129,6 +129,7 @@ These verbs help create `tidy data <https://en.wikipedia.org/wiki/Tidy_data>`_.
    gather
    spread
    separate
+   separate_rows
    extract
    pivot_wider
    pivot_longer

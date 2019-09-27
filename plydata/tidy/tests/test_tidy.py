@@ -9,6 +9,7 @@ from plydata.tidy import (
     gather,
     spread,
     separate,
+    separate_rows,
     extract,
     pivot_wider,
     pivot_longer
@@ -140,6 +141,22 @@ def test_separate():
     result = df >> separate('x', into=['A', 'B'])
     assert np.isnan(result.loc[1, 'A'])
     assert np.isnan(result.loc[1, 'B'])
+
+
+def test_separate_rows():
+    df = pd.DataFrame({
+        'parent': ['martha', 'james', 'alice'],
+        'child': ['leah', 'joe,vinny,laura', 'pat,lee'],
+        'age': ['3', '12,6,4', '2,7']
+    })
+
+    result = df >> separate_rows('-parent', convert=True)
+    assert result['age'].dtype == int
+
+    df_bad = df.copy()
+    df_bad['age'].iloc[1] = '12,6'
+    with pytest.raises(ValueError):
+        result = df_bad >> separate_rows('-parent')
 
 
 def test_extract():

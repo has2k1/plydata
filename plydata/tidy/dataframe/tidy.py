@@ -12,7 +12,13 @@ from plydata.operators import register_implementations
 from plydata.utils import convert_str, identity, clean_indices
 
 __all__ = [
-    'gather', 'spread', 'separate', 'extract', 'pivot_wider', 'pivot_longer'
+    'gather',
+    'spread',
+    'separate',
+    'separate_rows',
+    'extract',
+    'pivot_wider',
+    'pivot_longer'
 ]
 
 
@@ -140,6 +146,53 @@ def separate(verb):
         axis=1,
         copy=False
     )
+    return data
+
+
+def separate_rows(verb):
+    data = verb.data
+    verb._select_verb.data = data
+    columns = Selector.get(verb._select_verb)
+    left_columns = data.columns.difference(columns)
+    df_lists = pd.DataFrame(index=data.index)
+
+    # Separate into lists
+    for name in columns:
+        df_lists[name] = data[name].str.split(verb.sep)
+
+    # Check if the sizes are consistent
+    # Lengths across the row must be equal or any different item
+    # should be one
+    def row_consistent(row):
+        return (row.nunique() == 1) or (row == 1).all()
+
+    lengths = df_lists.applymap(len)
+    consistent = lengths.apply(row_consistent, axis=1).all()
+
+    if not consistent:
+        it = lengths.max().items()
+        tpl = "'{}': size={}"
+        expected_sizes = ', '.join(tpl.format(name, size) for name, size in it)
+        raise ValueError("No common size for {}".format(expected_sizes))
+
+    # Explode lists in the columns into values along the columns
+    # The operation maintains the original index which we rely on
+    # to merge.
+    df_exploded = pd.DataFrame({
+        name: col.explode()
+        for name, col in df_lists.items()
+    })
+
+    if verb.convert:
+        df_exploded = convert_str(df_exploded)
+
+    # Merge exploded columns with the unexploded
+    data = pd.merge(
+        data[left_columns],
+        df_exploded,
+        left_index=True,
+        right_index=True
+    )[data.columns].reset_index(drop=True)
     return data
 
 
