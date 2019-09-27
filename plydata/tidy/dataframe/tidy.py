@@ -1,7 +1,6 @@
 """
 Tidy verb initializations
 """
-import re
 from itertools import chain
 from warnings import warn
 
@@ -13,7 +12,7 @@ from plydata.operators import register_implementations
 from plydata.utils import convert_str, identity, clean_indices
 
 __all__ = [
-    'gather', 'spread', 'separate', 'extract', 'pivot_wider'
+    'gather', 'spread', 'separate', 'extract', 'pivot_wider', 'pivot_longer'
 ]
 
 
@@ -214,6 +213,45 @@ def pivot_wider(verb):
 
     clean_indices(data, verb.names_sep, inplace=True)
     data = data.infer_objects()
+    return data
+
+
+def pivot_longer(verb):
+    data = verb.data
+    verb._select_verb.data = data
+    columns = Selector.get(verb._select_verb)
+    exclude = pd.Index(columns).drop_duplicates()
+    id_vars = data.columns.difference(exclude, sort=False)
+
+    if len(columns) == 0:
+        warn("No columns have been selected for pivoting.")
+
+    if verb.names_sep:
+        # names_to is temporary column, that will be split
+        names_to = verb._separate_verb._column_name
+    elif verb.names_pattern:
+        # names_to is temporary column, that will be split
+        names_to = verb._extract_verb._column_name
+    else:
+        names_to = verb.names_to
+
+    data = pd.melt(
+        data,
+        id_vars=id_vars,
+        value_vars=columns,
+        var_name=names_to,
+        value_name=verb.values_to
+    )
+
+    if verb.names_sep:
+        data = verb._separate_verb(data)
+    elif verb.names_pattern:
+        data = verb._extract_verb(data)
+
+    if verb.names_prefix:
+        for colname, pattern in verb._prefix_patterns.items():
+            data[colname] = data[colname].str.replace(pattern, '', n=1)
+
     return data
 
 

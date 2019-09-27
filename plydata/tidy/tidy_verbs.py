@@ -15,6 +15,7 @@ __all__ = [
     'separate',
     'extract',
     'pivot_wider',
+    'pivot_longer'
 ]
 
 
@@ -325,6 +326,10 @@ class separate(DataOperator):
     _pattern = None
     _positions = None
 
+    # When other verbs need to use the separate verb, they can use
+    # this name for the temporary column.
+    _column_name = '__plydata_separate_col__'
+
     def __init__(
             self,
             col,
@@ -428,6 +433,10 @@ class extract(DataOperator):
     1      1    b    2     6
     2      1  NaN  NaN     6
     """
+
+    # When other verbs need to use the extract verb, they can use
+    # this name for the temporary column.
+    _column_name = '__plydata_extract_col__'
 
     def __init__(
             self,
@@ -611,3 +620,192 @@ class pivot_wider(DataOperator):
         self.names_sep = names_sep
         self.values_fill = values_fill
         self.values_fn = values_fn
+
+
+class pivot_longer(DataOperator):
+    r"""
+    Lengthen dataframe by reducing the columns & turning them into into values
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    col : list-like | select | str | slice
+        Columns to pivot into longer format.
+    names_to : str | list
+        Name of column to create. If a list, it is the names of columns
+        to create if ``names_sep`` or ``names_pattern`` is given.
+    values_to : str | list-like
+        Column(s) where to get observation values that will
+        be placed in the wide columns.
+    names_prefix : str | dict
+        A regular expression string used to remove matching text from the
+        start of each variable name. If each column requires a different
+        prefix, use a ``dict`` of the form ``{'column_name': r'regex'}``.
+        The ``column_name`` is as given in ``names_to``.
+    names_sep : str
+        If ``names_to`` contains multiple values, these control how the
+        column name is broken up.
+    names_pattern : regex
+        How the column name is broken up. Should be a regular expression
+        containing matching groups.
+    values_drop_na : bool
+        If ``True``, drop rows that contain only ``NA``s in the
+        ``values_to`` column. This effectively converts explicit
+        missing values to implicit missing values, and should be
+        used only when missing values in the ``data`` were created
+        by its structure.
+    convert : bool
+        If ``True`` convert separated or extracted columns to int, float
+        or bool where appropriate. This only applies when ``names_to``
+        has multiple values and ``names_sep`` or ``names_pattern`` is
+        set. Default is ``False``.
+
+    Parameters
+    ----------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...     'name': ['mary', 'mary', 'john', 'john'],
+    ...     'city':['dakar', 'dakar', 'lome', 'lome'],
+    ...     'year': [1990, 1992, 1996, 1998],
+    ...     'data_t1_sunny': [8, 6, 4, 7],
+    ...     'data_t2_rainy': [9, 7, 7, 6]
+    ... })
+    >>> df
+       name   city  year  data_t1_sunny  data_t2_rainy
+    0  mary  dakar  1990              8              9
+    1  mary  dakar  1992              6              7
+    2  john  lome   1996              4              7
+    3  john  lome   1998              7              6
+    >>> df >> pivot_longer(
+    ...     cols=select(startswith='data'),
+    ...     names_to='data_description',
+    ...     values_to='score',
+    ... )
+       name   city  year data_description  score
+    0  mary  dakar  1990    data_t1_sunny      8
+    1  mary  dakar  1992    data_t1_sunny      6
+    2  john  lome   1996    data_t1_sunny      4
+    3  john  lome   1998    data_t1_sunny      7
+    4  mary  dakar  1990    data_t2_rainy      9
+    5  mary  dakar  1992    data_t2_rainy      7
+    6  john  lome   1996    data_t2_rainy      7
+    7  john  lome   1998    data_t2_rainy      6
+    >>> df >> pivot_longer(
+    ...     cols=select(startswith='data'),
+    ...     names_to='data_description',
+    ...     values_to='score',
+    ...     names_prefix='data_'
+    ... )
+       name   city  year data_description  score
+    0  mary  dakar  1990         t1_sunny      8
+    1  mary  dakar  1992         t1_sunny      6
+    2  john  lome   1996         t1_sunny      4
+    3  john  lome   1998         t1_sunny      7
+    4  mary  dakar  1990         t2_rainy      9
+    5  mary  dakar  1992         t2_rainy      7
+    6  john  lome   1996         t2_rainy      7
+    7  john  lome   1998         t2_rainy      6
+
+    The column names are hiding data (data_description). We can
+    extract it.
+
+    >>> df >> pivot_longer(
+    ...     cols=select(startswith='data'),
+    ...     names_to=['take', 'season'],
+    ...     values_to='score',
+    ...     names_pattern=r'data_t(\d)_(\w+)'
+    ... )
+       name   city  year take season  score
+    0  mary  dakar  1990    1  sunny      8
+    1  mary  dakar  1992    1  sunny      6
+    2  john  lome   1996    1  sunny      4
+    3  john  lome   1998    1  sunny      7
+    4  mary  dakar  1990    2  rainy      9
+    5  mary  dakar  1992    2  rainy      7
+    6  john  lome   1996    2  rainy      7
+    7  john  lome   1998    2  rainy      6
+
+    Using a dictionary to specify different prefixes for more than
+    than one column.
+
+    >>> df >> pivot_longer(
+    ...     cols=select(startswith='data'),
+    ...     names_to=['take', 'season'],
+    ...     values_to='score',
+    ...     names_pattern=r'data_(t\d)(_\w+)',
+    ...     names_prefix={'take': 't', 'season': '_'}
+    ... )
+       name   city  year take season  score
+    0  mary  dakar  1990    1  sunny      8
+    1  mary  dakar  1992    1  sunny      6
+    2  john  lome   1996    1  sunny      4
+    3  john  lome   1998    1  sunny      7
+    4  mary  dakar  1990    2  rainy      9
+    5  mary  dakar  1992    2  rainy      7
+    6  john  lome   1996    2  rainy      7
+    7  john  lome   1998    2  rainy      6
+    """
+    _select_verb = None
+    _separate_verb = None
+    _extract_verb = None
+    _prefix_patterns = None
+
+    def __init__(
+            self,
+            cols,
+            names_to='name',
+            values_to='value',
+            names_prefix=None,
+            names_sep=None,
+            names_pattern=None,
+            convert=False
+    ):
+        if pdtypes.is_list_like(names_to):
+            if len(names_to) > 1 and not names_sep and not names_pattern:
+                raise ValueError(
+                    "If you supply multiple names in `names_to` you must "
+                    "also supply one of `names_sep` or `names_pattern`."
+                )
+        else:
+            names_to = [names_to]
+
+        if names_sep:
+            self._separate_verb = separate(
+                separate._column_name,
+                into=names_to,
+                convert=convert
+            )
+        elif names_pattern:
+            names_pattern = re.compile(names_pattern)
+            self._extract_verb = extract(
+                extract._column_name,
+                into=names_to,
+                regex=names_pattern,
+                convert=convert
+            )
+
+        if isinstance(names_prefix, str):
+            pattern = re.compile(r'^' + names_prefix)
+            self._prefix_patterns = {
+                name: pattern
+                for name in names_to
+            }
+        elif isinstance(names_prefix, dict):
+            self._prefix_patterns = {
+                name: re.compile(r'^' + p)
+                for name, p in names_prefix.items()
+            }
+        elif names_prefix:
+            raise TypeError(
+                "Got {} names_prefix should be a str or a dict".format(
+                    type(names_prefix))
+            )
+
+        self.cols = cols
+        self.names_to = names_to
+        self.values_to = values_to
+        self.names_prefix = names_prefix
+        self.names_sep = names_sep
+        self.names_pattern = names_pattern
+        self._select_verb = select.from_columns(cols)

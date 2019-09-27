@@ -23,6 +23,10 @@ New Features
   long-form to wide-form. This is a more general version of
   :class:`~plydata.tidy_verbs.spread`.
 
+- Added :class:`~plydata.tidy_verbs.pivot_longer` to transform dataframe from
+  wide-form to long-form. This is a more general version of
+  :class:`~plydata.tidy_verbs.gather`.
+
 Enhancements
 ************
 

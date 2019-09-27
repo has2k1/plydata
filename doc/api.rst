@@ -131,6 +131,7 @@ These verbs help create `tidy data <https://en.wikipedia.org/wiki/Tidy_data>`_.
    separate
    extract
    pivot_wider
+   pivot_longer
 
 Options
 =======

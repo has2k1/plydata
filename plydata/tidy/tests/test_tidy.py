@@ -4,13 +4,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from plydata import select
+from plydata import select, select_all
 from plydata.tidy import (
     gather,
     spread,
     separate,
     extract,
-    pivot_wider
+    pivot_wider,
+    pivot_longer
 )
 
 
@@ -240,3 +241,67 @@ def test_pivot_wider():
     assert result['datetime'].dtype == 'datetime64[ns]'
     assert result['timedelta'].dtype == 'timedelta64[ns]'
     assert result['string'].dtype == object
+
+
+def test_pivot_longer():
+    df = pd.DataFrame({
+        'name': ['mary', 'mary', 'john', 'john'],
+        'city': ['dakar', 'dakar', 'lome', 'lome'],
+        'year': [1990, 1992, 1996, 1998],
+        '1_sunny': [8, 6, 4, 7],
+        '2_rainy': [9, 7, 7, 6]
+    })
+
+    result = df >> pivot_longer(
+        cols=select(matches=r'^\d'),
+        names_to=['two_vars'],
+        values_to='score',
+    )
+
+    assert result['two_vars'].iloc[0] == '1_sunny'
+    assert result['two_vars'].iloc[4] == '2_rainy'
+
+    result = df >> pivot_longer(
+        cols=select(matches=r'^\d'),
+        names_to=['take', 'season'],
+        values_to='score',
+        names_sep='_',
+        convert=True
+    )
+    assert result['take'].dtype == int
+    assert len(result.columns) == 6
+
+    # select all
+    result = df[['1_sunny', '2_rainy']] >> pivot_longer(
+        cols=select_all(),
+        names_to=['col'],
+        values_to='score',
+    )
+
+    with pytest.warns(UserWarning) as records:
+        result = df >> pivot_longer(
+            select(startswith='x'),  # No selected columns
+            names_to=['take', 'season'],
+            values_to='score',
+            names_sep='_',
+        )
+
+    assert len(result) == 0
+    assert any('No columns' in str(r.message) for r in records)
+
+    with pytest.raises(ValueError):
+        df >> pivot_longer(
+            cols=select(matches=r'^\d'),
+            names_to=['take', 'season'],
+            values_to='score',
+            # missing names_sep or names_pattern
+        )
+
+    with pytest.raises(TypeError):
+        df >> pivot_longer(
+            cols=select(matches=r'^\d'),
+            names_to=['take', 'season'],
+            values_to='score',
+            names_sep='_',
+            names_prefix=4  # bad value
+        )
