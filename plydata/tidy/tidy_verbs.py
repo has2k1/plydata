@@ -9,7 +9,13 @@ from plydata.operators import DataOperator
 from plydata.one_table_verbs import select
 from plydata.utils import verify_arg, hasattrs, mean_if_many
 
-__all__ = ['gather', 'spread', 'separate', 'pivot_wider']
+__all__ = [
+    'gather',
+    'spread',
+    'separate',
+    'extract',
+    'pivot_wider',
+]
 
 
 class gather(DataOperator):
@@ -353,6 +359,101 @@ class separate(DataOperator):
         self.convert = convert
         self.extra = extra
         self.fill = fill
+
+
+class extract(DataOperator):
+    r"""
+    Split a column using a regular expression with capturing groups.
+
+    If the groups don't match, or the input is NA, the output will be NA.
+
+    Parameters
+    ----------
+    col : str | int
+        Column name or position of variable to separate.
+    into : list-like
+        Column names. Use ``None`` to omit the variable from the
+        output.
+    regex : str | regex
+        Pattern used to extract columns from ``col``. There should be
+        only one group (defined by ``()``) for each element of ``into``.
+    remove : bool
+        If ``True`` remove input column from output frame.
+    convert : bool
+        If ``True`` convert result columns to int, float or bool
+        where appropriate.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...    'alpha': 1,
+    ...    'x': ['a,1', 'b,2', 'c,3'],
+    ...    'zeta': 6
+    ... })
+    >>> df
+       alpha    x  zeta
+    0      1  a,1     6
+    1      1  b,2     6
+    2      1  c,3     6
+    >>> df >> extract('x', into='A')
+       alpha  A  zeta
+    0      1  a     6
+    1      1  b     6
+    2      1  c     6
+    >>> df >> extract('x', into=['A', 'B'], regex=r'(\w+),(\w+)')
+       alpha  A  B  zeta
+    0      1  a  1     6
+    1      1  b  2     6
+    2      1  c  3     6
+
+    >>> df >> extract('x', into=['A', 'B'], regex=r'(\w+),(\w+)', remove=False)
+       alpha    x  A  B  zeta
+    0      1  a,1  a  1     6
+    1      1  b,2  b  2     6
+    2      1  c,3  c  3     6
+
+    Convert extracted columns to appropriate data types.
+
+    >>> result = df >> extract(
+    ...    'x', into=['A', 'B'], regex=r'(\w+),(\w+)', convert=True)
+    >>> result['B'].dtype
+    dtype('int64')
+
+    The regex must match fully, not just the individual groups.
+
+    >>> df >> extract('x', into=['A', 'B'], regex=r'(\w+),([12]+)')
+       alpha    A    B  zeta
+    0      1    a    1     6
+    1      1    b    2     6
+    2      1  NaN  NaN     6
+    """
+
+    def __init__(
+            self,
+            col,
+            into,
+            regex=r'([A-Za-z0-9]+)',
+            remove=True,
+            convert=False,
+    ):
+        if isinstance(regex, str):
+            self.regex = re.compile(regex)
+        elif hasattrs(regex, ('split', 'match')):
+            self.regex = regex
+        else:
+            raise TypeError(
+                "Unknown type `{}` used to describe a regular "
+                "expression.".format(type(regex))
+            )
+        if not pdtypes.is_list_like(into):
+            into = [into]
+
+        self.col = col
+        self.into = into
+        self.regex = regex
+        self.remove = remove
+        self.convert = convert
 
 
 class pivot_wider(DataOperator):

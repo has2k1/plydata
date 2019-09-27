@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,6 +9,7 @@ from plydata.tidy import (
     gather,
     spread,
     separate,
+    extract,
     pivot_wider
 )
 
@@ -136,6 +139,38 @@ def test_separate():
     result = df >> separate('x', into=['A', 'B'])
     assert np.isnan(result.loc[1, 'A'])
     assert np.isnan(result.loc[1, 'B'])
+
+
+def test_extract():
+    df = pd.DataFrame({
+        'alpha': 1,
+        'x': ['a,1,1.1,True', 'b,2,2.2,False', 'c,3,3.3,True'],
+        'zeta': 2
+    })
+    result = df >> extract(
+        'x',
+        into=['A', 'C', 'D'],
+        regex=r'(\w),\d,([\d\.]+),(True|False)',
+        convert=True
+    )
+    assert result['D'].dtype == bool
+
+    # No enough groups
+    with pytest.raises(ValueError):
+        df >> extract(
+            'x',
+            into=['A', 'C', 'D'],
+            regex=r'(\w),\d,[\d\.]+,(True|False)',
+            convert=True
+        )
+
+    # Using a compiled regex
+    pattern = re.compile(r'(?:.+?,){2}([\d\.]+)')
+    result = df >> extract('x', into='C', regex=pattern, convert=True)
+    assert result['C'].dtype == float
+
+    with pytest.raises(TypeError):
+        df >> extract('x', into='C', regex=4)
 
 
 def test_pivot_wider():

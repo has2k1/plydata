@@ -1,6 +1,7 @@
 """
 Tidy verb initializations
 """
+import re
 from itertools import chain
 from warnings import warn
 
@@ -12,7 +13,7 @@ from plydata.operators import register_implementations
 from plydata.utils import convert_str, identity, clean_indices
 
 __all__ = [
-    'gather', 'spread', 'separate', 'pivot_wider'
+    'gather', 'spread', 'separate', 'extract', 'pivot_wider'
 ]
 
 
@@ -120,6 +121,40 @@ def separate(verb):
                  len(fewer_rows),
                  fewer_rows
              ))
+
+    if verb.convert:
+        split_df = convert_str(split_df)
+
+    # Insert the created columns
+    col_location = data.columns.get_loc(verb.col)
+    if verb.remove:
+        stop, start = col_location, col_location+1
+    else:
+        stop, start = col_location+1, col_location+1
+
+    data = pd.concat(
+        [
+            data.iloc[:, :stop],
+            split_df,
+            data.iloc[:, start:]
+        ],
+        axis=1,
+        copy=False
+    )
+    return data
+
+
+def extract(verb):
+    data = verb.data
+
+    split_df = data[verb.col].str.extract(verb.regex, expand=True)
+    if len(split_df.columns) == len(verb.into):
+        split_df.columns = verb.into
+    else:
+        raise ValueError(
+            "regex should define {} groups; {} found.".format(
+                len(verb.into), len(split_df.columns)
+            ))
 
     if verb.convert:
         split_df = convert_str(split_df)
