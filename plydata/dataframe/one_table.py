@@ -179,11 +179,6 @@ def query(verb):
 def do(verb):
     verb.env = get_empty_env()
     keep_index = verb.single_function
-    if verb.single_function:
-        if isinstance(verb.expressions[0].stmt, str):
-            raise TypeError(
-                "A single function for `do` cannot be a string")
-
     with regular_index(verb.data):
         data = Evaluator(verb, keep_index=keep_index).process()
 
