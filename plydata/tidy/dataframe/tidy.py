@@ -17,6 +17,7 @@ __all__ = [
     'separate',
     'separate_rows',
     'extract',
+    'unite',
     'pivot_wider',
     'pivot_longer'
 ]
@@ -227,6 +228,36 @@ def extract(verb):
         axis=1,
         copy=False
     )
+    return data
+
+
+def unite(verb):
+    data = verb.data.copy()
+    sep = verb.sep
+    verb._select_verb.data = data
+    columns = Selector.get(verb._select_verb)
+    data_unite = data[columns]
+
+    if verb.na_rm:
+        def remove_nulls(row):
+            return (x for x in row if not pd.isnull(x))
+
+        result_col = [
+            sep.join(str(r) for r in remove_nulls(row))
+            for row in data_unite.values
+        ]
+    else:
+        result_col = [
+            sep.join(str(r) for r in row)
+            for row in data_unite.values
+        ]
+
+    idx = int(np.min([data.columns.get_loc(c) for c in columns]))
+    data.insert(idx, verb.col, result_col)
+
+    if verb.remove:
+        data = data.drop(columns, axis=1)
+
     return data
 
 

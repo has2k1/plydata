@@ -30,6 +30,8 @@ New Features
 - Added :class:`~plydata.tidy_verbs.separate_rows` to split multiple delimited
   values and place each one in its own row.
 
+- Added :class:`~plydata.tidy_verbs.unite` to join multiple columns into one.
+
 Enhancements
 ************
 

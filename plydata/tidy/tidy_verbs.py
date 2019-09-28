@@ -15,6 +15,7 @@ __all__ = [
     'separate',
     'separate_rows',
     'extract',
+    'unite',
     'pivot_wider',
     'pivot_longer'
 ]
@@ -550,6 +551,105 @@ class extract(DataOperator):
         self.convert = convert
 
 
+class unite(DataOperator):
+    """
+    Join multiple columns into one
+
+    Parameters
+    ----------
+    data : dataframe, optional
+        Useful when not using the ``>>`` operator.
+    col : str
+        Name of new column
+    *unite_cols : list-like | select | str | slice
+        Columns to join. Uses
+        :class:`~plydata.one_table_verbs.select`.
+    sep : str
+        Separator between values. Default is ``_``.
+    remove : bool
+        If ``True``, remove the input columns from the output
+        dataframe.
+    na_rm : bool
+        If ``True``, missing values will be removed prior to
+        uniting each value.
+
+    Examples
+    --------
+    >>> import pandas as pd
+
+    >>> df = pd.DataFrame({
+    ...     'c1': [1, 2, 3, 4, None],
+    ...     'c2': list('abcde'),
+    ...     'c3': list('vwxyz')
+    ... })
+    >>> df
+        c1 c2 c3
+    0  1.0  a  v
+    1  2.0  b  w
+    2  3.0  c  x
+    3  4.0  d  y
+    4  NaN  e  z
+    >>> df >> unite('c1c2', 'c1', 'c2')
+        c1c2  c3
+    0  1.0_a   v
+    1  2.0_b   w
+    2  3.0_c   x
+    3  4.0_d   y
+    4  nan_e   z
+    >>> df >> unite('c1c2', 'c1', 'c2', na_rm=True)
+        c1c2  c3
+    0  1.0_a   v
+    1  2.0_b   w
+    2  3.0_c   x
+    3  4.0_d   y
+    4      e   z
+    >>> df >> unite('c2c3', 'c2', 'c3', sep=',')
+        c1 c2c3
+    0  1.0  a,v
+    1  2.0  b,w
+    2  3.0  c,x
+    3  4.0  d,y
+    4  NaN  e,z
+    >>> df >> unite('c2c3', 'c2', 'c3', remove=False)
+        c1 c2c3 c2 c3
+    0  1.0  a_v  a  v
+    1  2.0  b_w  b  w
+    2  3.0  c_x  c  x
+    3  4.0  d_y  d  y
+    4  NaN  e_z  e  z
+
+    You can choose columns in all ways that
+    :class:`~plydata.one_table_verbs.select` can understand and you
+    can also pass a select verb directly.
+
+    >>> df >> unite('c2c3', '-c1')
+        c1 c2c3
+    0  1.0  a_v
+    1  2.0  b_w
+    2  3.0  c_x
+    3  4.0  d_y
+    4  NaN  e_z
+
+    >>> df >> unite('c2c3', select(matches=r'c[23]$'))
+        c1 c2c3
+    0  1.0  a_v
+    1  2.0  b_w
+    2  3.0  c_x
+    3  4.0  d_y
+    4  NaN  e_z
+    """
+
+    # Powers the column selection
+    _select_verb = None
+
+    def __init__(self, col, *unite_cols, sep='_', remove=True, na_rm=False):
+        self.col = col
+        self.sep = sep
+        self.remove = remove
+        self.na_rm = na_rm
+        self._select_verb = select.from_columns(*unite_cols)
+
+
 class pivot_wider(DataOperator):
     """
     Spread a key-value pair across multiple columns
@@ -746,8 +846,8 @@ class pivot_longer(DataOperator):
         has multiple values and ``names_sep`` or ``names_pattern`` is
         set. Default is ``False``.
 
-    Parameters
-    ----------
+    Examples
+    --------
     >>> import pandas as pd
     >>> df = pd.DataFrame({
     ...     'name': ['mary', 'mary', 'john', 'john'],

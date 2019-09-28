@@ -11,6 +11,7 @@ from plydata.tidy import (
     separate,
     separate_rows,
     extract,
+    unite,
     pivot_wider,
     pivot_longer
 )
@@ -189,6 +190,43 @@ def test_extract():
 
     with pytest.raises(TypeError):
         df >> extract('x', into='C', regex=4)
+
+
+def test_unite():
+    df = pd.DataFrame({
+        'c1': [1, 2, 3, 4, None],
+        'c2': list('abcde'),
+        'c3': list('vwxy') + [None]
+    })
+    result = df >> unite('c1c3', 'c1', 'c3')
+    assert result.columns[0] == 'c1c3'
+    assert 'c1' not in result.columns
+    assert 'c3' not in result.columns
+    assert result['c1c3'].iloc[0] == '1.0_v'
+    assert result['c1c3'].iloc[4] == 'nan_None'
+
+    result = df >> unite('c1c3', 'c1', 'c3', na_rm=True)
+    assert result['c1c3'].iloc[4] == ''
+
+    # Unites all using select_all
+    result = df >> unite('c1c2c3')
+    assert len(result.columns) == 1
+    assert result['c1c2c3'].iloc[0] == '1.0_a_v'
+
+    df2 = pd.DataFrame({
+        'c1': pd.Series([1, 2, 3, 4, None], dtype=object),
+        'c2': list('abcde'),
+        'c3': list('vwxy') + [None]
+    })
+    result = df2 >> unite('c1c3', 'c1', 'c3')
+    assert result['c1c3'].iloc[0] == '1_v'
+
+    # Different uniting order
+    result = df2 >> unite('c3c2', 'c3', 'c2', remove=False)
+    assert result.columns[1] == 'c3c2'
+    assert result['c3c2'].iloc[0] == 'v_a'
+    assert 'c2' in result.columns
+    assert 'c3' in result.columns
 
 
 def test_pivot_wider():
