@@ -497,17 +497,10 @@ class Selector:
         """
         # Named (listed) columns are always included
         columns = cls.select(verb)
-        final_columns_set = set(cls.select(verb))
+        final_columns_set = set(columns)
         groups_set = set(_get_groups(verb))
         final_columns_set -= groups_set - set(verb.names)
-
-        def pred(col):
-            if col not in verb.data:
-                raise KeyError(
-                    "Unknown column name, {!r}".format(col))
-            return col in final_columns_set
-
-        return [col for col in columns if pred(col)]
+        return [col for col in columns if col in final_columns_set]
 
     @classmethod
     def _if(cls, verb):

@@ -1308,7 +1308,10 @@ def test_select_at():
     assert all(result.columns == ['beta', 'X', 'ALPHA'])
 
     with pytest.raises(ValueError):
-        df >> select_all(('x', 'beta', 'alpha'), (str.capitalize, str.upper))
+        df >> select_at(('x', 'beta', 'alpha'), (str.capitalize, str.upper))
+
+    with pytest.raises(KeyError):
+        df >> select_at(('missing', 'alpha', 'x'), str.capitalize)
 
 
 def test_select_if():

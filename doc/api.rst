@@ -69,6 +69,9 @@ Helpers
    rename_all
    rename_at
    rename_if
+   select_all
+   select_at
+   select_if
    summarise_all
    summarise_at
    summarise_if
