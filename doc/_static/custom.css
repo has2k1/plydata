@@ -139,3 +139,20 @@ dl.method>dd>dl.field-list>dd div,
 dl.function>dd>dl.field-list>dd div{
    margin-top: 0.5em;
 }
+
+#sidebar>.nav {
+   padding: 0 0 2em 0;
+}
+
+#sidebar .nav > li {
+  padding: 0.8em 0 0 0;
+  display: list-item;
+  line-height: 1.1em;
+}
+
+.bs-sidenav .nav > .active > a,
+.bs-sidenav .nav > .active:hover > a,
+.bs-sidenav .nav > .active:focus > a {
+   color: #5D6D7E;
+   border-right: 0;
+}
