@@ -117,27 +117,6 @@ expressions.
    case_when
    if_else
 
-
-Tidy Verbs
-==========
-These verbs help create `tidy data <https://en.wikipedia.org/wiki/Tidy_data>`_.
-
-.. currentmodule:: plydata.tidy
-
-.. autosummary::
-   :toctree: generated/
-   :nosignatures:
-   :template: main.rst
-
-   gather
-   spread
-   separate
-   separate_rows
-   extract
-   unite
-   pivot_wider
-   pivot_longer
-
 Options
 =======
 
@@ -165,3 +144,41 @@ Useful Functions
 
    Q
    n
+
+Tidy Verbs
+==========
+These verbs help create `tidy data <https://en.wikipedia.org/wiki/Tidy_data>`_.
+You can import them with :py:`from plydata.tidy import *`.
+
+.. currentmodule:: plydata.tidy
+
+Pivoting
+--------
+Pivoting changes the representation of a rectangular dataset, without changing
+the data inside it.
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   gather
+   pivot_longer
+   pivot_wider
+   spread
+
+String Columns
+--------------
+These verbs help separate multiple variables that are joined together in a
+single column.
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+   extract
+   separate
+   separate_rows
+   unite
+

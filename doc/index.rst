@@ -2,10 +2,10 @@
 
 plydata
 =======
-plydata is a library that provides a small grammar for data
-manipulation. The grammar consists of verbs that can be applied
-to pandas dataframes or database tables. It is based on the R package
-`dplyr`_. plydata uses the `>>` operator as a pipe symbol.
+plydata is a library that provides a grammar for data manipulation. The
+grammar consists of verbs that can be applied to pandas dataframes or
+database tables. It is based on the R package `dplyr`_ and `tidyr`_.
+plydata uses the `>>` operator as a pipe symbol.
 
 At present the only supported data store is the *pandas* dataframe.
 We expect to support *sqlite* and maybe *postgresql* and *mysql*.
@@ -87,5 +87,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`search`
 
-.. _dplyr: http://github.com/hadley/dplyr
+.. _dplyr: https://dplyr.tidyverse.org/
+.. _tidyr: https://tidyr.tidyverse.org/
 .. _plotnine: http://plotnine.readthedocs.io/en/stable/
