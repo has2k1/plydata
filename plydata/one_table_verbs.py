@@ -52,8 +52,8 @@ class define(DataOperator):
     1  2    8
     2  3   12
 
-    Note
-    ----
+    Notes
+    -----
     If :obj:`plydata.options.modify_input_data` is ``True``,
     :class:`define` will modify the original dataframe.
     """
@@ -311,8 +311,8 @@ class select(DataOperator):
     1  2  2  2  2  2  2
     2  3  3  3  3  3  3
 
-    Note
-    ----
+    Notes
+    -----
     To exclude columns by prepending a minus, the first column
     passed to :class:`select` must be prepended with minus.
     :py:`select('-a', 'c')` will exclude column ``a``, while
@@ -410,8 +410,8 @@ class rename(DataOperator):
     1     2        2    2     2
     2     3        3    3     3
 
-    Note
-    ----
+    Notes
+    -----
     If :obj:`plydata.options.modify_input_data` is ``True``,
     :class:`rename` will modify the original dataframe.
     """
@@ -641,8 +641,8 @@ class group_by(define):
     5    5       1  6
     6    4       5  5
 
-    Note
-    ----
+    Notes
+    -----
     If :obj:`plydata.options.modify_input_data` is ``True``,
     :class:`group_by` will modify the original dataframe.
     """
@@ -966,8 +966,8 @@ class do(DataOperator):
     that the group columns (``z`` in the above cases) are included in
     the result.
 
-    Note
-    ----
+    Notes
+    -----
     You cannot have both a position argument and keyword
     arguments.
     """
@@ -1107,8 +1107,8 @@ class pull(DataOperator):
     >>> df >> pull(-1, True)
     array([7, 8, 9])
 
-    Note
-    ----
+    Notes
+    -----
     Always returns a numpy array.
 
     If :obj:`plydata.options.modify_input_data` is ``True``,
@@ -1167,8 +1167,8 @@ class slice_rows(DataOperator):
 
     respectively.
 
-    Note
-    ----
+    Notes
+    -----
     If :obj:`plydata.options.modify_input_data` is ``True``,
     :class:`slice_rows` will not make a copy the original dataframe.
     """

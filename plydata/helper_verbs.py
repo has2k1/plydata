@@ -796,8 +796,8 @@ class arrange_all(_all):
     0     a    b     c  1  6   7
     1     a    a     d  2  5   9
 
-    Note
-    ----
+    Notes
+    -----
     Do not use functions that change the order of the values in the
     array. Such functions are most likely the wrong candidates,
     they corrupt the data. Use function(s) that return values that
@@ -921,8 +921,8 @@ class arrange_if(_if):
     1     a    a     d  2  5   9
     0     a    b     c  1  6   7
 
-    Note
-    ----
+    Notes
+    -----
     Do not use functions that change the order of the values in the
     array. Such functions are most likely the wrong candidates,
     they corrupt the data. Use function(s) that return values that
@@ -1032,8 +1032,8 @@ class arrange_at(_at):
     0     a    b     c  1  6   7
     1     a    a     d  2  5   9
 
-    Note
-    ----
+    Notes
+    -----
     Do not use functions that change the order of the values in the
     array. Such functions are most likely the wrong candidates,
     they corrupt the data. Use function(s) that return values that

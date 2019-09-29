@@ -1,35 +1,39 @@
+
+/* Items in the tables are centered by default. Which is ugly
+   Left alignment looks better
+   Tables on the left too
+*/
+table.align-default {
+   text-align: left;
+   margin: 1em 0 1em 0;
+}
+
+img.align-default,
+.figure.align-default {
+   text-align: left;
+   margin: 0.5em;
+   padding: 0.5em;
+}
+
 /* Adjust the tables */
 
-/*
- * The !important are necessary to because the
- * sphinx_bootstrap_theme does not insert this
- * file last.
- */
-table.table, table.longtable {
+table.table,
+table.longtable {
    border: 1px solid #DDD;
    border-collapse: collapse;
 }
 
 table.table {
-   width: initial !important;
+   width: initial;
 }
 
 table.longtable {
-   width: 100% !important;
+   width: 100%;
 }
 
 table.table td,
 table.table th {
-   border-left: 1px solid #DDD !important;
-}
-
-table.field-list {
-   border: none;
-}
-
-table.field-list td,
-table.field-list th{
-   border-left: none !important;
+   border-left: 1px solid #DDD;
 }
 
 tr.row-even td {
@@ -93,4 +97,45 @@ table.dataframe thead th {
 
 table.dataframe tbody tr:nth-child(odd) {
    background: #F0F6F6;
+}
+
+/* Better formatting for numpydoc parameter field lists */
+
+dl.class>dd>dl.field-list,
+dl.method>dd>dl.field-list,
+dl.function>dd>dl.field-list {
+   display: grid;
+   grid-template-columns: max-content auto;
+   border-left: 5px solid #eee;
+}
+
+dl.class>dd>dl.field-list>dt,
+dl.method>dd>dl.field-list>dt,
+dl.function>dd>dl.field-list>dt {
+   grid-column-start: 1;
+   padding: 0.25em;
+   background-color: rgb(238, 238, 238);
+   display: inline-table;
+}
+
+dl.class>dd>dl.field-list>dd,
+dl.method>dd>dl.field-list>dd,
+dl.function>dd>dl.field-list>dd {
+   margin-inline-start: 0em;
+   grid-column-start: 2;
+   padding: 0.25em 0.25em 0 0.25em;
+   margin-bottom: 0;
+}
+
+dl.class>dd>dl.field-list>dd>dl,
+dl.method>dd>dl.field-list>dd>dl,
+dl.function>dd>dl.field-list>dd>dl {
+   margin-left: 1em;
+   margin-bottom: 1em;
+}
+
+dl.class>dd>dl.field-list>dd div,
+dl.method>dd>dl.field-list>dd div,
+dl.function>dd>dl.field-list>dd div{
+   margin-top: 0.5em;
 }

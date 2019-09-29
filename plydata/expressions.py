@@ -316,8 +316,8 @@ class case_when(OrderedDict):
     8  8  greater-than-5-and-even
     9  9   greater-than-5-and-odd
 
-    Note
-    ----
+    Notes
+    -----
     As :class:`dict` classes are ordered, in python 3.6 and above you can
     get away with::
 
