@@ -199,4 +199,5 @@ These functions keep the values the same but change the order of the categories.
    :nosignatures:
    :template: main.rst
 
+    cat_infreq
     cat_inorder

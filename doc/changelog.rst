@@ -35,6 +35,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_inorder` which creates a categorical
   with categories *in order* of how they appear in the sequence.
 
+- Added :class:`~plydata.cat_tools.cat_infreq` which creates a categorical
+  with categories in order of the number of times they appear in the sequence.
+
 Enhancements
 ************
 
