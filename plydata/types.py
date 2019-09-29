@@ -60,7 +60,7 @@ class GroupedDataFrame(pd.DataFrame):
             indices[idx] = i
         return indices
 
-    def to_html(self, *args, **kwargs):
+    def _repr_html_(self, *args, **kwargs):
         cell = '<td>{}</td>'
         td_gen = (cell.format(x) for x in self.plydata_groups)
         group_html = """
@@ -73,7 +73,10 @@ class GroupedDataFrame(pd.DataFrame):
             </tbody>
         </table>
         """.format(''.join(td_gen))
-        return group_html + super().to_html(*args, **kwargs)
+        return group_html + super()._repr_html_(*args, **kwargs)
+
+    def to_html(self, *args, **kwargs):
+        return self._repr_html_(*args, **kwargs)
 
     def equals(self, other):
         try:
