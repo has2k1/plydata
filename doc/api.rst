@@ -182,3 +182,21 @@ single column.
    separate_rows
    unite
 
+Categorical Tools
+=================
+
+Functions to solve common problems when working with categorical variables.
+You can import them with :py:`from plydata.cat_tools import *`.
+
+.. currentmodule:: plydata.cat_tools
+
+Change the order of categories
+------------------------------
+These functions keep the values the same but change the order of the categories.
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+    cat_inorder

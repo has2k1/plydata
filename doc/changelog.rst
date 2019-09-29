@@ -32,6 +32,9 @@ New Features
 
 - Added :class:`~plydata.tidy_verbs.unite` to join multiple columns into one.
 
+- Added :class:`~plydata.cat_tools.cat_inorder` which creates a categorical
+  with categories *in order* of how they appear in the sequence.
+
 Enhancements
 ************
 
