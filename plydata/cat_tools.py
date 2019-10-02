@@ -9,6 +9,7 @@ from pandas.core.algorithms import value_counts
 __all__ = [
     'cat_infreq',
     'cat_inorder',
+    'cat_inseq',
 ]
 
 
@@ -139,6 +140,93 @@ def cat_inorder(c, ordered=None):
             if keep
         ])
     return pd.Categorical(c, categories=cats, **kwargs)
+
+
+def cat_inseq(c, ordered=None):
+    """
+    Reorder categorical by numerical order
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    ordered : bool
+        If ``True``, the categorical is ordered.
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> x = pd.Categorical([5, 1, 3, 2, 4])
+    >>> cat_inseq(x)
+    [5, 1, 3, 2, 4]
+    Categories (5, int64): [1, 2, 3, 4, 5]
+    >>> x = pd.Categorical([5, 1, '3', 2, 4])
+    >>> cat_inseq(x)
+    [5, 1, 3, 2, 4]
+    Categories (5, int64): [1, 2, 3, 4, 5]
+
+    Values that cannot be coerced to numerical turn in ``NaN``,
+    and categories cannot be ``NaN``.
+
+    >>> x = pd.Categorical([5, 1, 'three', 2, 4])
+    >>> cat_inseq(x)
+    [5, 1, NaN, 2, 4]
+    Categories (4, int64): [1, 2, 4, 5]
+
+    Coerces values to numerical
+
+    >>> x = [5, 1, '3', 2, 4]
+    >>> cat_inseq(x, ordered=True)
+    [5, 1, 3, 2, 4]
+    Categories (5, int64): [1 < 2 < 3 < 4 < 5]
+    >>> x = [5, 1, '3', 2, '4.5']
+    >>> cat_inseq(x)
+    [5.0, 1.0, 3.0, 2.0, 4.5]
+    Categories (5, float64): [1.0, 2.0, 3.0, 4.5, 5.0]
+
+    Atleast one of the values must be coercible to the integer
+
+    >>> x = ['five', 'one', 'three', 'two', 'four']
+    >>> cat_inseq(x)
+    Traceback (most recent call last):
+        ...
+    ValueError: Atleast one existing category must be a number.
+    >>> x = ['five', 'one', '3', 'two', 'four']
+    >>> cat_inseq(x)
+    [NaN, NaN, 3, NaN, NaN]
+    Categories (1, int64): [3]
+    """
+    if not isinstance(c, pd.Categorical):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    # one value at a time to avoid turning integers into floats
+    # when some values create nans
+    numerical_cats = []
+    for x in c.categories:
+        _x = pd.to_numeric(x, 'coerce')
+        if not pd.isnull(_x):
+            numerical_cats.append(_x)
+
+    if len(numerical_cats) == 0 and len(c) > 0:
+        raise ValueError(
+            "Atleast one existing category must be a number."
+        )
+
+    # Change the original categories to numerical ones, making sure
+    # to rename the existing ones i.e '3' becomes 3. Only after that,
+    # change to order.
+    c = (c.set_categories(numerical_cats, rename=True)
+         .reorder_categories(sorted(numerical_cats)))
+
+    if ordered is not None:
+        c.set_ordered(ordered, inplace=True)
+    return c
 
 
 def _stable_series_sort(ser, ascending):
