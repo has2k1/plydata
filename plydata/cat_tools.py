@@ -1,7 +1,7 @@
 """
 Functions for categoricals
 """
-
+import numpy as np
 import pandas as pd
 import pandas.api.types as pdtypes
 from pandas.core.algorithms import value_counts
@@ -10,6 +10,7 @@ __all__ = [
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
+    'cat_reorder',
 ]
 
 
@@ -227,6 +228,63 @@ def cat_inseq(c, ordered=None):
     if ordered is not None:
         c.set_ordered(ordered, inplace=True)
     return c
+
+
+def cat_reorder(c, x, fun=np.median, ascending=True):
+    """
+    Reorder categorical by sorting along another variable
+
+    It is the order of the categories that changes. Values in x
+    are grouped by categories and summarised to determine the
+    new order.
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    x : list-like
+        Values by which ``c`` will be ordered.
+    fun : callable
+        Summarising function to ``x`` for each category in ``c``.
+        Default is the *median*.
+    ascending : bool
+        If ``True``, the ``c`` is ordered in ascending order of ``x``.
+
+    Examples
+    --------
+    >>> c = list('abbccc')
+    >>> x = [11, 2, 2, 3, 33, 3]
+    >>> cat_reorder(c, x)
+    [a, b, b, c, c, c]
+    Categories (3, object): [b, c, a]
+    >>> cat_reorder(c, x, fun=max)
+    [a, b, b, c, c, c]
+    Categories (3, object): [b, a, c]
+    >>> cat_reorder(c, x, fun=max, ascending=False)
+    [a, b, b, c, c, c]
+    Categories (3, object): [c, a, b]
+    >>> c_ordered = pd.Categorical(c, ordered=True)
+    >>> cat_reorder(c_ordered, x)
+    [a, b, b, c, c, c]
+    Categories (3, object): [b < c < a]
+    >>> cat_reorder(c + ['d'], x)
+    Traceback (most recent call last):
+        ...
+    ValueError: Lengths are not equal. len(c) is 7 and len(x) is 6.
+    """
+    if len(c) != len(x):
+        raise ValueError(
+            "Lengths are not equal. len(c) is {} and len(x) is {}.".format(
+                len(c), len(x)
+            )
+        )
+    summary = (pd.Series(x)
+               .groupby(c)
+               .apply(fun)
+               .sort_values(ascending=ascending)
+               )
+    cats = summary.index.to_list()
+    return pd.Categorical(c, categories=cats)
 
 
 def _stable_series_sort(ser, ascending):

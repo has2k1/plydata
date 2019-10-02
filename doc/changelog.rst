@@ -41,6 +41,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_inseq` which creates a categorical
   with categories in ascending numerical order.
 
+- Added :class:`~plydata.cat_tools.cat_reorder` which creates a categorical
+  with categories ordered according to another variable.
+
 Enhancements
 ************
 
