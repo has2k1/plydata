@@ -572,3 +572,69 @@ def mean_if_many(x):
     TypeError: cannot perform reduce with flexible type
     """
     return list(x)[0] if len(x) == 1 else np.mean(x)
+
+
+def last2(x, y):
+    """
+    Find last value of y when sorted by x
+
+    Parameters
+    ----------
+    x : list-like
+        Values
+    y : list-like
+        Values
+
+    Returns
+    -------
+    obj : object
+        Last value of y when sorted by x
+
+    Examples
+    --------
+    >>> x = [1, 2, 3, 99, 5, 6]
+    >>> y = [1, 2, 3, 4, 5, 6]
+    >>> last2(x, y)
+    4
+    >>> last2(x, y[::-1])
+    3
+
+    See Also
+    --------
+    :class:`~plydata.cat_tools.reorder2`
+    """
+    y = np.asarray(y)
+    return y[np.argsort(x)][-1]
+
+
+def first2(x, y):
+    """
+    Find first value of y when sorted by x
+
+    Parameters
+    ----------
+    x : list-like
+        Values
+    y : list-like
+        Values
+
+    Returns
+    -------
+    obj : object
+        Last value of y when sorted by x
+
+    Examples
+    --------
+    >>> x = [1, 2, 3, -99, 5, 6]
+    >>> y = [1, 2, 3, 4, 5, 6]
+    >>> first2(x, y)
+    4
+    >>> first2(x, y[::-1])
+    3
+
+    See Also
+    --------
+    :class:`~plydata.cat_tools.reorder2`
+    """
+    y = np.asarray(y)
+    return y[np.argsort(x)][0]

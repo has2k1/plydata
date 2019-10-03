@@ -44,6 +44,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_reorder` which creates a categorical
   with categories ordered according to another variable.
 
+- Added :class:`~plydata.cat_tools.cat_reorder2` which creates a categorical
+  with categories ordered according a relationship between two other variables.
+
 Enhancements
 ************
 

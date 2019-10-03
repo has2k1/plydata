@@ -6,11 +6,14 @@ import pandas as pd
 import pandas.api.types as pdtypes
 from pandas.core.algorithms import value_counts
 
+from .utils import last2
+
 __all__ = [
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
     'cat_reorder',
+    'cat_reorder2',
 ]
 
 
@@ -281,6 +284,67 @@ def cat_reorder(c, x, fun=np.median, ascending=True):
     summary = (pd.Series(x)
                .groupby(c)
                .apply(fun)
+               .sort_values(ascending=ascending)
+               )
+    cats = summary.index.to_list()
+    return pd.Categorical(c, categories=cats)
+
+
+def cat_reorder2(c, x, y, *args, fun=last2, ascending=False, **kwargs):
+    """
+    Reorder categorical by sorting along another variable
+
+    It is the order of the categories that changes. Values in x
+    are grouped by categories and summarised to determine the
+    new order.
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    x : list-like
+        Values by which ``c`` will be ordered.
+    y : list-like
+        Values by which ``c`` will be ordered.
+    *args : tuple
+        Position arguments passed to function fun.
+    fun : callable
+        Summarising function to ``x`` for each category in ``c``.
+        Default is the *median*.
+    ascending : bool
+        If ``True``, the ``c`` is ordered in ascending order of ``x``.
+    **kwargs : dict
+        Keyword arguments passed to ``fun``.
+
+    Examples
+    --------
+
+    Order stocks by the price in the latest year. This type of ordering
+    can be used to order line plots so that the ends match the order of
+    the legend.
+
+    >>> stocks = list('AAABBBCCC')
+    >>> year = [1980, 1990, 2000] * 3
+    >>> price = [12.34, 12.90, 13.55, 10.92, 14.73, 11.08, 9.02, 12.44, 15.65]
+    >>> cat_reorder2(stocks, year, price)
+    [A, A, A, B, B, B, C, C, C]
+    Categories (3, object): [C, A, B]
+    """
+    if len(c) != len(x) or len(x) != len(y):
+        raise ValueError(
+            "Lengths are not equal. len(c) is {}, len(x) is {} and "
+            "len(y) is {}.".format(len(c), len(x), len(y))
+        )
+
+    # Wrap two argument function fun with a function that
+    # takes a dataframe, put x and y into a dataframe, then
+    # use dataframe.groupby
+    def _fun(cat_df):
+        return fun(cat_df['x'], cat_df['y'], *args, **kwargs)
+
+    summary = (pd.DataFrame({'x': x, 'y': y})
+               .groupby(c)
+               .apply(_fun)
                .sort_values(ascending=ascending)
                )
     cats = summary.index.to_list()

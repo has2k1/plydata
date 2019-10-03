@@ -144,6 +144,8 @@ Useful Functions
 
    Q
    n
+   first2
+   last2
 
 Tidy Verbs
 ==========
@@ -188,6 +190,7 @@ Categorical Tools
 Functions to solve common problems when working with categorical variables.
 You can import them with :py:`from plydata.cat_tools import *`.
 
+.. currentmodule:: plydata.utils
 .. currentmodule:: plydata.cat_tools
 
 Change the order of categories
@@ -203,3 +206,4 @@ These functions keep the values the same but change the order of the categories.
     cat_inorder
     cat_inseq
     cat_reorder
+    cat_reorder2
