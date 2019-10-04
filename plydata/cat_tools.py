@@ -14,6 +14,7 @@ __all__ = [
     'cat_inseq',
     'cat_reorder',
     'cat_reorder2',
+    'cat_rev',
 ]
 
 
@@ -349,6 +350,38 @@ def cat_reorder2(c, x, y, *args, fun=last2, ascending=False, **kwargs):
                )
     cats = summary.index.to_list()
     return pd.Categorical(c, categories=cats)
+
+
+def cat_rev(c):
+    """
+    Reverse order of categories
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> c = ['a', 'b', 'c']
+    >>> cat_rev(c)
+    [a, b, c]
+    Categories (3, object): [c, b, a]
+    >>> cat_rev(pd.Categorical(c))
+    [a, b, c]
+    Categories (3, object): [c, b, a]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+    c.reorder_categories(c.categories[::-1], inplace=True)
+    return c
 
 
 def _stable_series_sort(ser, ascending):
