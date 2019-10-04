@@ -56,6 +56,10 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_shift` which creates a categorical
   with the categories shifted to the left or to the right.
 
+- Added :class:`~plydata.cat_tools.cat_move`
+  (:class:`~plydata.cat_tools.cat_relevel`) which creates a categorical
+  with the categories moved to a given position.
+
 Enhancements
 ************
 

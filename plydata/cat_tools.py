@@ -12,6 +12,8 @@ __all__ = [
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
+    'cat_move',
+    'cat_relevel',
     'cat_reorder',
     'cat_reorder2',
     'cat_rev',
@@ -354,6 +356,54 @@ def cat_reorder2(c, x, y, *args, fun=last2, ascending=False, **kwargs):
     return pd.Categorical(c, categories=cats)
 
 
+def cat_move(c, *args, to=0):
+    """
+    Reorder categories explicitly
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    *args : tuple
+        Categories to reorder. Any categories not mentioned
+        will be left in existing order.
+    to : int or inf
+        Position where to place the categories. ``inf``, puts
+        them at the end (highest value).
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> c = ['a', 'b', 'c', 'd', 'e']
+    >>> cat_move(c, 'e', 'b')
+    [a, b, c, d, e]
+    Categories (5, object): [e, b, a, c, d]
+    >>> cat_move(c, 'c', to=np.inf)
+    [a, b, c, d, e]
+    Categories (5, object): [a, b, d, e, c]
+    >>> cat_move(pd.Categorical(c, ordered=True), 'a', 'c', 'e', to=1)
+    [a, b, c, d, e]
+    Categories (5, object): [b < a < c < e < d]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    if np.isinf(to):
+        to = len(c.categories)
+
+    args = list(args)
+    unmoved_cats = c.categories.drop(args).to_list()
+    cats = unmoved_cats[0:to] + args + unmoved_cats[to:]
+    c.reorder_categories(cats, inplace=True)
+    return c
+
+
 def cat_rev(c):
     """
     Reverse order of categories
@@ -506,3 +556,6 @@ def _stable_series_sort(ser, ascending):
     indexer = nargsort(
         values, kind='mergesort', ascending=ascending, na_position='last')
     return pd.Series(values[indexer], index=ser.index[indexer])
+
+
+cat_relevel = cat_move

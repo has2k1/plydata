@@ -205,6 +205,8 @@ These functions keep the values the same but change the order of the categories.
     cat_infreq
     cat_inorder
     cat_inseq
+    cat_remove
+    cat_relevel
     cat_reorder
     cat_reorder2
     cat_rev
