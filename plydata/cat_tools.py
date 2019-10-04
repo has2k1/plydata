@@ -15,6 +15,7 @@ __all__ = [
     'cat_reorder',
     'cat_reorder2',
     'cat_rev',
+    'cat_shift',
     'cat_shuffle',
 ]
 
@@ -382,6 +383,55 @@ def cat_rev(c):
     else:
         c = c.copy()
     c.reorder_categories(c.categories[::-1], inplace=True)
+    return c
+
+
+def cat_shift(c, n=1):
+    """
+    Shift and wrap-around categories to the left or right
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+
+    n : int
+        Number of times to shift. If positive, shift to
+        the left, if negative shift to the right.
+        Default is 1.
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> c = ['a', 'b', 'c', 'd', 'e']
+    >>> cat_shift(c)
+    [a, b, c, d, e]
+    Categories (5, object): [b, c, d, e, a]
+    >>> cat_shift(c, 2)
+    [a, b, c, d, e]
+    Categories (5, object): [c, d, e, a, b]
+    >>> cat_shift(c, -2)
+    [a, b, c, d, e]
+    Categories (5, object): [d, e, a, b, c]
+    >>> cat_shift(pd.Categorical(c, ordered=True), -3)
+    [a, b, c, d, e]
+    Categories (5, object): [c < d < e < a < b]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    cats = c.categories.to_list()
+    cats_extended = cats + cats
+    m = len(cats)
+    n = n % m
+    cats = cats_extended[n:m] + cats_extended[:n]
+    c.reorder_categories(cats, inplace=True)
     return c
 
 

@@ -1,6 +1,8 @@
+import pandas as pd
 import pytest
 from plydata.cat_tools import (
     cat_reorder2,
+    cat_shift,
     cat_shuffle,
 )
 
@@ -18,3 +20,12 @@ def test_shuffle():
 
     with pytest.raises(TypeError):
         cat_shuffle(c, 'bad_random_state')
+
+
+def test_shift():
+    c = pd.Categorical(list('abcde'))
+    res1 = cat_shift(c, len(c))
+    res2 = cat_shift(c, len(c)*2)
+    res3 = cat_shift(c, -len(c))
+    assert res1.equals(res2)
+    assert res1.equals(res3)

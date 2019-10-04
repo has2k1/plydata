@@ -53,6 +53,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_shuffle` which creates a categorical
   with the categories in a random order.
 
+- Added :class:`~plydata.cat_tools.cat_shift` which creates a categorical
+  with the categories shifted to the left or to the right.
+
 Enhancements
 ************
 
