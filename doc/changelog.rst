@@ -60,6 +60,9 @@ New Features
   (:class:`~plydata.cat_tools.cat_relevel`) which creates a categorical
   with the categories moved to a given position.
 
+- Added :class:`~plydata.cat_tools.cat_anon` which creates a categorical
+  with the categories renamed and reordered with arbitrary numeric identifiers.
+
 Enhancements
 ************
 

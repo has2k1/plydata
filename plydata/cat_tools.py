@@ -9,6 +9,7 @@ from pandas.core.algorithms import value_counts
 from .utils import last2
 
 __all__ = [
+    'cat_anon',
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
@@ -531,16 +532,72 @@ def cat_shuffle(c, random_state=None):
     random_state.shuffle(cats)
     c.reorder_categories(cats, inplace=True)
     return c
+
+
+# Change the value of categories
+
+def cat_anon(c, prefix='', random_state=None):
+    """
+    Anonymise categories
+
+    Neither the value nor the order of the categories is preserved.
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+
+    random_state : int or ~numpy.random.RandomState, optional
+        Seed or Random number generator to use. If ``None``, then
+        numpy global generator :class:`numpy.random` is used.
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> np.random.seed(123)
+    >>> c = ['a', 'b', 'b', 'c', 'c', 'c']
+    >>> cat_anon(c)
+    [0, 1, 1, 2, 2, 2]
+    Categories (3, object): [1, 0, 2]
+    >>> cat_anon(c, 'c-', 321)
+    [c-1, c-2, c-2, c-0, c-0, c-0]
+    Categories (3, object): [c-0, c-2, c-1]
+    >>> cat_anon(pd.Categorical(c, ordered=True), 'c-', 321)
+    [c-1, c-2, c-2, c-0, c-0, c-0]
+    Categories (3, object): [c-0 < c-2 < c-1]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
     else:
+        c = c.copy()
+
+    if random_state is None:
+        random_state = np.random
+    elif isinstance(random_state, int):
+        random_state = np.random.RandomState(random_state)
+    elif not isinstance(random_state, np.random.RandomState):
         raise TypeError(
             "Unknown type `{}` of random_state".format(type(random_state))
         )
 
+    # Shuffle two times,
+    #   1. to prevent predicable sequence to category mapping
+    #   2. to prevent reversing of the new categories to the old ones
+    fmt = '{}{}'.format
+    cats = [fmt(prefix, i) for i in range(len(c.categories))]
+    random_state.shuffle(cats)
+    c.rename_categories(cats, inplace=True)
     cats = c.categories.to_list()
     random_state.shuffle(cats)
     c.reorder_categories(cats, inplace=True)
     return c
 
+
+# Temporary functions
 
 def _stable_series_sort(ser, ascending):
     """

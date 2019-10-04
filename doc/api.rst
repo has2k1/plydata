@@ -212,3 +212,15 @@ These functions keep the values the same but change the order of the categories.
     cat_rev
     cat_shift
     cat_shuffle
+
+Change the value of categories
+------------------------------
+These functions change the categories while preserving the order (as much as possible).
+
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+    cat_anon

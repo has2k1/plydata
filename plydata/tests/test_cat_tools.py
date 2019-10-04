@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 from plydata.cat_tools import (
+    cat_anon,
     cat_reorder2,
     cat_shift,
     cat_shuffle,
@@ -29,3 +30,10 @@ def test_shift():
     res3 = cat_shift(c, -len(c))
     assert res1.equals(res2)
     assert res1.equals(res3)
+
+
+def test_anon():
+    c = list('abcde')
+
+    with pytest.raises(TypeError):
+        cat_anon(c, random_state='bad_random_state')
