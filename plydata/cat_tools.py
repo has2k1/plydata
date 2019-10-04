@@ -15,6 +15,7 @@ __all__ = [
     'cat_reorder',
     'cat_reorder2',
     'cat_rev',
+    'cat_shuffle',
 ]
 
 
@@ -381,6 +382,63 @@ def cat_rev(c):
     else:
         c = c.copy()
     c.reorder_categories(c.categories[::-1], inplace=True)
+    return c
+
+
+def cat_shuffle(c, random_state=None):
+    """
+    Reverse order of categories
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    random_state : int or ~numpy.random.RandomState, optional
+        Seed or Random number generator to use. If ``None``, then
+        numpy global generator :class:`numpy.random` is used.
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> np.random.seed(123)
+    >>> c = ['a', 'b', 'c', 'd', 'e']
+    >>> cat_shuffle(c)
+    [a, b, c, d, e]
+    Categories (5, object): [b, d, e, a, c]
+    >>> cat_shuffle(pd.Categorical(c, ordered=True), 321)
+    [a, b, c, d, e]
+    Categories (5, object): [d < b < a < c < e]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    if random_state is None:
+        random_state = np.random
+    elif isinstance(random_state, int):
+        random_state = np.random.RandomState(random_state)
+    elif not isinstance(random_state, np.random.RandomState):
+        raise TypeError(
+            "Unknown type `{}` of random_state".format(type(random_state))
+        )
+
+    cats = c.categories.to_list()
+    random_state.shuffle(cats)
+    c.reorder_categories(cats, inplace=True)
+    return c
+    else:
+        raise TypeError(
+            "Unknown type `{}` of random_state".format(type(random_state))
+        )
+
+    cats = c.categories.to_list()
+    random_state.shuffle(cats)
+    c.reorder_categories(cats, inplace=True)
     return c
 
 

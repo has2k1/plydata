@@ -50,6 +50,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_rev` which creates a categorical
   with reversed categories.
 
+- Added :class:`~plydata.cat_tools.cat_shuffle` which creates a categorical
+  with the categories in a random order.
+
 Enhancements
 ************
 
