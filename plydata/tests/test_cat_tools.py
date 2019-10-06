@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 from plydata.cat_tools import (
     cat_anon,
+    cat_collapse,
     cat_reorder2,
     cat_shift,
     cat_shuffle,
@@ -37,3 +38,17 @@ def test_anon():
 
     with pytest.raises(TypeError):
         cat_anon(c, random_state='bad_random_state')
+
+
+def test_collapse():
+    c = pd.Categorical(list('abcdef'), ordered=True)
+    mapping = {'first_2': ['a', 'b'], 'second_2': ['e', 'd']}
+    result = cat_collapse(c, mapping)
+    expected_cats = pd.Index(['first_2', 'c', 'second_2', 'f'])
+    assert result.ordered
+    assert result.categories.equals(expected_cats)
+
+    mapping = {'other': ['a', 'b'], 'other2': ['c', 'd']}
+    result = cat_collapse(c, mapping, group_other=True)
+    expected_cats = pd.Index(['other', 'other2', 'other3'])
+    assert result.categories.equals(expected_cats)

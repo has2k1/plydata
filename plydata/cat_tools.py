@@ -1,6 +1,8 @@
 """
 Functions for categoricals
 """
+from itertools import chain
+
 import numpy as np
 import pandas as pd
 import pandas.api.types as pdtypes
@@ -10,6 +12,7 @@ from .utils import last2
 
 __all__ = [
     'cat_anon',
+    'cat_collapse',
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
@@ -594,6 +597,97 @@ def cat_anon(c, prefix='', random_state=None):
     cats = c.categories.to_list()
     random_state.shuffle(cats)
     c.reorder_categories(cats, inplace=True)
+    return c
+
+
+def cat_collapse(c, mapping, group_other=False):
+    """
+    Collapse categories into manually defined groups
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    mapping : dict
+        New categories and the old categories contained in them.
+    group_other : False
+        If ``True``, a category is created to contain all other
+        categories that have not been explicitly collapsed.
+        The name of the other categories is ``other``, it may be
+        postfixed by the first available integer starting from
+        2 if there is a category with a similar name.
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> c = ['a', 'b', 'c', 'd', 'e', 'f']
+    >>> mapping = {'first_2': ['a', 'b'], 'second_2': ['c', 'd']}
+    >>> cat_collapse(c, mapping)
+    [first_2, first_2, second_2, second_2, e, f]
+    Categories (4, object): [first_2, second_2, e, f]
+    >>> cat_collapse(c, mapping, group_other=True)
+    [first_2, first_2, second_2, second_2, other, other]
+    Categories (3, object): [first_2, second_2, other]
+
+    Collapsing preserves the order
+
+    >>> cat_rev(c)
+    [a, b, c, d, e, f]
+    Categories (6, object): [f, e, d, c, b, a]
+    >>> cat_collapse(cat_rev(c), mapping)
+    [first_2, first_2, second_2, second_2, e, f]
+    Categories (4, object): [f, e, second_2, first_2]
+    >>> mapping = {'other': ['a', 'b'], 'another': ['c', 'd']}
+    >>> cat_collapse(c, mapping, group_other=True)
+    [other, other, another, another, other2, other2]
+    Categories (3, object): [other, another, other2]
+    """
+    def make_other_name():
+        """
+        Generate unique name for the other category
+        """
+        if 'other' not in mapping:
+            return 'other'
+
+        for i in range(2, len(mapping)+2):
+            other = 'other' + str(i)
+            if other not in mapping:
+                return other
+
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    if group_other:
+        mapping = mapping.copy()
+        other = make_other_name()
+        mapped_categories = list(chain(*mapping.values()))
+        unmapped_categories = c.categories.difference(mapped_categories)
+        mapping[other] = list(unmapped_categories)
+
+    inverted_mapping = {
+        cat: new_cat
+        for new_cat, old_cats in mapping.items()
+        for cat in old_cats
+    }
+
+    # Convert old categories to new values in order and remove
+    # any duplicates. The preserves the order
+    new_cats = pd.unique([
+        inverted_mapping.get(x, x)
+        for x in c.categories
+    ])
+
+    c = pd.Categorical(
+        [inverted_mapping.get(x, x) for x in c],
+        categories=new_cats,
+        ordered=c.ordered
+    )
     return c
 
 

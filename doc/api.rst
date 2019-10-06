@@ -224,3 +224,4 @@ These functions change the categories while preserving the order (as much as pos
    :template: main.rst
 
     cat_anon
+    cat_collapse

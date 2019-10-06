@@ -63,6 +63,10 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_anon` which creates a categorical
   with the categories renamed and reordered with arbitrary numeric identifiers.
 
+- Added :class:`~plydata.cat_tools.cat_collapse` which creates a categorical
+  with new umbrella categories that combine one or more of the original
+  categories.
+
 Enhancements
 ************
 
