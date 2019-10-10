@@ -3,6 +3,7 @@ import pytest
 from plydata.cat_tools import (
     cat_anon,
     cat_collapse,
+    cat_other,
     cat_reorder2,
     cat_shift,
     cat_shuffle,
@@ -52,3 +53,20 @@ def test_collapse():
     result = cat_collapse(c, mapping, group_other=True)
     expected_cats = pd.Index(['other', 'other2', 'other3'])
     assert result.categories.equals(expected_cats)
+
+
+def test_other():
+    c = ['a', 'b', 'a', 'c', 'b', 'b', 'b', 'd', 'c']
+    result = cat_other(c, drop='b')
+    assert 'b' not in result
+
+    result = cat_other(c, keep='b', other_category='others')
+    assert 'b' in result
+    assert 'others' in result
+    assert 'a' not in result
+
+    with pytest.raises(ValueError):
+        cat_other(c, keep='a', drop='b')
+
+    with pytest.raises(ValueError):
+        cat_other(c)

@@ -67,6 +67,10 @@ New Features
   with new umbrella categories that combine one or more of the original
   categories.
 
+- Added :class:`~plydata.cat_tools.cat_other` which creates a categorical
+  with a new umbrella category that combines one or more of the original
+  categories.
+
 Enhancements
 ************
 

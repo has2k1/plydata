@@ -17,6 +17,7 @@ __all__ = [
     'cat_inorder',
     'cat_inseq',
     'cat_move',
+    'cat_other',
     'cat_relevel',
     'cat_reorder',
     'cat_reorder2',
@@ -683,6 +684,80 @@ def cat_collapse(c, mapping, group_other=False):
         for x in c.categories
     ])
 
+    c = pd.Categorical(
+        [inverted_mapping.get(x, x) for x in c],
+        categories=new_cats,
+        ordered=c.ordered
+    )
+    return c
+
+
+def cat_other(c, keep=None, drop=None, other_category='other'):
+    """
+    Replace categories with 'other'
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    keep : list-like
+        Categories to preserve. Only one of ``keep`` or ``drop``
+        should be specified.
+    drop : list-like
+        Categories to drop. Only one of ``keep`` or ``drop``
+        should be specified.
+    other_category : object
+        Value used for the 'other' values. It is placed at
+        the end of the categories.
+
+    Returns
+    -------
+    out : categorical
+        Values
+
+    Examples
+    --------
+    >>> c = ['a', 'b', 'a', 'c', 'b', 'b', 'b', 'd', 'c']
+    >>> cat_other(c, keep=['a', 'b'])
+    [a, b, a, other, b, b, b, other, other]
+    Categories (3, object): [a, b, other]
+    >>> cat_other(c, drop=['a', 'b'])
+    [other, other, other, c, other, other, other, d, c]
+    Categories (3, object): [c, d, other]
+    >>> cat_other(pd.Categorical(c, ordered=True), drop=['a', 'b'])
+    [other, other, other, c, other, other, other, d, c]
+    Categories (3, object): [c < d < other]
+    """
+    if keep is None and drop is None:
+        raise ValueError(
+            "Missing columns to `keep` or those to `drop`."
+        )
+    elif keep is not None and drop is not None:
+        raise ValueError(
+            "Only one of `keep` or `drop` should be given."
+        )
+
+    if not isinstance(c, pd.Categorical):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    cats = c.categories
+
+    if keep is not None:
+        if not pdtypes.is_list_like(keep):
+            keep = [keep]
+    elif drop is not None:
+        if not pdtypes.is_list_like(drop):
+            drop = [drop]
+        keep = cats.difference(drop)
+
+    inverted_mapping = {
+        cat: other_category
+        for cat in cats.difference(keep)
+    }
+    inverted_mapping.update({x: x for x in keep})
+    new_cats = cats.intersection(keep).to_list() + [other_category]
     c = pd.Categorical(
         [inverted_mapping.get(x, x) for x in c],
         categories=new_cats,
