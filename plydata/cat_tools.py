@@ -16,6 +16,7 @@ __all__ = [
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
+    'cat_lump',
     'cat_move',
     'cat_other',
     'cat_relevel',
@@ -760,6 +761,217 @@ def cat_other(c, keep=None, drop=None, other_category='other'):
     new_cats = cats.intersection(keep).to_list() + [other_category]
     c = pd.Categorical(
         [inverted_mapping.get(x, x) for x in c],
+        categories=new_cats,
+        ordered=c.ordered
+    )
+    return c
+
+
+def cat_lump(
+    c,
+    n=None,
+    prop=None,
+    w=None,
+    other_category='other',
+    ties_method='min'
+):
+    """
+    Lump together least or most common categories
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    n : int (optional)
+        Number of most/least common values to preserve (not lumped
+        together). Positive ``n`` preserves the most common,
+        negative ``n`` preserves the least common.
+
+        Lumping happens on condition that the lumped category "other"
+        will have the smallest number of items.
+        You should only specify one of ``n`` or ``prop``
+    prop : float (optional)
+        Proportion above/below which the values of a category will be
+        preserved (not lumped together). Positive ``prop`` preserves
+        categories whose proportion of values is *more* than ``prop``.
+        Negative ``prop`` preserves categories whose proportion of
+        values is *less* than ``prop``.
+
+        Lumping happens on condition that the lumped category "other"
+        will have the smallest number of items.
+        You should only specify one of ``n`` or ``prop``
+    w : list[int|float] (optional)
+        Weights for the frequency of each value. It should be the same
+        length as ``c``.
+    other_category : object (default: 'other')
+        Value used for the 'other' values. It is placed at
+        the end of the categories.
+    ties_method : {'min', 'max', 'average', 'first', 'dense'} (default: min)
+        How to treat categories that occur the same number of times
+        (i.e. ties):
+        * min: lowest rank in the group
+        * max: highest rank in the group
+        * average: average rank of the group
+        * first: ranks assigned in order they appear in the array
+        * dense: like 'min', but rank always increases by 1 between groups.
+
+    Examples
+    --------
+    >>> cat_lump(list('abbccc'))
+    [other, b, b, c, c, c]
+    Categories (3, object): [b, c, other]
+
+    When the least categories put together are not less than the next
+    smallest group.
+
+    >>> cat_lump(list('abcddd'))
+    [a, b, c, d, d, d]
+    Categories (4, object): [a, b, c, d]
+    >>> cat_lump(list('abcdddd'))
+    [other, other, other, d, d, d, d]
+    Categories (2, object): [d, other]
+
+    >>> c = pd.Categorical(list('abccdd'))
+    >>> cat_lump(c, n=1)
+    [other, other, c, c, d, d]
+    Categories (3, object): [c, d, other]
+
+    >>> cat_lump(c, n=2)
+    [other, other, c, c, d, d]
+    Categories (3, object): [c, d, other]
+
+    ``n`` Least common categories
+
+    >>> cat_lump(c, n=-2)
+    [a, b, other, other, other, other]
+    Categories (3, object): [a, b, other]
+
+    There are fewer than ``n`` categories that are the most/least common.
+
+    >>> cat_lump(c, n=3)
+    [a, b, c, c, d, d]
+    Categories (4, object): [a, b, c, d]
+    >>> cat_lump(c, n=-3)
+    [a, b, c, c, d, d]
+    Categories (4, object): [a, b, c, d]
+
+    By proportions, categories that make up *more* than ``prop`` fraction
+    of the items.
+
+    >>> cat_lump(c, prop=1/3.01)
+    [other, other, c, c, d, d]
+    Categories (3, object): [c, d, other]
+    >>> cat_lump(c, prop=-1/3.01)
+    [a, b, other, other, other, other]
+    Categories (3, object): [a, b, other]
+    >>> cat_lump(c, prop=1/2)
+    [other, other, other, other, other, other]
+    Categories (1, object): [other]
+
+    Order of categoricals is maintained
+
+    >>> c = pd.Categorical(
+    ...     list('abccdd'),
+    ...     categories=list('adcb'),
+    ...     ordered=True
+    ... )
+    >>> cat_lump(c, n=2)
+    [other, other, c, c, d, d]
+    Categories (3, object): [d < c < other]
+
+    **Weighted lumping**
+
+    >>> c = list('abcd')
+    >>> weights = [3, 2, 1, 1]
+    >>> cat_lump(c, n=2)  # No lumping
+    [a, b, c, d]
+    Categories (4, object): [a, b, c, d]
+    >>> cat_lump(c, n=2, w=weights)
+    [a, b, other, other]
+    Categories (3, object): [a, b, other]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    if len(c) == 0:
+        return c
+
+    if w is None:
+        counts = c.value_counts().sort_values(ascending=False)
+        total = len(c)
+    else:
+        counts = (
+            pd.Series(w)
+            .groupby(c)
+            .apply(np.sum)
+            .sort_values(ascending=False)
+        )
+        total = counts.sum()
+
+    # For each category findout whether to lump it or keep it
+    # Create a generator of the form ((cat, lump), ...)
+    if n is not None:
+        if n < 0:
+            rank = counts.rank(method=ties_method)
+            n = -n
+        else:
+            rank = (-counts).rank(method=ties_method)
+
+        # Less than n categories outside the lumping,
+        if not (rank > n).any():
+            return c
+
+        lump_it = zip(rank.index, rank > n)
+    elif prop is not None:
+        props = counts / total
+
+        if prop < 0:
+            if not (props > -prop).any():
+                # No proportion more than target, so no lumping
+                # the most common
+                return c
+            else:
+                lump_it = zip(props.index, props > -prop)
+        else:
+            if not (props <= prop).any():
+                # No proportion less than target, so no lumping
+                # the least common
+                return c
+            else:
+                lump_it = zip(props.index, props <= prop)
+    else:
+        if len(counts) == 1:
+            return c
+
+        unique_counts = pd.unique(counts)
+        smallest = unique_counts[-1]
+        next_smallest = unique_counts[-2]
+        smallest_counts = counts[counts == smallest]
+        smallest_total = smallest_counts.sum()
+        smallest_cats = smallest_counts.index
+
+        if not smallest_total < next_smallest:
+            return c
+
+        lump_it = (
+            (cat, True) if cat in smallest_cats else (cat, False)
+            for cat in counts.index
+        )
+
+    lookup = {
+        cat: other_category if lump else cat
+        for cat, lump in lump_it
+    }
+    new_cats = (
+        c.categories
+        .intersection(lookup.values())
+        .insert(len(c), other_category)
+    )
+
+    c = pd.Categorical(
+        [lookup[value] for value in c],
         categories=new_cats,
         ordered=c.ordered
     )

@@ -71,6 +71,9 @@ New Features
   with a new umbrella category that combines one or more of the original
   categories.
 
+- Added :class:`~plydata.cat_tools.cat_lump` which lumps together most/least
+  common categories.
+
 Enhancements
 ************
 

@@ -3,6 +3,7 @@ import pytest
 from plydata.cat_tools import (
     cat_anon,
     cat_collapse,
+    cat_lump,
     cat_other,
     cat_reorder2,
     cat_shift,
@@ -70,3 +71,31 @@ def test_other():
 
     with pytest.raises(ValueError):
         cat_other(c)
+
+
+def test_lump():
+    result = cat_lump([])
+    expected_cats = pd.Index([])
+    assert result.categories.equals(expected_cats)
+
+    result = cat_lump(['a'])
+    expected_cats = pd.Index(['a'])
+    assert result.categories.equals(expected_cats)
+
+    result = cat_lump(['a'], n=1)
+    expected_cats = pd.Index(['a'])
+    assert result.categories.equals(expected_cats)
+
+    result = cat_lump(['a'], prop=0.5)
+    expected_cats = pd.Index(['a'])
+    assert result.categories.equals(expected_cats)
+
+    result = cat_lump(['a'], prop=-0.5)
+    expected_cats = pd.Index(['other'])
+    assert result.categories.equals(expected_cats)
+
+    # No lumping since no category has is more than 0.5
+    # (50%) of the values
+    result = cat_lump(['a', 'b', 'c'], prop=-0.5)
+    expected_cats = pd.Index(['a', 'b', 'c'])
+    assert result.categories.equals(expected_cats)
