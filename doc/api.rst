@@ -226,4 +226,5 @@ These functions change the categories while preserving the order (as much as pos
     cat_anon
     cat_collapse
     cat_lump
+    cat_lump_min
     cat_other

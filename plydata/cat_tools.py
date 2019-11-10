@@ -17,6 +17,7 @@ __all__ = [
     'cat_inorder',
     'cat_inseq',
     'cat_lump',
+    'cat_lump_min',
     'cat_move',
     'cat_other',
     'cat_relevel',
@@ -963,6 +964,94 @@ def cat_lump(
     lookup = {
         cat: other_category if lump else cat
         for cat, lump in lump_it
+    }
+    new_cats = (
+        c.categories
+        .intersection(lookup.values())
+        .insert(len(c), other_category)
+    )
+
+    c = pd.Categorical(
+        [lookup[value] for value in c],
+        categories=new_cats,
+        ordered=c.ordered
+    )
+    return c
+
+
+def cat_lump_min(
+    c,
+    min,
+    w=None,
+    other_category='other',
+):
+    """
+    Lump catogeries, preserving those that appear min number of times
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    min : int
+        Minum number of times a category must be represented to be
+        preserved.
+    w : list[int|float] (optional)
+        Weights for the frequency of each value. It should be the same
+        length as ``c``.
+    other_category : object (default: 'other')
+        Value used for the 'other' values. It is placed at
+        the end of the categories.
+
+    Examples
+    --------
+    >>> c = list('abccdd')
+    >>> cat_lump_min(c, min=1)
+    [a, b, c, c, d, d]
+    Categories (4, object): [a, b, c, d]
+    >>> cat_lump_min(c, min=2)
+    [other, other, c, c, d, d]
+    Categories (3, object): [c, d, other]
+
+    **Weighted Lumping**
+
+    >>> weights = [2, 2, .5, .5, 1, 1]
+    >>> cat_lump_min(c, min=2, w=weights)
+    [a, b, other, other, d, d]
+    Categories (4, object): [a, b, d, other]
+
+    Unlike :func:`~plydata.cat_tools.cat_lump`,  :func:`cat_lump_min`
+    can lump together and create a category larger than the preserved
+    categories.
+
+    >>> c = list('abxyzccdd')
+    >>> cat_lump_min(c, min=2)
+    [other, other, other, other, other, c, c, d, d]
+    Categories (3, object): [c, d, other]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    if len(c) == 0:
+        return c
+
+    if w is None:
+        counts = c.value_counts().sort_values(ascending=False)
+    else:
+        counts = (
+            pd.Series(w)
+            .groupby(c)
+            .apply(np.sum)
+            .sort_values(ascending=False)
+        )
+
+    if (counts >= min).all():
+        return c
+
+    lookup = {
+        cat: cat if freq >= min else other_category
+        for cat, freq in counts.items()
     }
     new_cats = (
         c.categories

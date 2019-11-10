@@ -4,6 +4,7 @@ from plydata.cat_tools import (
     cat_anon,
     cat_collapse,
     cat_lump,
+    cat_lump_min,
     cat_other,
     cat_reorder2,
     cat_shift,
@@ -98,4 +99,15 @@ def test_lump():
     # (50%) of the values
     result = cat_lump(['a', 'b', 'c'], prop=-0.5)
     expected_cats = pd.Index(['a', 'b', 'c'])
+    assert result.categories.equals(expected_cats)
+
+
+def test_lump_min():
+    result = cat_lump_min([], min=1)
+    expected_cats = pd.Index([])
+    assert result.categories.equals(expected_cats)
+
+    c = pd.Categorical(list('abccdd'), categories=list('dcba'))
+    result = cat_lump_min(c, min=2)
+    expected_cats = pd.Index(['d', 'c', 'other'])
     assert result.categories.equals(expected_cats)

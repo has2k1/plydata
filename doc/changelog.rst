@@ -74,6 +74,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_lump` which lumps together most/least
   common categories.
 
+- Added :class:`~plydata.cat_tools.cat_lump_min` which lumps together common
+  enough categories.
+
 Enhancements
 ************
 
