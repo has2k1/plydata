@@ -80,6 +80,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_rename` with which you can manually
   change category names (and values).
 
+- Added :class:`~plydata.cat_tools.cat_relabel` to change category names
+  using a function.
+
 Enhancements
 ************
 

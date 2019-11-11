@@ -21,6 +21,7 @@ __all__ = [
     'cat_move',
     'cat_other',
     'cat_recode',
+    'cat_relabel',
     'cat_relevel',
     'cat_rename',
     'cat_reorder',
@@ -1147,6 +1148,74 @@ def cat_rename(c, mapping=None, **kwargs):
     new_categories = pd.unique(categories)
     c.remove_unused_categories(inplace=True)
     c.set_categories(new_categories, inplace=True)
+    return c
+
+
+def cat_relabel(c, func=None, *args, **kwargs):
+    """
+    Change/rename categories and collapse as necessary
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    func : callable
+        Function to create the new name. The first argument to
+        the function will be a category to be renamed.
+    *args : tuple
+        Positional arguments passed to ``func``.
+    *kwargs : dict
+        Keyword arguments passed to ``func``.
+
+    Examples
+    --------
+    >>> c = list('abcde')
+    >>> cat_relabel(c, str.upper)
+    [A, B, C, D, E]
+    Categories (5, object): [A, B, C, D, E]
+    >>> c = pd.Categorical([0, 1, 2, 1, 1, 0])
+    >>> def func(x):
+    ...     if x == 0:
+    ...         return 'low'
+    ...     elif x == 1:
+    ...         return 'mid'
+    ...     elif x == 2:
+    ...         return 'high'
+    >>> cat_relabel(c, func)
+    [low, mid, high, mid, mid, low]
+    Categories (3, object): [low, mid, high]
+
+    When the function yields the same output for 2 or more
+    different categories, those categories are collapsed.
+
+    >>> def first(x):
+    ...     return x[0]
+    >>> c = pd.Categorical(['aA', 'bB', 'aC', 'dD'],
+    ...     categories=['bB', 'aA', 'dD', 'aC'],
+    ...     ordered=True
+    ... )
+    >>> cat_relabel(c, first)
+    [a, b, a, d]
+    Categories (3, object): [b < a < d]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    new_categories = [func(x, *args, **kwargs) for x in c.categories]
+    new_categories_uniq = pd.unique(new_categories)
+    if len(new_categories_uniq) < len(c.categories):
+        # Collapse
+        lookup = dict(zip(c.categories, new_categories))
+        c = pd.Categorical(
+            [lookup[value] for value in c],
+            categories=new_categories_uniq,
+            ordered=c.ordered
+        )
+    else:
+        c.categories = new_categories
+
     return c
 
 
