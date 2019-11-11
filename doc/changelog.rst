@@ -77,6 +77,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_lump_min` which lumps together common
   enough categories.
 
+- Added :class:`~plydata.cat_tools.cat_rename` with which you can manually
+  change category names (and values).
+
 Enhancements
 ************
 

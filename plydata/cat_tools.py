@@ -20,7 +20,9 @@ __all__ = [
     'cat_lump_min',
     'cat_move',
     'cat_other',
+    'cat_recode',
     'cat_relevel',
+    'cat_rename',
     'cat_reorder',
     'cat_reorder2',
     'cat_rev',
@@ -1067,6 +1069,87 @@ def cat_lump_min(
     return c
 
 
+def cat_rename(c, mapping=None, **kwargs):
+    """
+    Change/rename categories manually
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    mapping : dict (optional)
+        Mapping of the form ``{old_name: new_name}`` for how to rename
+        the categories. Setting a value to ``None`` removes the category.
+        This arguments is useful if the old names are not valid
+        python parameters. Otherwise, ``kwargs`` can be used.
+    **kwargs : dict
+        Mapping to rename categories. Setting a value to ``None`` removes
+        the category.
+
+    Examples
+    --------
+    >>> c = list('abcd')
+    >>> cat_rename(c, a='A')
+    [A, b, c, d]
+    Categories (4, object): [A, b, c, d]
+    >>> c = pd.Categorical(
+    ...     list('abcd'),
+    ...     categories=list('bacd'),
+    ...     ordered=True
+    ... )
+    >>> cat_rename(c, b='B', d='D')
+    [a, B, c, D]
+    Categories (4, object): [B < a < c < D]
+
+    Remove categories by setting them to ``None``.
+
+    >>> cat_rename(c, b='B', d=None)
+    [a, B, c]
+    Categories (3, object): [B < a < c]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    if mapping is not None and len(kwargs):
+        raise ValueError("Use only one of `new` or the ``kwargs``.")
+
+    lookup = mapping or kwargs
+
+    if not lookup:
+        return c
+
+    # Remove categories set to None
+    remove = [
+        old
+        for old, new in lookup.items()
+        if new is None
+    ]
+    if remove:
+        for cat in remove:
+            del lookup[cat]
+        c = c.remove_categories(remove).dropna()
+
+    # Separately change values (inplace) and the categories (using an
+    # array) old to the new names. Then reconcile the two lists.
+    categories = c.categories.to_numpy().copy()
+    c.add_categories(
+        pd.Index(lookup.values()).difference(c.categories),
+        inplace=True
+    )
+    for old, new in lookup.items():
+        if old not in c.categories:
+            raise IndexError("Unknown category '{}'.".format(old))
+        c[c == old] = new
+        categories[categories == old] = new
+
+    new_categories = pd.unique(categories)
+    c.remove_unused_categories(inplace=True)
+    c.set_categories(new_categories, inplace=True)
+    return c
+
+
 # Temporary functions
 
 def _stable_series_sort(ser, ascending):
@@ -1086,3 +1169,4 @@ def _stable_series_sort(ser, ascending):
 
 
 cat_relevel = cat_move
+cat_recode = cat_rename

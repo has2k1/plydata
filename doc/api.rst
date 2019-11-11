@@ -228,3 +228,5 @@ These functions change the categories while preserving the order (as much as pos
     cat_lump
     cat_lump_min
     cat_other
+    cat_recode
+    cat_rename

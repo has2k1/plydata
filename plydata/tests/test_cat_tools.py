@@ -6,6 +6,7 @@ from plydata.cat_tools import (
     cat_lump,
     cat_lump_min,
     cat_other,
+    cat_rename,
     cat_reorder2,
     cat_shift,
     cat_shuffle,
@@ -111,3 +112,21 @@ def test_lump_min():
     result = cat_lump_min(c, min=2)
     expected_cats = pd.Index(['d', 'c', 'other'])
     assert result.categories.equals(expected_cats)
+
+
+def test_rename():
+    c = pd.Categorical([], categories=list('bacd'))
+    result = cat_rename(c, b='B', d='D')
+    expected_cats = pd.Index(list('BacD'))
+    assert result.categories.equals(expected_cats)
+
+    c = list('abcd')
+    result = cat_rename(c)
+    expected_cats = pd.Index(list('abcd'))
+    assert result.categories.equals(expected_cats)
+
+    with pytest.raises(ValueError):
+        cat_rename(c, mapping={'a': 'A'}, b='B', d='D')
+
+    with pytest.raises(IndexError):
+        cat_rename(c, z='Z')
