@@ -83,6 +83,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_relabel` to change category names
   using a function.
 
+- Added :class:`~plydata.cat_tools.cat_expand` to add or remove categories to
+  a categorical.
+
 Enhancements
 ************
 

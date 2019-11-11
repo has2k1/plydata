@@ -231,3 +231,14 @@ These functions change the categories while preserving the order (as much as pos
     cat_recode
     cat_relabel
     cat_rename
+
+Add or Remove Categories
+------------------------
+These functions leave the data values as is, but they add or remove categories.
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+    cat_expand

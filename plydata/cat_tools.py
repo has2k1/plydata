@@ -13,6 +13,7 @@ from .utils import last2
 __all__ = [
     'cat_anon',
     'cat_collapse',
+    'cat_expand',
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
@@ -1216,6 +1217,39 @@ def cat_relabel(c, func=None, *args, **kwargs):
     else:
         c.categories = new_categories
 
+    return c
+
+
+def cat_expand(c, *args):
+    """
+    Add additional categories to a categorical
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    *args : tuple
+        Categories to add.
+
+    Examples
+    --------
+    >>> cat_expand(list('abc'), 'd', 'e')
+    [a, b, c]
+    Categories (5, object): [a, b, c, d, e]
+    >>> c = pd.Categorical(list('abcd'), ordered=True)
+    >>> cat_expand(c, 'e', 'f')
+    [a, b, c, d]
+    Categories (6, object): [a < b < c < d < e < f]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    c.add_categories(
+        pd.Index(args).difference(c.categories),
+        inplace=True
+    )
     return c
 
 
