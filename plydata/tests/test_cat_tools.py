@@ -3,6 +3,7 @@ import pytest
 from plydata.cat_tools import (
     cat_anon,
     cat_collapse,
+    cat_explicit_na,
     cat_lump,
     cat_lump_min,
     cat_other,
@@ -130,3 +131,9 @@ def test_rename():
 
     with pytest.raises(IndexError):
         cat_rename(c, z='Z')
+
+
+def test_explict_na():
+    result = cat_explicit_na(['a', None, 'b'])
+    expected_cats = pd.Index(['a', 'b', '(missing)'])
+    assert result.categories.equals(expected_cats)

@@ -14,6 +14,7 @@ __all__ = [
     'cat_anon',
     'cat_collapse',
     'cat_expand',
+    'cat_explicit_na',
     'cat_infreq',
     'cat_inorder',
     'cat_inseq',
@@ -1250,6 +1251,42 @@ def cat_expand(c, *args):
         pd.Index(args).difference(c.categories),
         inplace=True
     )
+    return c
+
+
+def cat_explicit_na(c, na_category='(missing)'):
+    """
+    Give missing values an explicity category
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    na_category : object (default: '(missing)')
+        Category for missing values
+
+    Examples
+    --------
+    >>> c = pd.Categorical(
+    ...     ['a', 'b', None, 'c', None, 'd', 'd'],
+    ...     ordered=True
+    ... )
+    >>> c
+    [a, b, NaN, c, NaN, d, d]
+    Categories (4, object): [a < b < c < d]
+    >>> cat_explicit_na(c)
+    [a, b, (missing), c, (missing), d, d]
+    Categories (5, object): [a < b < c < d < (missing)]
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    else:
+        c = c.copy()
+
+    bool_idx = pd.isnull(c)
+    if any(bool_idx):
+        c.add_categories([na_category], inplace=True)
+        c[bool_idx] = na_category
     return c
 
 

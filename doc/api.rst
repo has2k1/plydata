@@ -242,3 +242,4 @@ These functions leave the data values as is, but they add or remove categories.
    :template: main.rst
 
     cat_expand
+    cat_explicit_na

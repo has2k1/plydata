@@ -86,6 +86,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_expand` to add or remove categories to
   a categorical.
 
+- Added :class:`~plydata.cat_tools.cat_explicit_na` to create a category for
+  missing values.
+
 Enhancements
 ************
 
