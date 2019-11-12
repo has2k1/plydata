@@ -13,6 +13,7 @@ from .utils import last2
 __all__ = [
     'cat_anon',
     'cat_collapse',
+    'cat_drop',
     'cat_expand',
     'cat_explicit_na',
     'cat_infreq',
@@ -1290,6 +1291,51 @@ def cat_explicit_na(c, na_category='(missing)'):
     return c
 
 
+def cat_remove_unused(c, only=None):
+    """
+    Remove unused categories
+
+    Parameters
+    ----------
+    c : list-like
+        Values that will make up the categorical.
+    only : list-like (optional)
+        The categories to remove *if* they are empty. If not given,
+        all unused categories are dropped.
+
+    Examples
+    --------
+    >>> c = pd.Categorical(list('abcdd'), categories=list('bacdefg'))
+    >>> c
+    [a, b, c, d, d]
+    Categories (7, object): [b, a, c, d, e, f, g]
+    >>> cat_remove_unused(c)
+    [a, b, c, d, d]
+    Categories (4, object): [b, a, c, d]
+    >>> cat_remove_unused(c, only=['a', 'e', 'g'])
+    [a, b, c, d, d]
+    Categories (5, object): [b, a, c, d, f]
+    """
+    if not pdtypes.is_categorical(c):
+        # All categories are used
+        c = pd.Categorical(c)
+        return c
+    else:
+        c = c.copy()
+
+    if only is None:
+        only = c.categories
+
+    used_idx = pd.unique(c.codes)
+    used_categories = c.categories[used_idx]
+    c = c.remove_categories(
+        c.categories
+        .difference(used_categories)
+        .intersection(only)
+    )
+    return c
+
+
 # Temporary functions
 
 def _stable_series_sort(ser, ascending):
@@ -1310,3 +1356,4 @@ def _stable_series_sort(ser, ascending):
 
 cat_relevel = cat_move
 cat_recode = cat_rename
+cat_drop = cat_remove_unused

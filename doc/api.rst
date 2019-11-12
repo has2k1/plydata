@@ -241,5 +241,7 @@ These functions leave the data values as is, but they add or remove categories.
    :nosignatures:
    :template: main.rst
 
+    cat_drop
     cat_expand
     cat_explicit_na
+    cat_remove_unused

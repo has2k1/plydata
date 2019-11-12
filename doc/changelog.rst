@@ -89,6 +89,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_explicit_na` to create a category for
   missing values.
 
+- Added :class:`~plydata.cat_tools.cat_remove_unsed` to remove/drop unused
+  categories.
+
 Enhancements
 ************
 

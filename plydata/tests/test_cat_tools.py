@@ -7,6 +7,7 @@ from plydata.cat_tools import (
     cat_lump,
     cat_lump_min,
     cat_other,
+    cat_remove_unused,
     cat_rename,
     cat_reorder2,
     cat_shift,
@@ -136,4 +137,10 @@ def test_rename():
 def test_explict_na():
     result = cat_explicit_na(['a', None, 'b'])
     expected_cats = pd.Index(['a', 'b', '(missing)'])
+    assert result.categories.equals(expected_cats)
+
+
+def test_drop():
+    result = cat_remove_unused(list('abcd'))
+    expected_cats = pd.Index(list('abcd'))
     assert result.categories.equals(expected_cats)
