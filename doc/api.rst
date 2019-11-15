@@ -245,3 +245,4 @@ These functions leave the data values as is, but they add or remove categories.
     cat_expand
     cat_explicit_na
     cat_remove_unused
+    cat_unify

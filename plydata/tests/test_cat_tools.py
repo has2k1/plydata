@@ -12,6 +12,7 @@ from plydata.cat_tools import (
     cat_reorder2,
     cat_shift,
     cat_shuffle,
+    cat_unify,
 )
 
 
@@ -144,3 +145,12 @@ def test_drop():
     result = cat_remove_unused(list('abcd'))
     expected_cats = pd.Index(list('abcd'))
     assert result.categories.equals(expected_cats)
+
+
+def test_unify():
+    c1 = list('ab')
+    c2 = list('dac')
+    result = cat_unify([c1, c2], list('xw'))
+    expected_cats = pd.Index(list('abcdxw'))
+    assert result[0].categories.equals(expected_cats)
+    assert result[1].categories.equals(expected_cats)

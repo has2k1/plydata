@@ -32,6 +32,7 @@ __all__ = [
     'cat_rev',
     'cat_shift',
     'cat_shuffle',
+    'cat_unify',
 ]
 
 
@@ -1334,6 +1335,51 @@ def cat_remove_unused(c, only=None):
         .intersection(only)
     )
     return c
+
+
+def cat_unify(cs, categories=None):
+    """
+    Unify (union of all) the categories in a list of categoricals
+
+    Parameters
+    ----------
+    cs : list-like
+        Categoricals
+    categories : list-like
+        Extra categories to apply to very categorical.
+
+    Examples
+    --------
+    >>> c1 = pd.Categorical(['a', 'b'], categories=list('abc'))
+    >>> c2 = pd.Categorical(['d', 'e'], categories=list('edf'))
+    >>> c1_new, c2_new = cat_unify([c1, c2])
+    >>> c1_new
+    [a, b]
+    Categories (6, object): [a, b, c, e, d, f]
+    >>> c2_new
+    [d, e]
+    Categories (6, object): [a, b, c, e, d, f]
+    >>> c1_new, c2_new = cat_unify([c1, c2], categories=['z', 'y'])
+    >>> c1_new
+    [a, b]
+    Categories (8, object): [a, b, c, e, d, f, z, y]
+    >>> c2_new
+    [d, e]
+    Categories (8, object): [a, b, c, e, d, f, z, y]
+    """
+    cs = [
+        c.copy() if pdtypes.is_categorical(c) else pd.Categorical(c)
+        for c in cs
+    ]
+
+    all_cats = list(chain(*(c.categories.to_list() for c in cs)))
+    if categories is None:
+        categories = pd.unique(all_cats)
+    else:
+        categories = pd.unique(all_cats + categories)
+
+    cs = [c.set_categories(categories) for c in cs]
+    return cs
 
 
 # Temporary functions

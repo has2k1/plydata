@@ -92,6 +92,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_remove_unsed` to remove/drop unused
   categories.
 
+- Added :class:`~plydata.cat_tools.cat_unify` to unify (union of all) the
+  categories in a list of categoricals.
+
 Enhancements
 ************
 
