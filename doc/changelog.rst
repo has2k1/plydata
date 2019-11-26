@@ -95,6 +95,9 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_unify` to unify (union of all) the
   categories in a list of categoricals.
 
+- Added :class:`~plydata.cat_tools.cat_concat` to concantenate categoricals
+  and combine the categories.
+
 Enhancements
 ************
 

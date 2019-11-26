@@ -13,6 +13,7 @@ from .utils import last2
 __all__ = [
     'cat_anon',
     'cat_collapse',
+    'cat_concat',
     'cat_drop',
     'cat_expand',
     'cat_explicit_na',
@@ -1379,6 +1380,38 @@ def cat_unify(cs, categories=None):
         categories = pd.unique(all_cats + categories)
 
     cs = [c.set_categories(categories) for c in cs]
+    return cs
+
+
+def cat_concat(*args):
+    """
+    Concatenate categoricals and combine the categories
+
+    Parameters
+    ----------
+    *args : tuple
+        Categoricals to be concatenated
+
+    Examples
+    --------
+    >>> c1 = pd.Categorical(['a', 'b'], categories=['b', 'a'])
+    >>> c2 = pd.Categorical(['d', 'a', 'c'])
+    >>> cat_concat(c1, c2)
+    [a, b, d, a, c]
+    Categories (4, object): [b, a, c, d]
+
+    Notes
+    -----
+    The resulting category is not ordered.
+    """
+    categories = pd.unique(list(chain(*(
+        c.categories if pdtypes.is_categorical(c) else c
+        for c in args
+    ))))
+    cs = pd.Categorical(
+        list(chain(*(c for c in args))),
+        categories=categories
+    )
     return cs
 
 

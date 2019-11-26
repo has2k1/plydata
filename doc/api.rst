@@ -246,3 +246,13 @@ These functions leave the data values as is, but they add or remove categories.
     cat_explicit_na
     cat_remove_unused
     cat_unify
+
+Combine Multiple Categoricals
+-----------------------------
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+   :template: main.rst
+
+    cat_concat
