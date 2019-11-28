@@ -98,6 +98,8 @@ New Features
 - Added :class:`~plydata.cat_tools.cat_concat` to concantenate categoricals
   and combine the categories.
 
+- Added :class:`~plydata.cat_tools.cat_zip` to combine two or more categoricals.
+
 Enhancements
 ************
 

@@ -13,6 +13,7 @@ from plydata.cat_tools import (
     cat_shift,
     cat_shuffle,
     cat_unify,
+    cat_zip,
 )
 
 
@@ -154,3 +155,16 @@ def test_unify():
     expected_cats = pd.Index(list('abcdxw'))
     assert result[0].categories.equals(expected_cats)
     assert result[1].categories.equals(expected_cats)
+
+
+def test_zip():
+    c1 = pd.Categorical(list('ab'), list('ba'))
+    c2 = pd.Categorical(list('12'), list('12'))
+
+    result = cat_zip(c1, c2, keep_empty=False)
+    expected_cats = pd.Index(['b:2', 'a:1'])
+    assert result.categories.equals(expected_cats)
+
+    result = cat_zip(c1, c2, keep_empty=True)
+    expected_cats = pd.Index(['b:1', 'b:2', 'a:1', 'a:2'])
+    assert result.categories.equals(expected_cats)

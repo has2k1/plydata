@@ -256,3 +256,4 @@ Combine Multiple Categoricals
    :template: main.rst
 
     cat_concat
+    cat_zip

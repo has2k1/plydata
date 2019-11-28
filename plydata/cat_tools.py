@@ -1,7 +1,7 @@
 """
 Functions for categoricals
 """
-from itertools import chain
+from itertools import chain, product
 
 import numpy as np
 import pandas as pd
@@ -34,6 +34,7 @@ __all__ = [
     'cat_shift',
     'cat_shuffle',
     'cat_unify',
+    'cat_zip',
 ]
 
 
@@ -1413,6 +1414,49 @@ def cat_concat(*args):
         categories=categories
     )
     return cs
+
+
+def cat_zip(*args, sep=':', keep_empty=False):
+    """
+    Create a new categorical (zip style) combined from two or more
+
+    Parameters
+    ----------
+    *args : tuple
+        Categoricals to be concatenated.
+    sep : str (default: ':')
+        Separator for the combined categories.
+    keep_empty : bool (default: False)
+        If ``True``, include all combinations of categories
+        even those without observations.
+
+    Examples
+    --------
+    >>> c1 = pd.Categorical(list('aba'))
+    >>> c2 = pd.Categorical(list('122'))
+    >>> cat_zip(c1, c2)
+    [a:1, b:2, a:2]
+    Categories (3, object): [a:1, a:2, b:2]
+    >>> cat_zip(c1, c2, keep_empty=True)
+    [a:1, b:2, a:2]
+    Categories (4, object): [a:1, a:2, b:1, b:2]
+    """
+    values = [sep.join(items) for items in zip(*args)]
+    cs = [
+        c if pdtypes.is_categorical(c) else pd.Categorical(c)
+        for c in args
+    ]
+    categories = [
+        sep.join(items)
+        for items in product(*(c.categories for c in cs))
+    ]
+
+    c = pd.Categorical(values, categories=categories)
+
+    if not keep_empty:
+        c.remove_unused_categories(inplace=True)
+
+    return c
 
 
 # Temporary functions
