@@ -1,4 +1,5 @@
-pandas
-sphinx>=1.6.1
+pandas>=1.0.0
+sphinx>=2.2.0
 nbsphinx
 ipython
+numpydoc>=0.9.1
