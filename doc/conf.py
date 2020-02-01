@@ -30,9 +30,11 @@ if on_rtd:
     MOCK_MODULES = [
         'pandas',
         'pandas.core',
+        'pandas.core.algorithms',
         'pandas.core.common',
         'pandas.api',
-        'pandas.api.types']
+        'pandas.api.types',
+    ]
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = mock.Mock()
     pprint(os.environ)
@@ -345,7 +347,7 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy', None),
-    'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
 }
 
 

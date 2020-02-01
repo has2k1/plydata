@@ -8,6 +8,7 @@ nbsphinx
 
 # Release
 wheel
+twine
 
 # Linting
 pep8

@@ -190,28 +190,26 @@ Categorical Tools
 Functions to solve common problems when working with categorical variables.
 You can import them with :py:`from plydata.cat_tools import *`.
 
-.. currentmodule:: plydata.utils
-.. currentmodule:: plydata.cat_tools
-
 Change the order of categories
 ------------------------------
 These functions keep the values the same but change the order of the categories.
+
+.. currentmodule:: plydata.cat_tools
 
 .. autosummary::
    :toctree: generated/
    :nosignatures:
    :template: main.rst
 
-    cat_infreq
-    cat_inorder
-    cat_inseq
-    cat_remove
-    cat_relevel
-    cat_reorder
-    cat_reorder2
-    cat_rev
-    cat_shift
-    cat_shuffle
+   cat_infreq
+   cat_inorder
+   cat_inseq
+   cat_relevel
+   cat_reorder
+   cat_reorder2
+   cat_rev
+   cat_shift
+   cat_shuffle
 
 Change the value of categories
 ------------------------------
@@ -223,14 +221,14 @@ These functions change the categories while preserving the order (as much as pos
    :nosignatures:
    :template: main.rst
 
-    cat_anon
-    cat_collapse
-    cat_lump
-    cat_lump_min
-    cat_other
-    cat_recode
-    cat_relabel
-    cat_rename
+   cat_anon
+   cat_collapse
+   cat_lump
+   cat_lump_min
+   cat_other
+   cat_recode
+   cat_relabel
+   cat_rename
 
 Add or Remove Categories
 ------------------------
@@ -241,11 +239,11 @@ These functions leave the data values as is, but they add or remove categories.
    :nosignatures:
    :template: main.rst
 
-    cat_drop
-    cat_expand
-    cat_explicit_na
-    cat_remove_unused
-    cat_unify
+   cat_drop
+   cat_expand
+   cat_explicit_na
+   cat_remove_unused
+   cat_unify
 
 Combine Multiple Categoricals
 -----------------------------
@@ -255,8 +253,8 @@ Combine Multiple Categoricals
    :nosignatures:
    :template: main.rst
 
-    cat_concat
-    cat_zip
+   cat_concat
+   cat_zip
 
 
 Datasets
@@ -271,5 +269,5 @@ These datasets ship with plydata and you can import them with from the
    :toctree: generated/
    :template: data.rst
 
-    fish_encounters
-    gss_cat
+   fish_encounters
+   gss_cat
