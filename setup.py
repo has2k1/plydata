@@ -50,7 +50,9 @@ def get_package_data():
         - And include any *.msg files found in
           the 'hello' package, too:
     """
-    return {}
+    csv_data = ['data/*.csv']
+    package_data = {'plydata': csv_data}
+    return package_data
 
 
 if __name__ == '__main__':

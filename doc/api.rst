@@ -257,3 +257,19 @@ Combine Multiple Categoricals
 
     cat_concat
     cat_zip
+
+
+Datasets
+========
+
+These datasets ship with plydata and you can import them with from the
+``plydata.data`` sub-package.
+
+.. currentmodule:: plydata.data
+
+.. autosummary::
+   :toctree: generated/
+   :template: data.rst
+
+    fish_encounters
+    gss_cat
