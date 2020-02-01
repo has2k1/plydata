@@ -241,7 +241,7 @@ def unique(lst):
     >>> import numpy as np
     >>> lst = ['one', 'two', 123, 'three']
     >>> pd.unique(lst)
-    array(['one', 'two', '123', 'three'], dtype=object)
+    array(['one', 'two', '123', 'three'], dtype='<U5')
     >>> np.unique(lst)
     array(['123', 'one', 'three', 'two'],
           dtype='<U5')
