@@ -7,18 +7,22 @@ language: python
 matrix:
   fast_finish: true
   include:
-    - python: 3.6
+    - python: 3.6  # Minimum
       env:
         - JOB: 'UNITTEST'
-        - FULL_DEPS=true
-    - python: 3.6
+        - FULL_DEPS: true
+    - python: 3.8  # Maximum
+      env:
+        - JOB: 'UNITTEST'
+        - FULL_DEPS: true
+    - python: 3.8
       env:
         - JOB: 'DOCS'
-        - FULL_DEPS=true
-    - python: 3.6
+        - FULL_DEPS: true
+    - python: 3.8
       env:
         - JOB: 'LINT'
-        - FULL_DEPS=false
+        - FULL_DEPS: false
 
 cache: pip
 
@@ -58,6 +62,7 @@ install:
   - pip install coveralls
   # List all conda and pip packages
   - conda list
+  - pip list
 
 script:
   - |
@@ -72,8 +77,15 @@ script:
       make lint
     fi
 
+# Calculate coverage
 after_success:
   - |
     if [[ "$JOB" == "UNITTEST" ]]; then
       coveralls --rcfile=.coveragerc
+    fi
+
+after_failure:
+  - |
+    if [[ "$JOB" == "DOCS" ]]; then
+      cat /tmp/sphinx-err-*.log
     fi
