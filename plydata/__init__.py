@@ -2,6 +2,7 @@ from .one_table_verbs import *  # noqa
 from .two_table_verbs import *  # noqa
 from .helper_verbs import *     # noqa
 from .expressions import *      # noqa
+from .utils import ply          # noqa
 from ._version import get_versions
 
 __version__ = get_versions()['version']

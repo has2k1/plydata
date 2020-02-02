@@ -13,8 +13,10 @@ Documentation (Release)      |documentation_stable|_
 
 plydata is a library that provides a grammar for data manipulation.
 The grammar consists of verbs that can be applied to pandas
-dataframes or database tables. It is based on the R package
-`dplyr`_. plydata uses the `>>` operator as a pipe symbol.
+dataframes or database tables. It is based on the R packages
+`dplyr`_, `tidyr`_ and `forcats`_. plydata uses the ``>>`` operator
+as a pipe symbol, alternatively there is the ``ply(data, *verbs)``
+function that you can use instead of ``>>``.
 
 At present the only supported data store is the *pandas* dataframe.
 We expect to support *sqlite* and maybe *postgresql* and *mysql*.
@@ -44,7 +46,7 @@ Example
 
     import pandas as pd
     import numpy as np
-    from plydata import define, query, if_else
+    from plydata import define, query, if_else, ply
 
     # NOTE: query is the equivalent of dplyr's filter but with
     #      slightly different python syntax  for the expressions
@@ -78,6 +80,18 @@ Example
     2  2    two
     3  3  three
     """
+
+    # You can use the ply function instead of the >> operator
+    ply(df,
+        define(z=if_else('x > 1', 1, 0)),
+        query('z == 1')
+    )
+    """
+        x      y  z
+     2  2    two  1
+     3  3  three  1
+    """
+
 
 plydata piping works with `plotnine`_.
 
@@ -129,7 +143,9 @@ For more, see the documentation_.
 .. |documentation_stable| image:: https://readthedocs.org/projects/plydata/badge/?version=stable
 .. _documentation_stable: https://plydata.readthedocs.io/en/stable/
 
-.. _dplyr: http://github.com/hadley/dplyr
+.. _dplyr: https://github.com/tidyverse/dplyr
+.. _tidyr: https://github.com/tidyverse/tidyr
+.. _forcats: https://github.com/tidyverse/forcats
 .. _pandas-ply: https://github.com/coursera/pandas-ply
 .. _dplython: https://github.com/dodger487/dplython
-.. _plotnine: http://plotnine.readthedocs.io/en/stable/
+.. _plotnine: https://plotnine.readthedocs.io/en/stable/

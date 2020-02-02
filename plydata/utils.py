@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .eval import EvalEnvironment
+from .options import options
 
 BOOL_PATTERN = re.compile(r'True|False')
 
@@ -638,3 +639,58 @@ def first2(x, y):
     """
     y = np.asarray(y)
     return y[np.argsort(x)][0]
+
+
+def ply(data, *verbs):
+    """
+    Pipe data through the verbs
+
+    This function allows you to use plydata without
+    abusing the ``>>`` operator.
+
+    Parameters
+    ----------
+    data : dataframe
+        Data
+    verbs : tuple
+        Verb to which the data should be piped
+
+    >>> from plydata import *
+    >>> df = pd.DataFrame({
+    ...     'x': [0, 1, 2, 3],
+    ...     'y': ['zero', 'one', 'two', 'three']}
+    ... )
+
+    Using ply
+
+    >>> ply(
+    ...    df,
+    ...    define(z='2*x', w='y+"-"+y'),
+    ...    group_by(parity='x % 2'),
+    ...    define(u='sum(z)')
+    ... )
+    groups: ['parity']
+       x      y  z            w  parity  u
+    0  0   zero  0    zero-zero       0  4
+    1  1    one  2      one-one       1  8
+    2  2    two  4      two-two       0  4
+    3  3  three  6  three-three       1  8
+
+    Is equivalent to
+
+    >>> (df
+    ...  >> define(z='2*x', w='y+"-"+y')
+    ...  >> group_by(parity='x % 2')
+    ...  >> define(u='sum(z)'))
+    groups: ['parity']
+       x      y  z            w  parity  u
+    0  0   zero  0    zero-zero       0  4
+    1  1    one  2      one-one       1  8
+    2  2    two  4      two-two       0  4
+    3  3  three  6  three-three       1  8
+    """
+    data = data.copy()
+    with options(modify_input_data=True):
+        for verb in verbs:
+            data >>= verb
+    return data

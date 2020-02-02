@@ -146,6 +146,7 @@ Useful Functions
    n
    first2
    last2
+   ply
 
 Tidy Verbs
 ==========

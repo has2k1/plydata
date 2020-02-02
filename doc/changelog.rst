@@ -100,6 +100,10 @@ New Features
 
 - Added :class:`~plydata.cat_tools.cat_zip` to combine two or more categoricals.
 
+- Added :class:`~plydata.utils.ply` function. Makes it possible to use
+  plydata with implied piping without abusing the ``>>`` operator.
+  It is also more efficient as it minimises the copying of data.
+
 Enhancements
 ************
 
