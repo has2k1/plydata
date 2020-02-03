@@ -875,6 +875,20 @@ class query(DataOperator):
     2  2  1
     4  4  2
 
+    ``query`` works within groups
+
+    >>> df >> query('x == x.min()')
+       x  y
+    0  0  0
+
+    >>> df >> group_by('y') >> query('x == x.min()')
+    groups: ['y']
+       x  y
+    0  0  0
+    2  2  1
+    4  4  2
+    5  5  3
+
     For more information see :meth:`pandas.DataFrame.query`. To query
     rows and columns with ``NaN`` values, use :class:`dropna`
 

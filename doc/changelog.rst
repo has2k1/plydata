@@ -5,6 +5,11 @@ v0.4.0
 ------
 *(Not Yet Released)*
 
+Bug Fixes
+*********
+
+- :class:`~plydata.one_table_verbs.query` now works within groups.
+
 New Features
 ************
 - Added :class:`~plydata.tidy_verbs.gather` to transform dataframe from

@@ -168,11 +168,25 @@ def summarize(verb):
 
 
 def query(verb):
-    data = verb.data.query(
-        verb.expression,
-        global_dict=verb.env.namespace,
-        **verb.kwargs)
-    data._is_copy = None
+    if isinstance(verb.data, GroupedDataFrame):
+        grouper = verb.data.groupby()
+        dfs = [
+            gdf.query(
+                verb.expression,
+                global_dict=verb.env.namespace,
+                **verb.kwargs
+            )
+            for _, gdf in grouper
+        ]
+        data = pd.concat(dfs, axis=0, ignore_index=False, copy=False)
+        data.plydata_groups = list(verb.data.plydata_groups)
+    else:
+        data = verb.data.query(
+            verb.expression,
+            global_dict=verb.env.namespace,
+            **verb.kwargs
+        )
+        data._is_copy = None
     return data
 
 
