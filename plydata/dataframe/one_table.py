@@ -22,7 +22,7 @@ __all__ = ['arrange', 'create', 'define', 'distinct', 'do',
 
 def _check_modify_groups(verb):
     """
-    Return True if expressions modify existing groups
+    Raise ValueError if expressions modify existing groups
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ def _check_modify_groups(verb):
     groups = _get_groups(verb)
 
     # Data has no groups or verb authorises modification
-    if not groups or getattr(verb, '_modify_groups', False):
+    if not groups:
         return
 
     new_cols = [e.column for e in verb.expressions if e.column != e.stmt]
