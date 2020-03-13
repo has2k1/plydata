@@ -221,7 +221,7 @@ class Evaluator:
 
     def _all_expressions_evaluated(self):
         """
-        Return True all expressions match with the columns
+        Return True if all expressions match with the columns
 
         Saves some processor cycles
         """
