@@ -800,7 +800,7 @@ def cat_lump(
 
     This is a general method that calls one of
     :func:`~plydata.cat_tools.cat_lump_n`
-    :func:`~plydata.cat_tools.cat_tools.cat_lump_prop` or
+    :func:`~plydata.cat_tools.cat_lump_prop` or
     :func:`~plydata.cat_tools.cat_lump_lowfreq`
     depending on the parameters.
 

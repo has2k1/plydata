@@ -71,6 +71,7 @@ if __name__ == '__main__':
           install_requires=get_required_packages(),
           packages=find_packages(),
           package_data=get_package_data(),
+          python_requires='>=3.6',
           classifiers=[
               'Intended Audience :: Science/Research',
               'License :: OSI Approved :: BSD License',
