@@ -1,10 +1,10 @@
 # travis does not use tox because scipy takes long to install
 # with pip. It is better to use miniconda
-sudo: false
-
+os: linux
+dist: xenial
 language: python
 
-matrix:
+jobs:
   fast_finish: true
   include:
     - python: 3.6  # Minimum
