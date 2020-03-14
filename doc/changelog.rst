@@ -109,6 +109,12 @@ New Features
   plydata with implied piping without abusing the ``>>`` operator.
   It is also more efficient as it minimises the copying of data.
 
+- Added :class:`~plydata.cat_tools.cat_lump_n`,
+  :class:`~plydata.cat_tools.cat_lump_prop`, and
+  :class:`~plydata.cat_tools.cat_lump_lowfreq` as the distinct cases of
+  :class:`~plydata.cat_tools.cat_lump`.
+
+
 Enhancements
 ************
 

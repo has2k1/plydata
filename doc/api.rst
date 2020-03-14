@@ -225,7 +225,10 @@ These functions change the categories while preserving the order (as much as pos
    cat_anon
    cat_collapse
    cat_lump
+   cat_lump_lowfreq
    cat_lump_min
+   cat_lump_n
+   cat_lump_prop
    cat_other
    cat_recode
    cat_relabel
