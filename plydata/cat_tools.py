@@ -228,11 +228,7 @@ def cat_inseq(c, ordered=None):
     [NaN, NaN, 3, NaN, NaN]
     Categories (1, int64): [3]
     """
-    if not isinstance(c, pd.Categorical):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     # one value at a time to avoid turning integers into floats
     # when some values create nans
     numerical_cats = []
@@ -408,11 +404,7 @@ def cat_move(c, *args, to=0):
     [a, b, c, d, e]
     Categories (5, object): [b < a < c < e < d]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if np.isinf(to):
         to = len(c.categories)
 
@@ -447,10 +439,7 @@ def cat_rev(c):
     [a, b, c]
     Categories (3, object): [c, b, a]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
+    c = as_categorical(c)
     c.reorder_categories(c.categories[::-1], inplace=True)
     return c
 
@@ -490,11 +479,7 @@ def cat_shift(c, n=1):
     [a, b, c, d, e]
     Categories (5, object): [c < d < e < a < b]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     cats = c.categories.to_list()
     cats_extended = cats + cats
     m = len(cats)
@@ -532,11 +517,7 @@ def cat_shuffle(c, random_state=None):
     [a, b, c, d, e]
     Categories (5, object): [d < b < a < c < e]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if random_state is None:
         random_state = np.random
     elif isinstance(random_state, int):
@@ -588,11 +569,7 @@ def cat_anon(c, prefix='', random_state=None):
     [c-1, c-2, c-2, c-0, c-0, c-0]
     Categories (3, object): [c-0 < c-2 < c-1]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if random_state is None:
         random_state = np.random
     elif isinstance(random_state, int):
@@ -673,11 +650,7 @@ def cat_collapse(c, mapping, group_other=False):
             if other not in mapping:
                 return other
 
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if group_other:
         mapping = mapping.copy()
         other = make_other_name()
@@ -750,12 +723,7 @@ def cat_other(c, keep=None, drop=None, other_category='other'):
         raise ValueError(
             "Only one of `keep` or `drop` should be given."
         )
-
-    if not isinstance(c, pd.Categorical):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     cats = c.categories
 
     if keep is not None:
@@ -1041,11 +1009,7 @@ def cat_lump_n(
     [a, b, other, other]
     Categories (3, object): [a, b, other]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if len(c) == 0:
         return c
 
@@ -1119,11 +1083,7 @@ def cat_lump_prop(
     [other, other, other, other, other, other]
     Categories (1, object): [other]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if len(c) == 0:
         return c
 
@@ -1193,11 +1153,7 @@ def cat_lump_lowfreq(
     [other, other, other, d, d, d, d]
     Categories (2, object): [d, other]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if len(c) == 0:
         return c
 
@@ -1273,11 +1229,7 @@ def cat_lump_min(
     [other, other, other, other, other, c, c, d, d]
     Categories (3, object): [c, d, other]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if len(c) == 0:
         return c
 
@@ -1350,11 +1302,7 @@ def cat_rename(c, mapping=None, **kwargs):
     [a, B, c]
     Categories (3, object): [B < a < c]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     if mapping is not None and len(kwargs):
         raise ValueError("Use only one of `new` or the ``kwargs``.")
 
@@ -1440,11 +1388,7 @@ def cat_relabel(c, func=None, *args, **kwargs):
     [a, b, a, d]
     Categories (3, object): [b < a < d]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     new_categories = [func(x, *args, **kwargs) for x in c.categories]
     new_categories_uniq = pd.unique(new_categories)
     if len(new_categories_uniq) < len(c.categories):
@@ -1482,11 +1426,7 @@ def cat_expand(c, *args):
     [a, b, c, d]
     Categories (6, object): [a < b < c < d < e < f]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     c.add_categories(
         pd.Index(args).difference(c.categories),
         inplace=True
@@ -1518,11 +1458,7 @@ def cat_explicit_na(c, na_category='(missing)'):
     [a, b, (missing), c, (missing), d, d]
     Categories (5, object): [a < b < c < d < (missing)]
     """
-    if not pdtypes.is_categorical(c):
-        c = pd.Categorical(c)
-    else:
-        c = c.copy()
-
+    c = as_categorical(c)
     bool_idx = pd.isnull(c)
     if any(bool_idx):
         c.add_categories([na_category], inplace=True)
@@ -1605,11 +1541,7 @@ def cat_unify(cs, categories=None):
     [d, e]
     Categories (8, object): [a, b, c, e, d, f, z, y]
     """
-    cs = [
-        c.copy() if pdtypes.is_categorical(c) else pd.Categorical(c)
-        for c in cs
-    ]
-
+    cs = [as_categorical(c) for c in cs]
     all_cats = list(chain(*(c.categories.to_list() for c in cs)))
     if categories is None:
         categories = pd.unique(all_cats)
@@ -1692,6 +1624,33 @@ def cat_zip(*args, sep=':', keep_empty=False):
     if not keep_empty:
         c.remove_unused_categories(inplace=True)
 
+    return c
+
+
+# helpers
+def as_categorical(c, copy=True):
+    """
+    Convert input to a categorical
+
+    Parameters
+    ----------
+    c : categorical_like
+        Sequence of objects
+    copy : bool
+        If `True` and c is alread a categorical, return
+        a copy of `c` otherwise return `c`.
+
+    Returns
+    -------
+    out : categorical
+        Categorical made out of `c` or copy of `c`
+        if it was a categorical
+
+    """
+    if not pdtypes.is_categorical(c):
+        c = pd.Categorical(c)
+    elif copy:
+        c = c.copy()
     return c
 
 
