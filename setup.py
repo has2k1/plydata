@@ -16,6 +16,12 @@ __email__ = 'has2k1@gmail.com'
 __description__ = "Functions for manipulating Data in Python"
 __license__ = 'BSD (3-clause)'
 __url__ = 'https://github.com/has2k1/plydata'
+__classifiers__ = [
+  'Intended Audience :: Science/Research',
+  'License :: OSI Approved :: BSD License',
+  'Programming Language :: Python :: 3 :: Only',
+  'Topic :: Scientific/Engineering :: Information Analysis'
+]
 
 
 def check_dependencies():
@@ -56,7 +62,6 @@ def get_package_data():
 
 
 if __name__ == '__main__':
-
     check_dependencies()
 
     setup(name='plydata',
@@ -68,14 +73,9 @@ if __name__ == '__main__':
           version=versioneer.get_version(),
           cmdclass=versioneer.get_cmdclass(),
           url=__url__,
+          python_requires='>=3.6',
           install_requires=get_required_packages(),
           packages=find_packages(),
           package_data=get_package_data(),
-          python_requires='>=3.6',
-          classifiers=[
-              'Intended Audience :: Science/Research',
-              'License :: OSI Approved :: BSD License',
-              'Programming Language :: Python :: 3 :: Only',
-              'Topic :: Scientific/Engineering :: Information Analysis'
-          ],
-          )
+          classifiers=__classifiers__,
+          zip_safe=False)
