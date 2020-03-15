@@ -3,7 +3,7 @@ Changelog
 
 v0.4.0
 ------
-*(Not Yet Released)*
+*(2020-03-15)*
 
 Bug Fixes
 *********
