@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v0.4.1
+------
+*not-yet-released*
+
+Bug Fixes
+*********
+
+- Fixed bug in :class:`~plydata.one_table_verbs.define` were you could not
+  create a new column from array-like or series-like iterables. (:issue:`21`)
+
 v0.4.0
 ------
 *(2020-03-15)*

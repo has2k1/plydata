@@ -89,6 +89,11 @@ def test_define():
     with pytest.raises(ValueError):
         df >> group_by('x') >> define(x='2*x')
 
+    # Series-like iterables
+    # https://github.com/has2k1/plydata/issues/21
+    result = df >> define(y=pd.Series(y))
+    assert all(result['y'] == y)
+
 
 def test_create():
     x = np.array([1, 2, 3])

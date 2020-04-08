@@ -226,7 +226,9 @@ class Evaluator:
         Saves some processor cycles
         """
         def present(expr):
-            return expr.stmt == expr.column and expr.column in self.data
+            return (isinstance(expr.stmt, str) and
+                    expr.stmt == expr.column and
+                    expr.column in self.data)
         return all(present(expr) for expr in self.expressions)
 
     def _get_group_dataframes(self):
