@@ -296,6 +296,15 @@ def test_arrange():
     result = df >> arrange('x') >> arrange('y')  # already sorted
     assert result.index.equals(df.index)
 
+    # Bad index
+    df_bad = df.copy()
+    df_bad.index = [0, 1, 0, 1, 0, 1]
+    result = df_bad >> arrange('x')
+    assert result.index.equals(I([1, 0, 0, 1, 0, 1]))
+
+    result = df_bad >> arrange('x', '-y')
+    assert result.index.equals(I([1, 0, 1, 0, 0, 1]))
+
 
 def test_group_by():
     df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],

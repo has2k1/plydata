@@ -108,8 +108,13 @@ def arrange(verb):
         df = Evaluator(verb, keep_index=True).process()
 
     if len(df.columns):
-        sorted_index = df.sort_values(by=list(df.columns)).index
-        data = verb.data.loc[sorted_index, :]
+        # The index is also rearranged, but to avoid issues with
+        # duplicate index values, we work with a regular index
+        original_index = verb.data.index
+        with regular_index(verb.data, df):
+            sorted_index = df.sort_values(by=list(df.columns)).index
+            data = verb.data.loc[sorted_index, :]
+            data.index = original_index[sorted_index]
     else:
         data = verb.data
     return data

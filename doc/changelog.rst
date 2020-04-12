@@ -11,6 +11,9 @@ Bug Fixes
 - Fixed bug in :class:`~plydata.one_table_verbs.define` were you could not
   create a new column from array-like or series-like iterables. (:issue:`21`)
 
+- Fixed bug in :class:`~plydata.one_table_verbs.arrange` were dataframes with
+  irregular indicies would give wrong output. (:issue:`22`)
+
 v0.4.0
 ------
 *(2020-03-15)*
