@@ -61,11 +61,11 @@ def cat_infreq(c, ordered=None):
     --------
     >>> x = ['d', 'a', 'b', 'b', 'c', 'c', 'c']
     >>> cat_infreq(x)
-    [d, a, b, b, c, c, c]
-    Categories (4, object): [c, b, d, a]
+    ['d', 'a', 'b', 'b', 'c', 'c', 'c']
+    Categories (4, object): ['c', 'b', 'd', 'a']
     >>> cat_infreq(x, ordered=True)
-    [d, a, b, b, c, c, c]
-    Categories (4, object): [c < b < d < a]
+    ['d', 'a', 'b', 'b', 'c', 'c', 'c']
+    Categories (4, object): ['c' < 'b' < 'd' < 'a']
 
     When two or more values occur the same number of times, if the
     categorical is ordered, the order is preserved. If it is not
@@ -76,11 +76,11 @@ def cat_infreq(c, ordered=None):
     ...     x, categories=['a', 'c', 'b', 'd']
     ... )
     >>> cat_infreq(c)
-    [d, a, b, b, c, c, c]
-    Categories (4, object): [c, b, a, d]
+    ['d', 'a', 'b', 'b', 'c', 'c', 'c']
+    Categories (4, object): ['c', 'b', 'a', 'd']
     >>> cat_infreq(c.set_ordered(True))
-    [d, a, b, b, c, c, c]
-    Categories (4, object): [c < b < a < d]
+    ['d', 'a', 'b', 'b', 'c', 'c', 'c']
+    Categories (4, object): ['c' < 'b' < 'a' < 'd']
     """
     kwargs = {} if ordered is None else {'ordered': ordered}
     counts = value_counts(c)
@@ -124,32 +124,32 @@ def cat_inorder(c, ordered=None):
     Categories (4, int64): [4, 1, 3, 7]
     >>> c = ['b', 'f', 'c', None, 'c', 'a', 'b', 'e']
     >>> cat_inorder(c)
-    [b, f, c, NaN, c, a, b, e]
-    Categories (5, object): [b, f, c, a, e]
+    ['b', 'f', 'c', NaN, 'c', 'a', 'b', 'e']
+    Categories (5, object): ['b', 'f', 'c', 'a', 'e']
     >>> s = pd.Series(c)
     >>> cat_inorder(s)
-    [b, f, c, NaN, c, a, b, e]
-    Categories (5, object): [b, f, c, a, e]
+    ['b', 'f', 'c', NaN, 'c', 'a', 'b', 'e']
+    Categories (5, object): ['b', 'f', 'c', 'a', 'e']
     >>> cat = pd.Categorical(c)
     >>> cat_inorder(cat)
-    [b, f, c, NaN, c, a, b, e]
-    Categories (5, object): [b, f, c, a, e]
+    ['b', 'f', 'c', NaN, 'c', 'a', 'b', 'e']
+    Categories (5, object): ['b', 'f', 'c', 'a', 'e']
     >>> cat_inorder(cat, ordered=True)
-    [b, f, c, NaN, c, a, b, e]
-    Categories (5, object): [b < f < c < a < e]
+    ['b', 'f', 'c', NaN, 'c', 'a', 'b', 'e']
+    Categories (5, object): ['b' < 'f' < 'c' < 'a' < 'e']
 
     By default, ordered categories remain ordered.
 
     >>> ocat = pd.Categorical(cat, ordered=True)
     >>> ocat
-    [b, f, c, NaN, c, a, b, e]
-    Categories (5, object): [a < b < c < e < f]
+    ['b', 'f', 'c', NaN, 'c', 'a', 'b', 'e']
+    Categories (5, object): ['a' < 'b' < 'c' < 'e' < 'f']
     >>> cat_inorder(ocat)
-    [b, f, c, NaN, c, a, b, e]
-    Categories (5, object): [b < f < c < a < e]
+    ['b', 'f', 'c', NaN, 'c', 'a', 'b', 'e']
+    Categories (5, object): ['b' < 'f' < 'c' < 'a' < 'e']
     >>> cat_inorder(ocat, ordered=False)
-    [b, f, c, NaN, c, a, b, e]
-    Categories (5, object): [b, f, c, a, e]
+    ['b', 'f', 'c', NaN, 'c', 'a', 'b', 'e']
+    Categories (5, object): ['b', 'f', 'c', 'a', 'e']
 
     Notes
     -----
@@ -278,18 +278,18 @@ def cat_reorder(c, x, fun=np.median, ascending=True):
     >>> c = list('abbccc')
     >>> x = [11, 2, 2, 3, 33, 3]
     >>> cat_reorder(c, x)
-    [a, b, b, c, c, c]
-    Categories (3, object): [b, c, a]
+    ['a', 'b', 'b', 'c', 'c', 'c']
+    Categories (3, object): ['b', 'c', 'a']
     >>> cat_reorder(c, x, fun=max)
-    [a, b, b, c, c, c]
-    Categories (3, object): [b, a, c]
+    ['a', 'b', 'b', 'c', 'c', 'c']
+    Categories (3, object): ['b', 'a', 'c']
     >>> cat_reorder(c, x, fun=max, ascending=False)
-    [a, b, b, c, c, c]
-    Categories (3, object): [c, a, b]
+    ['a', 'b', 'b', 'c', 'c', 'c']
+    Categories (3, object): ['c', 'a', 'b']
     >>> c_ordered = pd.Categorical(c, ordered=True)
     >>> cat_reorder(c_ordered, x)
-    [a, b, b, c, c, c]
-    Categories (3, object): [b < c < a]
+    ['a', 'b', 'b', 'c', 'c', 'c']
+    Categories (3, object): ['b' < 'c' < 'a']
     >>> cat_reorder(c + ['d'], x)
     Traceback (most recent call last):
         ...
@@ -347,8 +347,8 @@ def cat_reorder2(c, x, y, *args, fun=last2, ascending=False, **kwargs):
     >>> year = [1980, 1990, 2000] * 3
     >>> price = [12.34, 12.90, 13.55, 10.92, 14.73, 11.08, 9.02, 12.44, 15.65]
     >>> cat_reorder2(stocks, year, price)
-    [A, A, A, B, B, B, C, C, C]
-    Categories (3, object): [C, A, B]
+    ['A', 'A', 'A', 'B', 'B', 'B', 'C', 'C', 'C']
+    Categories (3, object): ['C', 'A', 'B']
     """
     if len(c) != len(x) or len(x) != len(y):
         raise ValueError(
@@ -395,14 +395,14 @@ def cat_move(c, *args, to=0):
     --------
     >>> c = ['a', 'b', 'c', 'd', 'e']
     >>> cat_move(c, 'e', 'b')
-    [a, b, c, d, e]
-    Categories (5, object): [e, b, a, c, d]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['e', 'b', 'a', 'c', 'd']
     >>> cat_move(c, 'c', to=np.inf)
-    [a, b, c, d, e]
-    Categories (5, object): [a, b, d, e, c]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['a', 'b', 'd', 'e', 'c']
     >>> cat_move(pd.Categorical(c, ordered=True), 'a', 'c', 'e', to=1)
-    [a, b, c, d, e]
-    Categories (5, object): [b < a < c < e < d]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['b' < 'a' < 'c' < 'e' < 'd']
     """
     c = as_categorical(c)
     if np.isinf(to):
@@ -433,11 +433,11 @@ def cat_rev(c):
     --------
     >>> c = ['a', 'b', 'c']
     >>> cat_rev(c)
-    [a, b, c]
-    Categories (3, object): [c, b, a]
+    ['a', 'b', 'c']
+    Categories (3, object): ['c', 'b', 'a']
     >>> cat_rev(pd.Categorical(c))
-    [a, b, c]
-    Categories (3, object): [c, b, a]
+    ['a', 'b', 'c']
+    Categories (3, object): ['c', 'b', 'a']
     """
     c = as_categorical(c)
     c.reorder_categories(c.categories[::-1], inplace=True)
@@ -467,17 +467,17 @@ def cat_shift(c, n=1):
     --------
     >>> c = ['a', 'b', 'c', 'd', 'e']
     >>> cat_shift(c)
-    [a, b, c, d, e]
-    Categories (5, object): [b, c, d, e, a]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['b', 'c', 'd', 'e', 'a']
     >>> cat_shift(c, 2)
-    [a, b, c, d, e]
-    Categories (5, object): [c, d, e, a, b]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['c', 'd', 'e', 'a', 'b']
     >>> cat_shift(c, -2)
-    [a, b, c, d, e]
-    Categories (5, object): [d, e, a, b, c]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['d', 'e', 'a', 'b', 'c']
     >>> cat_shift(pd.Categorical(c, ordered=True), -3)
-    [a, b, c, d, e]
-    Categories (5, object): [c < d < e < a < b]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['c' < 'd' < 'e' < 'a' < 'b']
     """
     c = as_categorical(c)
     cats = c.categories.to_list()
@@ -511,11 +511,11 @@ def cat_shuffle(c, random_state=None):
     >>> np.random.seed(123)
     >>> c = ['a', 'b', 'c', 'd', 'e']
     >>> cat_shuffle(c)
-    [a, b, c, d, e]
-    Categories (5, object): [b, d, e, a, c]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['b', 'd', 'e', 'a', 'c']
     >>> cat_shuffle(pd.Categorical(c, ordered=True), 321)
-    [a, b, c, d, e]
-    Categories (5, object): [d < b < a < c < e]
+    ['a', 'b', 'c', 'd', 'e']
+    Categories (5, object): ['d' < 'b' < 'a' < 'c' < 'e']
     """
     c = as_categorical(c)
     if random_state is None:
@@ -560,14 +560,14 @@ def cat_anon(c, prefix='', random_state=None):
     >>> np.random.seed(123)
     >>> c = ['a', 'b', 'b', 'c', 'c', 'c']
     >>> cat_anon(c)
-    [0, 1, 1, 2, 2, 2]
-    Categories (3, object): [1, 0, 2]
+    ['0', '1', '1', '2', '2', '2']
+    Categories (3, object): ['1', '0', '2']
     >>> cat_anon(c, 'c-', 321)
-    [c-1, c-2, c-2, c-0, c-0, c-0]
-    Categories (3, object): [c-0, c-2, c-1]
+    ['c-1', 'c-2', 'c-2', 'c-0', 'c-0', 'c-0']
+    Categories (3, object): ['c-0', 'c-2', 'c-1']
     >>> cat_anon(pd.Categorical(c, ordered=True), 'c-', 321)
-    [c-1, c-2, c-2, c-0, c-0, c-0]
-    Categories (3, object): [c-0 < c-2 < c-1]
+    ['c-1', 'c-2', 'c-2', 'c-0', 'c-0', 'c-0']
+    Categories (3, object): ['c-0' < 'c-2' < 'c-1']
     """
     c = as_categorical(c)
     if random_state is None:
@@ -619,24 +619,24 @@ def cat_collapse(c, mapping, group_other=False):
     >>> c = ['a', 'b', 'c', 'd', 'e', 'f']
     >>> mapping = {'first_2': ['a', 'b'], 'second_2': ['c', 'd']}
     >>> cat_collapse(c, mapping)
-    [first_2, first_2, second_2, second_2, e, f]
-    Categories (4, object): [first_2, second_2, e, f]
+    ['first_2', 'first_2', 'second_2', 'second_2', 'e', 'f']
+    Categories (4, object): ['first_2', 'second_2', 'e', 'f']
     >>> cat_collapse(c, mapping, group_other=True)
-    [first_2, first_2, second_2, second_2, other, other]
-    Categories (3, object): [first_2, second_2, other]
+    ['first_2', 'first_2', 'second_2', 'second_2', 'other', 'other']
+    Categories (3, object): ['first_2', 'second_2', 'other']
 
     Collapsing preserves the order
 
     >>> cat_rev(c)
-    [a, b, c, d, e, f]
-    Categories (6, object): [f, e, d, c, b, a]
+    ['a', 'b', 'c', 'd', 'e', 'f']
+    Categories (6, object): ['f', 'e', 'd', 'c', 'b', 'a']
     >>> cat_collapse(cat_rev(c), mapping)
-    [first_2, first_2, second_2, second_2, e, f]
-    Categories (4, object): [f, e, second_2, first_2]
+    ['first_2', 'first_2', 'second_2', 'second_2', 'e', 'f']
+    Categories (4, object): ['f', 'e', 'second_2', 'first_2']
     >>> mapping = {'other': ['a', 'b'], 'another': ['c', 'd']}
     >>> cat_collapse(c, mapping, group_other=True)
-    [other, other, another, another, other2, other2]
-    Categories (3, object): [other, another, other2]
+    ['other', 'other', 'another', 'another', 'other2', 'other2']
+    Categories (3, object): ['other', 'another', 'other2']
     """
     def make_other_name():
         """
@@ -706,14 +706,14 @@ def cat_other(c, keep=None, drop=None, other_category='other'):
     --------
     >>> c = ['a', 'b', 'a', 'c', 'b', 'b', 'b', 'd', 'c']
     >>> cat_other(c, keep=['a', 'b'])
-    [a, b, a, other, b, b, b, other, other]
-    Categories (3, object): [a, b, other]
+    ['a', 'b', 'a', 'other', 'b', 'b', 'b', 'other', 'other']
+    Categories (3, object): ['a', 'b', 'other']
     >>> cat_other(c, drop=['a', 'b'])
-    [other, other, other, c, other, other, other, d, c]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'other', 'c', 'other', 'other', 'other', 'd', 'c']
+    Categories (3, object): ['c', 'd', 'other']
     >>> cat_other(pd.Categorical(c, ordered=True), drop=['a', 'b'])
-    [other, other, other, c, other, other, other, d, c]
-    Categories (3, object): [c < d < other]
+    ['other', 'other', 'other', 'c', 'other', 'other', 'other', 'd', 'c']
+    Categories (3, object): ['c' < 'd' < 'other']
     """
     if keep is None and drop is None:
         raise ValueError(
@@ -844,55 +844,55 @@ def cat_lump(
     Examples
     --------
     >>> cat_lump(list('abbccc'))
-    [other, b, b, c, c, c]
-    Categories (3, object): [b, c, other]
+    ['other', 'b', 'b', 'c', 'c', 'c']
+    Categories (3, object): ['b', 'c', 'other']
 
     When the least categories put together are not less than the next
     smallest group.
 
     >>> cat_lump(list('abcddd'))
-    [a, b, c, d, d, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'd', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
     >>> cat_lump(list('abcdddd'))
-    [other, other, other, d, d, d, d]
-    Categories (2, object): [d, other]
+    ['other', 'other', 'other', 'd', 'd', 'd', 'd']
+    Categories (2, object): ['d', 'other']
 
     >>> c = pd.Categorical(list('abccdd'))
     >>> cat_lump(c, n=1)
-    [other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
 
     >>> cat_lump(c, n=2)
-    [other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
 
     ``n`` Least common categories
 
     >>> cat_lump(c, n=-2)
-    [a, b, other, other, other, other]
-    Categories (3, object): [a, b, other]
+    ['a', 'b', 'other', 'other', 'other', 'other']
+    Categories (3, object): ['a', 'b', 'other']
 
     There are fewer than ``n`` categories that are the most/least common.
 
     >>> cat_lump(c, n=3)
-    [a, b, c, c, d, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'c', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
     >>> cat_lump(c, n=-3)
-    [a, b, c, c, d, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'c', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
 
     By proportions, categories that make up *more* than ``prop`` fraction
     of the items.
 
     >>> cat_lump(c, prop=1/3.01)
-    [other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
     >>> cat_lump(c, prop=-1/3.01)
-    [a, b, other, other, other, other]
-    Categories (3, object): [a, b, other]
+    ['a', 'b', 'other', 'other', 'other', 'other']
+    Categories (3, object): ['a', 'b', 'other']
     >>> cat_lump(c, prop=1/2)
-    [other, other, other, other, other, other]
-    Categories (1, object): [other]
+    ['other', 'other', 'other', 'other', 'other', 'other']
+    Categories (1, object): ['other']
 
     Order of categoricals is maintained
 
@@ -902,19 +902,19 @@ def cat_lump(
     ...     ordered=True
     ... )
     >>> cat_lump(c, n=2)
-    [other, other, c, c, d, d]
-    Categories (3, object): [d < c < other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['d' < 'c' < 'other']
 
     **Weighted lumping**
 
     >>> c = list('abcd')
     >>> weights = [3, 2, 1, 1]
     >>> cat_lump(c, n=2)  # No lumping
-    [a, b, c, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
     >>> cat_lump(c, n=2, w=weights)
-    [a, b, other, other]
-    Categories (3, object): [a, b, other]
+    ['a', 'b', 'other', 'other']
+    Categories (3, object): ['a', 'b', 'other']
     """
     if n is not None:
         return cat_lump_n(c, n, w, other_category, ties_method)
@@ -965,27 +965,27 @@ def cat_lump_n(
     --------
     >>> c = pd.Categorical(list('abccdd'))
     >>> cat_lump_n(c, 1)
-    [other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
 
     >>> cat_lump_n(c, 2)
-    [other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
 
     ``n`` Least common categories
 
     >>> cat_lump_n(c, -2)
-    [a, b, other, other, other, other]
-    Categories (3, object): [a, b, other]
+    ['a', 'b', 'other', 'other', 'other', 'other']
+    Categories (3, object): ['a', 'b', 'other']
 
     There are fewer than ``n`` categories that are the most/least common.
 
     >>> cat_lump_n(c, 3)
-    [a, b, c, c, d, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'c', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
     >>> cat_lump_n(c, -3)
-    [a, b, c, c, d, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'c', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
 
     Order of categoricals is maintained
 
@@ -995,19 +995,19 @@ def cat_lump_n(
     ...     ordered=True
     ... )
     >>> cat_lump_n(c, 2)
-    [other, other, c, c, d, d]
-    Categories (3, object): [d < c < other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['d' < 'c' < 'other']
 
     **Weighted lumping**
 
     >>> c = list('abcd')
     >>> weights = [3, 2, 1, 1]
     >>> cat_lump_n(c, n=2)  # No lumping
-    [a, b, c, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
     >>> cat_lump_n(c, n=2, w=weights)
-    [a, b, other, other]
-    Categories (3, object): [a, b, other]
+    ['a', 'b', 'other', 'other']
+    Categories (3, object): ['a', 'b', 'other']
     """
     c = as_categorical(c)
     if len(c) == 0:
@@ -1074,14 +1074,14 @@ def cat_lump_prop(
 
     >>> c = pd.Categorical(list('abccdd'))
     >>> cat_lump_prop(c, 1/3.01)
-    [other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
     >>> cat_lump_prop(c, -1/3.01)
-    [a, b, other, other, other, other]
-    Categories (3, object): [a, b, other]
+    ['a', 'b', 'other', 'other', 'other', 'other']
+    Categories (3, object): ['a', 'b', 'other']
     >>> cat_lump_prop(c, 1/2)
-    [other, other, other, other, other, other]
-    Categories (1, object): [other]
+    ['other', 'other', 'other', 'other', 'other', 'other']
+    Categories (1, object): ['other']
     """
     c = as_categorical(c)
     if len(c) == 0:
@@ -1140,18 +1140,18 @@ def cat_lump_lowfreq(
     Examples
     --------
     >>> cat_lump_lowfreq(list('abbccc'))
-    [other, b, b, c, c, c]
-    Categories (3, object): [b, c, other]
+    ['other', 'b', 'b', 'c', 'c', 'c']
+    Categories (3, object): ['b', 'c', 'other']
 
     When the least categories put together are not less than the next
     smallest group.
 
     >>> cat_lump_lowfreq(list('abcddd'))
-    [a, b, c, d, d, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'd', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
     >>> cat_lump_lowfreq(list('abcdddd'))
-    [other, other, other, d, d, d, d]
-    Categories (2, object): [d, other]
+    ['other', 'other', 'other', 'd', 'd', 'd', 'd']
+    Categories (2, object): ['d', 'other']
     """
     c = as_categorical(c)
     if len(c) == 0:
@@ -1207,18 +1207,18 @@ def cat_lump_min(
     --------
     >>> c = list('abccdd')
     >>> cat_lump_min(c, min=1)
-    [a, b, c, c, d, d]
-    Categories (4, object): [a, b, c, d]
+    ['a', 'b', 'c', 'c', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'c', 'd']
     >>> cat_lump_min(c, min=2)
-    [other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
 
     **Weighted Lumping**
 
     >>> weights = [2, 2, .5, .5, 1, 1]
     >>> cat_lump_min(c, min=2, w=weights)
-    [a, b, other, other, d, d]
-    Categories (4, object): [a, b, d, other]
+    ['a', 'b', 'other', 'other', 'd', 'd']
+    Categories (4, object): ['a', 'b', 'd', 'other']
 
     Unlike :func:`~plydata.cat_tools.cat_lump`,  :func:`cat_lump_min`
     can lump together and create a category larger than the preserved
@@ -1226,8 +1226,8 @@ def cat_lump_min(
 
     >>> c = list('abxyzccdd')
     >>> cat_lump_min(c, min=2)
-    [other, other, other, other, other, c, c, d, d]
-    Categories (3, object): [c, d, other]
+    ['other', 'other', 'other', 'other', 'other', 'c', 'c', 'd', 'd']
+    Categories (3, object): ['c', 'd', 'other']
     """
     c = as_categorical(c)
     if len(c) == 0:
@@ -1285,22 +1285,22 @@ def cat_rename(c, mapping=None, **kwargs):
     --------
     >>> c = list('abcd')
     >>> cat_rename(c, a='A')
-    [A, b, c, d]
-    Categories (4, object): [A, b, c, d]
+    ['A', 'b', 'c', 'd']
+    Categories (4, object): ['A', 'b', 'c', 'd']
     >>> c = pd.Categorical(
     ...     list('abcd'),
     ...     categories=list('bacd'),
     ...     ordered=True
     ... )
     >>> cat_rename(c, b='B', d='D')
-    [a, B, c, D]
-    Categories (4, object): [B < a < c < D]
+    ['a', 'B', 'c', 'D']
+    Categories (4, object): ['B' < 'a' < 'c' < 'D']
 
     Remove categories by setting them to ``None``.
 
     >>> cat_rename(c, b='B', d=None)
-    [a, B, c]
-    Categories (3, object): [B < a < c]
+    ['a', 'B', 'c']
+    Categories (3, object): ['B' < 'a' < 'c']
     """
     c = as_categorical(c)
     if mapping is not None and len(kwargs):
@@ -1361,8 +1361,8 @@ def cat_relabel(c, func=None, *args, **kwargs):
     --------
     >>> c = list('abcde')
     >>> cat_relabel(c, str.upper)
-    [A, B, C, D, E]
-    Categories (5, object): [A, B, C, D, E]
+    ['A', 'B', 'C', 'D', 'E']
+    Categories (5, object): ['A', 'B', 'C', 'D', 'E']
     >>> c = pd.Categorical([0, 1, 2, 1, 1, 0])
     >>> def func(x):
     ...     if x == 0:
@@ -1372,8 +1372,8 @@ def cat_relabel(c, func=None, *args, **kwargs):
     ...     elif x == 2:
     ...         return 'high'
     >>> cat_relabel(c, func)
-    [low, mid, high, mid, mid, low]
-    Categories (3, object): [low, mid, high]
+    ['low', 'mid', 'high', 'mid', 'mid', 'low']
+    Categories (3, object): ['low', 'mid', 'high']
 
     When the function yields the same output for 2 or more
     different categories, those categories are collapsed.
@@ -1385,8 +1385,8 @@ def cat_relabel(c, func=None, *args, **kwargs):
     ...     ordered=True
     ... )
     >>> cat_relabel(c, first)
-    [a, b, a, d]
-    Categories (3, object): [b < a < d]
+    ['a', 'b', 'a', 'd']
+    Categories (3, object): ['b' < 'a' < 'd']
     """
     c = as_categorical(c)
     new_categories = [func(x, *args, **kwargs) for x in c.categories]
@@ -1419,12 +1419,12 @@ def cat_expand(c, *args):
     Examples
     --------
     >>> cat_expand(list('abc'), 'd', 'e')
-    [a, b, c]
-    Categories (5, object): [a, b, c, d, e]
+    ['a', 'b', 'c']
+    Categories (5, object): ['a', 'b', 'c', 'd', 'e']
     >>> c = pd.Categorical(list('abcd'), ordered=True)
     >>> cat_expand(c, 'e', 'f')
-    [a, b, c, d]
-    Categories (6, object): [a < b < c < d < e < f]
+    ['a', 'b', 'c', 'd']
+    Categories (6, object): ['a' < 'b' < 'c' < 'd' < 'e' < 'f']
     """
     c = as_categorical(c)
     c.add_categories(
@@ -1452,11 +1452,11 @@ def cat_explicit_na(c, na_category='(missing)'):
     ...     ordered=True
     ... )
     >>> c
-    [a, b, NaN, c, NaN, d, d]
-    Categories (4, object): [a < b < c < d]
+    ['a', 'b', NaN, 'c', NaN, 'd', 'd']
+    Categories (4, object): ['a' < 'b' < 'c' < 'd']
     >>> cat_explicit_na(c)
-    [a, b, (missing), c, (missing), d, d]
-    Categories (5, object): [a < b < c < d < (missing)]
+    ['a', 'b', '(missing)', 'c', '(missing)', 'd', 'd']
+    Categories (5, object): ['a' < 'b' < 'c' < 'd' < '(missing)']
     """
     c = as_categorical(c)
     bool_idx = pd.isnull(c)
@@ -1482,14 +1482,14 @@ def cat_remove_unused(c, only=None):
     --------
     >>> c = pd.Categorical(list('abcdd'), categories=list('bacdefg'))
     >>> c
-    [a, b, c, d, d]
-    Categories (7, object): [b, a, c, d, e, f, g]
+    ['a', 'b', 'c', 'd', 'd']
+    Categories (7, object): ['b', 'a', 'c', 'd', 'e', 'f', 'g']
     >>> cat_remove_unused(c)
-    [a, b, c, d, d]
-    Categories (4, object): [b, a, c, d]
+    ['a', 'b', 'c', 'd', 'd']
+    Categories (4, object): ['b', 'a', 'c', 'd']
     >>> cat_remove_unused(c, only=['a', 'e', 'g'])
-    [a, b, c, d, d]
-    Categories (5, object): [b, a, c, d, f]
+    ['a', 'b', 'c', 'd', 'd']
+    Categories (5, object): ['b', 'a', 'c', 'd', 'f']
     """
     if not pdtypes.is_categorical(c):
         # All categories are used
@@ -1528,18 +1528,18 @@ def cat_unify(cs, categories=None):
     >>> c2 = pd.Categorical(['d', 'e'], categories=list('edf'))
     >>> c1_new, c2_new = cat_unify([c1, c2])
     >>> c1_new
-    [a, b]
-    Categories (6, object): [a, b, c, e, d, f]
+    ['a', 'b']
+    Categories (6, object): ['a', 'b', 'c', 'e', 'd', 'f']
     >>> c2_new
-    [d, e]
-    Categories (6, object): [a, b, c, e, d, f]
+    ['d', 'e']
+    Categories (6, object): ['a', 'b', 'c', 'e', 'd', 'f']
     >>> c1_new, c2_new = cat_unify([c1, c2], categories=['z', 'y'])
     >>> c1_new
-    [a, b]
-    Categories (8, object): [a, b, c, e, d, f, z, y]
+    ['a', 'b']
+    Categories (8, object): ['a', 'b', 'c', 'e', 'd', 'f', 'z', 'y']
     >>> c2_new
-    [d, e]
-    Categories (8, object): [a, b, c, e, d, f, z, y]
+    ['d', 'e']
+    Categories (8, object): ['a', 'b', 'c', 'e', 'd', 'f', 'z', 'y']
     """
     cs = [as_categorical(c) for c in cs]
     all_cats = list(chain(*(c.categories.to_list() for c in cs)))
@@ -1566,8 +1566,8 @@ def cat_concat(*args):
     >>> c1 = pd.Categorical(['a', 'b'], categories=['b', 'a'])
     >>> c2 = pd.Categorical(['d', 'a', 'c'])
     >>> cat_concat(c1, c2)
-    [a, b, d, a, c]
-    Categories (4, object): [b, a, c, d]
+    ['a', 'b', 'd', 'a', 'c']
+    Categories (4, object): ['b', 'a', 'c', 'd']
 
     Notes
     -----
@@ -1603,11 +1603,11 @@ def cat_zip(*args, sep=':', keep_empty=False):
     >>> c1 = pd.Categorical(list('aba'))
     >>> c2 = pd.Categorical(list('122'))
     >>> cat_zip(c1, c2)
-    [a:1, b:2, a:2]
-    Categories (3, object): [a:1, a:2, b:2]
+    ['a:1', 'b:2', 'a:2']
+    Categories (3, object): ['a:1', 'a:2', 'b:2']
     >>> cat_zip(c1, c2, keep_empty=True)
-    [a:1, b:2, a:2]
-    Categories (4, object): [a:1, a:2, b:1, b:2]
+    ['a:1', 'b:2', 'a:2']
+    Categories (4, object): ['a:1', 'a:2', 'b:1', 'b:2']
     """
     values = [sep.join(items) for items in zip(*args)]
     cs = [
