@@ -655,6 +655,9 @@ def ply(data, *verbs):
     verbs : tuple
         Verb to which the data should be piped
 
+    Examples
+    --------
+
     >>> from plydata import *
     >>> df = pd.DataFrame({
     ...     'x': [0, 1, 2, 3],
