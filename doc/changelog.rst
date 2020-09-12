@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v0.4.2
+------
+*(2020-09-12)*
+
+- This is release makes Plydata depend on pandas < 1.1.0. See
+  `Issue 23 <https://github.com/has2k1/plydata/issues/23>`_ for details.
+
+
 v0.4.1
 ------
 *(2020-06-10)*
