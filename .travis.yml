@@ -48,7 +48,7 @@ install:
   - source activate plydata-test
   - |
     if [[ "$FULL_DEPS" ]]; then
-      conda install pandas
+      conda install "pandas<1.1.0"
     fi
   - |
     if [[ "$JOB" == "UNITTEST" ]]; then
