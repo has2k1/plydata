@@ -3,8 +3,8 @@ Usage
 
 For data manipulation, there are two types of verbs;
 
-1. :ref:`One table verbs`
-2. :ref:`Two table verbs`
+1. :ref:`api:One table verbs`
+2. :ref:`api:Two table verbs`
 
 We define the usage by how the verbs accept the data argument.
 There are three types of usage;

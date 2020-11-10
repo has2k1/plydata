@@ -355,6 +355,8 @@ intersphinx_mapping = {
 autodoc_member_order = 'bysource'
 autosummary_generate = True
 nbsphinx_execute = 'never'
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 
 extlinks = {
     'issue': ('https://github.com/has2k1/plydata/issues/%s', 'GH')
@@ -387,5 +389,5 @@ numpydoc_xref_ignore = {'type', 'optional', 'default'}
 
 
 def setup(app):
-    app.add_javascript('copybutton.js')
-    app.add_stylesheet('custom.css')
+    app.add_js_file('copybutton.js')
+    app.add_css_file('custom.css')
