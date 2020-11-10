@@ -1,18 +1,20 @@
 name: build
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   # Unittests
   unittests:
     runs-on: ubuntu-latest
+
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run
+    # by the push to the branch.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
     strategy:
       matrix:
-        include:
-          - python-version: 3.6
-          - python-version: 3.8
+        python-version: [3.6, 3.8]
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -66,10 +68,14 @@ jobs:
   # Linting
   lint:
     runs-on: ubuntu-latest
+
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run
+    # by the push to the branch.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
     strategy:
       matrix:
-        include:
-          - python-version: 3.8
+        python-version: [3.8]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -106,10 +112,15 @@ jobs:
   # Documentation
   documentation:
     runs-on: ubuntu-latest
+
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run
+    # by the push to the branch.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
     strategy:
       matrix:
-        include:
-           - python-version: 3.8
+        python-version: [3.8]
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
