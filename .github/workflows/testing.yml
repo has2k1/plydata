@@ -1,0 +1,150 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Unittests
+  unittests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: 3.6
+          - python-version: 3.8
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      # Ref: https://github.com/marketplace/actions/setup-miniconda
+      - name: Cache conda
+        uses: actions/cache@v1
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml
+          # has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('etc/example-environment.yml') }}
+
+      - name: Install Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: plydata-ci-unittests
+
+      - name: Install Packages
+        shell: bash -l {0}
+        run: |
+          conda install "pandas<1.1.0"
+          conda install pytest-cov
+
+      - name: Environment Information
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+          pip list
+
+      - name: Run Tests
+        shell: bash -l {0}
+        run: |
+          coverage erase
+          make test
+          ls -la
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+          name: "py${{ matrix.python-version }}"
+
+  # Linting
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: 3.8
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Ref: https://docs.github.com/en/free-pro-team@latest/actions/guides/building-and-testing-python#caching-dependencies
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          # This path is specific to Ubuntu
+          path: ~/.cache/pip
+          # Look to see if there is a cache hit for the corresponding requirements file
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install Packages
+        shell: bash -l {0}
+        run: pip install flake8
+
+      - name: Environment Information
+        shell: bash -l {0}
+        run: pip list
+
+      - name: Run Tests
+        shell: bash -l {0}
+        run: make lint
+
+  # Documentation
+  documentation:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+           - python-version: 3.8
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Ref: https://docs.github.com/en/free-pro-team@latest/actions/guides/building-and-testing-python#caching-dependencies
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          # This path is specific to Ubuntu
+          path: ~/.cache/pip
+          # Look to see if there is a cache hit for the corresponding requirements file
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install Packages
+        shell: bash -l {0}
+        run: |
+          sudo apt-get install pandoc
+          pip install -r requirements/doc.txt
+          python setup.py install
+
+      - name: Environment Information
+        shell: bash -l {0}
+        run: pip list
+
+      - name: Build Documentation
+        shell: bash -l {0}
+        run: |
+          pushd doc
+          sphinx-build -W -b html -d _build/doctrees . _build/html
+          popd

@@ -131,11 +131,11 @@ For more, see the documentation_.
 .. |license| image:: https://img.shields.io/pypi/l/plydata.svg
 .. _license: https://pypi.python.org/pypi/plydata
 
-.. |buildstatus| image:: https://api.travis-ci.org/has2k1/plydata.svg?branch=master
-.. _buildstatus: https://travis-ci.org/has2k1/plydata
+.. |buildstatus| image:: https://github.com/has2k1/plydata/workflows/build/badge.svg?branch=master
+.. _buildstatus: https://github.com/has2k1/plydata/actions?query=branch%3Amaster+workflow%3A%22build%22
 
-.. |coverage| image:: https://coveralls.io/repos/github/has2k1/plydata/badge.svg?branch=master
-.. _coverage: https://coveralls.io/github/has2k1/plydata?branch=master
+.. |coverage| image:: https://codecov.io /github/has2k1/plydata/coverage.svg?branch=master
+.. _coverage: https://codecov.io/github/has2k1/plydata?branch=master
 
 .. |documentation| image:: https://readthedocs.org/projects/plydata/badge/?version=latest
 .. _documentation: https://plydata.readthedocs.io/en/latest/
