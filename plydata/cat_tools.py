@@ -84,7 +84,7 @@ def cat_infreq(c, ordered=None):
     """
     kwargs = {} if ordered is None else {'ordered': ordered}
     counts = value_counts(c)
-    if pdtypes.is_categorical(c):
+    if pdtypes.is_categorical_dtype(c):
         original_cat_order = c.categories
     else:
         original_cat_order = pd.unique(c)
@@ -1491,7 +1491,7 @@ def cat_remove_unused(c, only=None):
     ['a', 'b', 'c', 'd', 'd']
     Categories (5, object): ['b', 'a', 'c', 'd', 'f']
     """
-    if not pdtypes.is_categorical(c):
+    if not pdtypes.is_categorical_dtype(c):
         # All categories are used
         c = pd.Categorical(c)
         return c
@@ -1574,7 +1574,7 @@ def cat_concat(*args):
     The resulting category is not ordered.
     """
     categories = pd.unique(list(chain(*(
-        c.categories if pdtypes.is_categorical(c) else c
+        c.categories if pdtypes.is_categorical_dtype(c) else c
         for c in args
     ))))
     cs = pd.Categorical(
@@ -1611,7 +1611,7 @@ def cat_zip(*args, sep=':', keep_empty=False):
     """
     values = [sep.join(items) for items in zip(*args)]
     cs = [
-        c if pdtypes.is_categorical(c) else pd.Categorical(c)
+        c if pdtypes.is_categorical_dtype(c) else pd.Categorical(c)
         for c in args
     ]
     categories = [
@@ -1647,7 +1647,7 @@ def as_categorical(c, copy=True):
         if it was a categorical
 
     """
-    if not pdtypes.is_categorical(c):
+    if not pdtypes.is_categorical_dtype(c):
         c = pd.Categorical(c)
     elif copy:
         c = c.copy()
