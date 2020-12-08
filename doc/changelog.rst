@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v0.4.3
+------
+*(2020-12-08)*
+
+Bug Fixes
+*********
+
+- This release makes Plydata depend on pandas >= 1.1.5.
+
 v0.4.2
 ------
 *(2020-09-12)*
