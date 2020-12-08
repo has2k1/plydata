@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.6, 3.8]
+        python-version: [3.6, 3.9]
 
     steps:
       - name: Checkout Code
@@ -36,13 +36,14 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
+          channels: conda-forge
           python-version: ${{ matrix.python-version }}
           activate-environment: plydata-ci-unittests
 
       - name: Install Packages
         shell: bash -l {0}
         run: |
-          conda install "pandas<1.1.0"
+          conda install "pandas>=1.1.5"
           conda install pytest-cov
 
       - name: Environment Information
@@ -75,7 +76,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -119,7 +120,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
       - name: Checkout Code
