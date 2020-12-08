@@ -213,8 +213,8 @@ class right_join(_join):
     >>> right_join(df1, df2, on='col1')
         col1  col2_x  col2_y
     0    one     1.0       1
-    1  three     3.0       3
-    2   four     NaN       4
+    1   four     NaN       4
+    2  three     3.0       3
 
     Notes
     -----
