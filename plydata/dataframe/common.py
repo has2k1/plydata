@@ -313,9 +313,11 @@ class Evaluator:
         # order, but we can only do that if the result has a one to
         # one relationship with the original
         one2one = (
+            (len(egdfs) > 1) and
             self.keep_index and
             not any(edata.index.duplicated()) and
-            len(edata.index) == len(self.data.index))
+            len(edata.index) == len(self.data.index)
+        )
         if one2one:
             edata = edata.sort_index()
         else:

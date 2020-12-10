@@ -305,6 +305,14 @@ def test_arrange():
     result = df_bad >> arrange('x', '-y')
     assert result.index.equals(I([1, 0, 1, 0, 0, 1]))
 
+    # A computation on a non-increasing index
+    df2 = pd.DataFrame({
+        'x': [0, 1, 2, 2, 4, 5],
+        'y': [6, 1, 3, 4, 5, 2]
+    }, index=[5, 0, 2, 3, 4, 1])
+    result = df2 >> arrange('-y')
+    assert result.index.equals(I([5, 4, 3, 2, 1, 0]))
+
 
 def test_group_by():
     df = pd.DataFrame({'x': [1, 5, 2, 2, 4, 0, 4],

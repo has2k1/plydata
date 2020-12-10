@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v0.4.4
+------
+*(not-yet-released)*
+
+Bug Fixes
+*********
+
+- Fixed bug in :class:`~plydata.one_table_verbs.arrange` where the sorting would not
+  work in some cases when the dataframe index was out of order.
+
 v0.4.3
 ------
 *(2020-12-08)*
