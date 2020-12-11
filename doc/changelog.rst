@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v0.4.4
+v0.5.0
 ------
 *(not-yet-released)*
 
@@ -10,6 +10,18 @@ Bug Fixes
 
 - Fixed bug in :class:`~plydata.one_table_verbs.arrange` where the sorting would not
   work in some cases when the dataframe index was out of order.
+
+API Changes
+***********
+
+- :class:`~plydata.one_table_verbs.arrange`,
+ :class:`~plydata.one_table_verbs.query`,
+ :class:`~plydata.helpers.query_all`,
+ :class:`~plydata.helpers.query_at`,
+ :class:`~plydata.helpers.query_if`,
+ :class:`~plydata.helpers.arrange_all`,
+ :class:`~plydata.helpers.arrange_at` and
+ :class:`~plydata.helpers.arrange_if` now return dataframe with the indices reset.
 
 v0.4.3
 ------

@@ -114,9 +114,14 @@ def arrange(verb):
         with regular_index(verb.data, df):
             sorted_index = df.sort_values(by=list(df.columns)).index
             data = verb.data.loc[sorted_index, :]
+
+        if verb.reset_index:
+            data.reset_index(drop=True, inplace=True)
+        else:
             data.index = original_index[sorted_index]
     else:
         data = verb.data
+
     return data
 
 
@@ -192,6 +197,9 @@ def query(verb):
             **verb.kwargs
         )
         data._is_copy = None
+
+    if verb.reset_index:
+        data.reset_index(drop=True, inplace=True)
     return data
 
 

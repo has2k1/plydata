@@ -126,6 +126,8 @@ def _query_helper(verb):
     bool_idx = _data[result_col].values
 
     data = verb.data.loc[bool_idx, :]
+    if verb.reset_index:
+        data.reset_index(drop=True, inplace=True)
     return data
 
 

@@ -533,6 +533,9 @@ class arrange(DataOperator):
         Useful when not using the ``>>`` operator.
     args : tuple
         Columns/expressions to sort by.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
 
     Examples
     --------
@@ -542,33 +545,34 @@ class arrange(DataOperator):
     ...                    'y': [1, 2, 3, 4, 5, 6]})
     >>> df >> arrange('x')
        x  y
-    5  0  6
-    0  1  1
+    0  0  6
+    1  1  1
     2  2  3
     3  2  4
     4  4  5
-    1  5  2
+    5  5  2
     >>> df >> arrange('x', '-y')
        x  y
-    5  0  6
-    0  1  1
-    3  2  4
-    2  2  3
+    0  0  6
+    1  1  1
+    2  2  4
+    3  2  3
     4  4  5
-    1  5  2
+    5  5  2
     >>> df >> arrange('np.sin(y)')
        x  y
-    4  4  5
-    3  2  4
-    5  0  6
-    2  2  3
-    0  1  1
-    1  5  2
+    0  4  5
+    1  2  4
+    2  0  6
+    3  2  3
+    4  1  1
+    5  5  2
     """
     expressions = None
 
-    def __init__(self, *args):
+    def __init__(self, *args, reset_index=True):
         self.set_env_from_verb_init()
+        self.reset_index = reset_index
         name_gen = ('col_{}'.format(x) for x in range(100))
         self.expressions = [
             Expression(stmt, col)
@@ -846,6 +850,9 @@ class query(DataOperator):
         `log`, `expm1`, `log1p`, `sqrt`, `sinh`, `cosh`, `tanh`,
         `arcsin`, `arccos`, `arctan`, `arccosh`, `arcsinh`,
         `arctanh`, `abs` and `arctan2`.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
     kwargs : dict
         See the documentation for :func:`pandas.eval` for complete
         details on the keyword arguments accepted by
@@ -859,21 +866,21 @@ class query(DataOperator):
     >>> df >> query('x % 2 == 0')
        x  y
     0  0  0
-    2  2  1
-    4  4  2
+    1  2  1
+    2  4  2
 
     >>> df >> query('x % 2 == 0 & y > 0')
        x  y
-    2  2  1
-    4  4  2
+    0  2  1
+    1  4  2
 
     By default, Bitwise operators ``&`` and ``|`` have the same
     precedence as the booleans ``and`` and ``or``.
 
     >>> df >> query('x % 2 == 0 and y > 0')
        x  y
-    2  2  1
-    4  4  2
+    0  2  1
+    1  4  2
 
     ``query`` works within groups
 
@@ -885,9 +892,9 @@ class query(DataOperator):
     groups: ['y']
        x  y
     0  0  0
-    2  2  1
-    4  4  2
-    5  5  3
+    1  2  1
+    2  4  2
+    3  5  3
 
     For more information see :meth:`pandas.DataFrame.query`. To query
     rows and columns with ``NaN`` values, use :class:`dropna`
@@ -900,8 +907,9 @@ class query(DataOperator):
     """
     expression = None
 
-    def __init__(self, expr, **kwargs):
+    def __init__(self, expr, reset_index=True, **kwargs):
         self.set_env_from_verb_init()
+        self.reset_index = reset_index
         self.expression = expr
         self.kwargs = kwargs
 

@@ -281,13 +281,16 @@ def test_arrange():
     I = pd.Index
 
     result = df >> arrange('x')
-    assert result.index.equals(I([5, 0, 2, 3, 4, 1]))
+    assert all(result.x == [0, 1, 2, 2, 4, 5])
+    assert all(result.y == [6, 1, 3, 4, 5, 2])
 
     result = df >> arrange('x', '-y')
-    assert result.index.equals(I([5, 0, 3, 2, 4, 1]))
+    assert all(result.x == [0, 1, 2, 2, 4, 5])
+    assert all(result.y == [6, 1, 4, 3, 5, 2])
 
     result = df >> arrange('np.sin(y)')
-    assert result.index.equals(I([4, 3, 5, 2, 0, 1]))
+    assert all(result.x == [4, 2, 0, 2, 1, 5])
+    assert all(result.y == [5, 4, 6, 3, 1, 2])
 
     # Branches
     result = df >> arrange()
@@ -296,14 +299,19 @@ def test_arrange():
     result = df >> arrange('x') >> arrange('y')  # already sorted
     assert result.index.equals(df.index)
 
+    # Do not reset index
+    result = df >> arrange('x', reset_index=False)
+    assert result.index.equals(I([5, 0, 2, 3, 4, 1]))
+
     # Bad index
     df_bad = df.copy()
     df_bad.index = [0, 1, 0, 1, 0, 1]
     result = df_bad >> arrange('x')
-    assert result.index.equals(I([1, 0, 0, 1, 0, 1]))
+    assert all(result.x == [0, 1, 2, 2, 4, 5])
 
     result = df_bad >> arrange('x', '-y')
-    assert result.index.equals(I([1, 0, 1, 0, 0, 1]))
+    assert all(result.x == [0, 1, 2, 2, 4, 5])
+    assert all(result.y == [6, 1, 4, 3, 5, 2])
 
     # A computation on a non-increasing index
     df2 = pd.DataFrame({
@@ -311,7 +319,7 @@ def test_arrange():
         'y': [6, 1, 3, 4, 5, 2]
     }, index=[5, 0, 2, 3, 4, 1])
     result = df2 >> arrange('-y')
-    assert result.index.equals(I([5, 4, 3, 2, 1, 0]))
+    assert all(result.y == [6, 5, 4, 3, 2, 1])
 
 
 def test_group_by():
@@ -563,6 +571,9 @@ def test_query():
 
     result = df >> query('x > @c')
     assert all(result.loc[:, 'x'] == [4, 5])
+
+    result = df >> query('x % 2 == 0', reset_index=False)
+    assert result.index.equals(pd.Index([0, 2, 4]))
 
 
 def test_do():
@@ -1422,6 +1433,9 @@ def test_query_all():
     # per column.
     result = df >> query_all(any_vars='pdtypes.is_integer_dtype({_})')
     assert result.equals(df)
+
+    result = df >> query_all(any_vars='({_} == 4)', reset_index=False)
+    assert result.index.equals(pd.Index([2, 3]))
 
     # branches
     with pytest.raises(ValueError):

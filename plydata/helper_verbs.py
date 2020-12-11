@@ -756,6 +756,9 @@ class arrange_all(_all):
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
     kwargs : dict
         Keyword arguments to the functions. The keyword arguments are
         passed to *all* functions.
@@ -778,23 +781,23 @@ class arrange_all(_all):
 
     >>> df >> arrange_all()
       alpha beta theta  x  y   z
-    1     a    a     d  2  5   9
-    0     a    b     c  1  6   7
+    0     a    a     d  2  5   9
+    1     a    b     c  1  6   7
     2     a    b     e  3  4  11
-    5     b    q     e  6  1  12
-    3     b    r     c  4  3   8
-    4     b    u     d  5  2  10
+    3     b    q     e  6  1  12
+    4     b    r     c  4  3   8
+    5     b    u     d  5  2  10
 
     Arranging in descending order.
 
     >>> df >> arrange_all(pd.Series.rank, ascending=False)
       alpha beta theta  x  y   z
-    4     b    u     d  5  2  10
-    3     b    r     c  4  3   8
-    5     b    q     e  6  1  12
-    2     a    b     e  3  4  11
-    0     a    b     c  1  6   7
-    1     a    a     d  2  5   9
+    0     b    u     d  5  2  10
+    1     b    r     c  4  3   8
+    2     b    q     e  6  1  12
+    3     a    b     e  3  4  11
+    4     a    b     c  1  6   7
+    5     a    a     d  2  5   9
 
     Notes
     -----
@@ -804,8 +807,15 @@ class arrange_all(_all):
     can be sorted.
     """
 
-    def __init__(self, functions=None, *args, **kwargs):
+    def __init__(
+        self,
+        functions=None,
+        *args,
+        reset_index=True,
+        **kwargs
+    ):
         self.set_env_from_verb_init()
+        self.reset_index = reset_index
         super().__init__(functions, *args, **kwargs)
 
 
@@ -869,6 +879,9 @@ class arrange_if(_if):
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
     kwargs : dict
         Keyword arguments to the functions. The keyword arguments are
         passed to *all* functions.
@@ -891,35 +904,35 @@ class arrange_if(_if):
 
     >>> df >> arrange_if('is_string')
       alpha beta theta  x  y   z
-    1     a    a     d  2  5   9
-    0     a    b     c  1  6   7
+    0     a    a     d  2  5   9
+    1     a    b     c  1  6   7
     2     a    b     e  3  4  11
-    5     b    q     e  6  1  12
-    3     b    r     c  4  3   8
-    4     b    u     d  5  2  10
+    3     b    q     e  6  1  12
+    4     b    r     c  4  3   8
+    5     b    u     d  5  2  10
 
     Arranging by the columns with strings in descending order.
 
     >>> df >> arrange_if('is_string', pd.Series.rank, ascending=False)
       alpha beta theta  x  y   z
-    4     b    u     d  5  2  10
-    3     b    r     c  4  3   8
-    5     b    q     e  6  1  12
-    2     a    b     e  3  4  11
-    0     a    b     c  1  6   7
-    1     a    a     d  2  5   9
+    0     b    u     d  5  2  10
+    1     b    r     c  4  3   8
+    2     b    q     e  6  1  12
+    3     a    b     e  3  4  11
+    4     a    b     c  1  6   7
+    5     a    a     d  2  5   9
 
     It is easier to sort by only the numeric columns in descending
     order.
 
     >>> df >> arrange_if('is_numeric', np.negative)
       alpha beta theta  x  y   z
-    5     b    q     e  6  1  12
-    4     b    u     d  5  2  10
-    3     b    r     c  4  3   8
-    2     a    b     e  3  4  11
-    1     a    a     d  2  5   9
-    0     a    b     c  1  6   7
+    0     b    q     e  6  1  12
+    1     b    u     d  5  2  10
+    2     b    r     c  4  3   8
+    3     a    b     e  3  4  11
+    4     a    a     d  2  5   9
+    5     a    b     c  1  6   7
 
     Notes
     -----
@@ -928,6 +941,17 @@ class arrange_if(_if):
     they corrupt the data. Use function(s) that return values that
     can be sorted.
     """
+    def __init__(
+        self,
+        predicate,
+        functions=None,
+        *args,
+        reset_index=True,
+        **kwargs
+    ):
+        self.set_env_from_verb_init()
+        self.reset_index = reset_index
+        super().__init__(predicate, functions, *args, **kwargs)
 
 
 class arrange_at(_at):
@@ -975,6 +999,9 @@ class arrange_at(_at):
     args : tuple
         Arguments to the functions. The arguments are pass to *all*
         functions.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
     kwargs : dict
         Keyword arguments to the functions. The keyword arguments are
         passed to *all* functions.
@@ -1010,12 +1037,12 @@ class arrange_at(_at):
 
     >>> df >> arrange_at(dict(contains='eta'))
       alpha beta theta  x  y   z
-    1     a    a     d  2  5   9
-    0     a    b     c  1  6   7
+    0     a    a     d  2  5   9
+    1     a    b     c  1  6   7
     2     a    b     e  3  4  11
-    5     b    q     e  6  1  12
-    3     b    r     c  4  3   8
-    4     b    u     d  5  2  10
+    3     b    q     e  6  1  12
+    4     b    r     c  4  3   8
+    5     b    u     d  5  2  10
 
     In descending order.
 
@@ -1025,12 +1052,12 @@ class arrange_at(_at):
     ...     pd.Series.rank, ascending=False)
     ... )
       alpha beta theta  x  y   z
-    4     b    u     d  5  2  10
-    3     b    r     c  4  3   8
-    5     b    q     e  6  1  12
-    2     a    b     e  3  4  11
-    0     a    b     c  1  6   7
-    1     a    a     d  2  5   9
+    0     b    u     d  5  2  10
+    1     b    r     c  4  3   8
+    2     b    q     e  6  1  12
+    3     a    b     e  3  4  11
+    4     a    b     c  1  6   7
+    5     a    a     d  2  5   9
 
     Notes
     -----
@@ -1039,8 +1066,16 @@ class arrange_at(_at):
     they corrupt the data. Use function(s) that return values that
     can be sorted.
     """
-    def __init__(self, names, functions=None, *args, **kwargs):
+    def __init__(
+        self,
+        names,
+        functions=None,
+        *args,
+        reset_index=True,
+        **kwargs
+    ):
         self.set_env_from_verb_init()
+        self.reset_index = reset_index
         super().__init__(names, functions, *args, **kwargs)
 
 
@@ -2085,6 +2120,9 @@ class query_all(_all):
 
         After the statement is evaluated for all columns, the
         *intersection* (``&``), is used to select the output rows.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
 
     Examples
     --------
@@ -2105,8 +2143,8 @@ class query_all(_all):
 
     >>> df >> query_all(any_vars='({_} == 4)')
       alpha beta theta  x  y   z
-    2     a    b     e  3  4  11
-    3     b    r     c  4  3   8
+    0     a    b     e  3  4  11
+    1     b    r     c  4  3   8
 
     The opposit, select all rows where none of the entries along
     the columns is a 4.
@@ -2115,8 +2153,8 @@ class query_all(_all):
       alpha beta theta  x  y   z
     0     a    b     c  1  6   7
     1     a    a     d  2  5   9
-    4     b    u     d  5  2  10
-    5     b    q     e  6  1  12
+    2     b    u     d  5  2  10
+    3     b    q     e  6  1  12
 
     For something more complicated, group-wise selection.
 
@@ -2137,9 +2175,9 @@ class query_all(_all):
     ...  >> query_all(any_vars='(sum({_}) > 28)'))
     groups: ['alpha']
       alpha  x  y   z
-    3     b  4  3   8
-    4     b  5  2  10
-    5     b  6  1  12
+    0     b  4  3   8
+    1     b  5  2  10
+    2     b  6  1  12
 
     Note that ``sum({_}) > 28`` is a column operation, it returns
     a single number for the whole column. Therefore the whole column
@@ -2148,8 +2186,15 @@ class query_all(_all):
     """
     vars_predicate = None
 
-    def __init__(self, *, all_vars=None, any_vars=None):
+    def __init__(
+        self,
+        *,
+        all_vars=None,
+        any_vars=None,
+        reset_index=True,
+    ):
         self.set_env_from_verb_init()
+        self.reset_index = reset_index
         if all_vars and any_vars:
             raise ValueError(
                 "Only one of `all_vars` or `any_vars` should "
@@ -2223,6 +2268,9 @@ class query_if(_if):
 
         After the statement is evaluated for all columns selected by the
         predicate, *intersection* (``&``), is used to select the output rows.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
 
     Examples
     --------
@@ -2243,8 +2291,8 @@ class query_if(_if):
 
     >>> df >> query_if('is_integer', any_vars='({_} == 4)')
       alpha beta theta  x  y   z
-    2     a    b     e  3  4  11
-    3     b    r     c  4  3   8
+    0     a    b     e  3  4  11
+    1     b    r     c  4  3   8
 
     The opposite, select all rows where none of the entries along
     the integer columns is a 4.
@@ -2253,8 +2301,8 @@ class query_if(_if):
       alpha beta theta  x  y   z
     0     a    b     c  1  6   7
     1     a    a     d  2  5   9
-    4     b    u     d  5  2  10
-    5     b    q     e  6  1  12
+    2     b    u     d  5  2  10
+    3     b    q     e  6  1  12
 
     For something more complicated, group-wise selection.
 
@@ -2273,9 +2321,9 @@ class query_if(_if):
     ...  >> query_if('is_integer', any_vars='(sum({_}) > 28)'))
     groups: ['alpha']
       alpha beta theta  x  y   z
-    3     b    r     c  4  3   8
-    4     b    u     d  5  2  10
-    5     b    q     e  6  1  12
+    0     b    r     c  4  3   8
+    1     b    u     d  5  2  10
+    2     b    q     e  6  1  12
 
     Note that ``sum({_}) > 28`` is a column operation, it returns
     a single number for the whole column. Therefore the whole column
@@ -2284,9 +2332,17 @@ class query_if(_if):
     """
     vars_predicate = None
 
-    def __init__(self, predicate, *, all_vars=None, any_vars=None):
+    def __init__(
+        self,
+        predicate,
+        *,
+        all_vars=None,
+        any_vars=None,
+        reset_index=True
+    ):
         self.set_env_from_verb_init()
         self.predicate = predicate
+        self.reset_index = reset_index
 
         if all_vars and any_vars:
             raise ValueError(
@@ -2348,6 +2404,9 @@ class query_at(_at):
         After the statement is evaluated for all columns selected by the
         *names* specification, *intersection* (``&``), is used to select
         the output rows.
+    reset_index : bool, optional (default: True)
+        If ``True``, the index is reset to a sequential range index.
+        If ``False``, the original index is maintained.
 
     Examples
     --------
@@ -2368,8 +2427,8 @@ class query_at(_at):
 
     >>> df >> query_at(('x', 'y', 'z'), any_vars='({_} == 4)')
       alpha beta theta  x  y   z
-    2     a    b     e  3  4  11
-    3     b    r     c  4  3   8
+    0     a    b     e  3  4  11
+    1     b    r     c  4  3   8
 
     The opposit, select all rows where none of the entries along
     the integer columns is a 4.
@@ -2378,8 +2437,8 @@ class query_at(_at):
       alpha beta theta  x  y   z
     0     a    b     c  1  6   7
     1     a    a     d  2  5   9
-    4     b    u     d  5  2  10
-    5     b    q     e  6  1  12
+    2     b    u     d  5  2  10
+    3     b    q     e  6  1  12
 
     For something more complicated, group-wise selection.
 
@@ -2398,9 +2457,9 @@ class query_at(_at):
     ...  >> query_at(('x', 'y', 'z'), any_vars='(sum({_}) > 28)'))
     groups: ['alpha']
       alpha beta theta  x  y   z
-    3     b    r     c  4  3   8
-    4     b    u     d  5  2  10
-    5     b    q     e  6  1  12
+    0     b    r     c  4  3   8
+    1     b    u     d  5  2  10
+    2     b    q     e  6  1  12
 
     Note that ``sum({_}) > 28`` is a column operation, it returns
     a single number for the whole column. Therefore the whole column
@@ -2408,7 +2467,14 @@ class query_at(_at):
     enable group-wise selection.
     """
 
-    def __init__(self, names, *, all_vars=None, any_vars=None):
+    def __init__(
+        self,
+        names,
+        *,
+        all_vars=None,
+        any_vars=None,
+        reset_index=True
+    ):
         if all_vars and any_vars:
             raise ValueError(
                 "Only one of `all_vars` or `any_vars` should "
@@ -2427,6 +2493,7 @@ class query_at(_at):
                 "One of `all_vars` or `any_vars` should be given.")
 
         self.set_env_from_verb_init()
+        self.reset_index = reset_index
         super().__init__(names, tuple())
 
 
