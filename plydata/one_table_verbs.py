@@ -862,39 +862,56 @@ class query(DataOperator):
     --------
     >>> import pandas as pd
     >>> df = pd.DataFrame({'x': [0, 1, 2, 3, 4, 5],
-    ...                    'y': [0, 0, 1, 1, 2, 3]})
+    ...                    'y': [0, 0, 1, 1, 2, 3],
+    ...                    'z': list('aabbcd')})
     >>> df >> query('x % 2 == 0')
-       x  y
-    0  0  0
-    1  2  1
-    2  4  2
+       x  y  z
+    0  0  0  a
+    1  2  1  b
+    2  4  2  c
 
     >>> df >> query('x % 2 == 0 & y > 0')
-       x  y
-    0  2  1
-    1  4  2
+       x  y  z
+    0  2  1  b
+    1  4  2  c
 
     By default, Bitwise operators ``&`` and ``|`` have the same
     precedence as the booleans ``and`` and ``or``.
 
     >>> df >> query('x % 2 == 0 and y > 0')
-       x  y
-    0  2  1
-    1  4  2
+       x  y  z
+    0  2  1  b
+    1  4  2  c
 
     ``query`` works within groups
 
     >>> df >> query('x == x.min()')
-       x  y
-    0  0  0
+       x  y  z
+    0  0  0  a
 
     >>> df >> group_by('y') >> query('x == x.min()')
     groups: ['y']
-       x  y
-    0  0  0
-    1  2  1
-    2  4  2
-    3  5  3
+       x  y  z
+    0  0  0  a
+    1  2  1  b
+    2  4  2  c
+    3  5  3  d
+
+    When working with strings, the values should be quoted.
+
+    >>> df >> query('z == "a"')
+       x  y  z
+    0  0  0  a
+    1  1  0  a
+
+    You can refer to variables in the environment by prefixing them
+    with an `@` character.
+
+    >>> w = list('rrbbst')
+    >>> df >> query('z == @w')
+       x  y  z
+    0  2  1  b
+    1  3  1  b
 
     For more information see :meth:`pandas.DataFrame.query`. To query
     rows and columns with ``NaN`` values, use :class:`dropna`
