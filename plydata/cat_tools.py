@@ -249,7 +249,7 @@ def cat_inseq(c, ordered=None):
          .reorder_categories(sorted(numerical_cats)))
 
     if ordered is not None:
-        c.set_ordered(ordered, inplace=True)
+        c = c.set_ordered(ordered)
     return c
 
 
@@ -411,7 +411,7 @@ def cat_move(c, *args, to=0):
     args = list(args)
     unmoved_cats = c.categories.drop(args).to_list()
     cats = unmoved_cats[0:to] + args + unmoved_cats[to:]
-    c.reorder_categories(cats, inplace=True)
+    c = c.reorder_categories(cats)
     return c
 
 
@@ -440,7 +440,7 @@ def cat_rev(c):
     Categories (3, object): ['c', 'b', 'a']
     """
     c = as_categorical(c)
-    c.reorder_categories(c.categories[::-1], inplace=True)
+    c = c.reorder_categories(c.categories[::-1])
     return c
 
 
@@ -485,7 +485,7 @@ def cat_shift(c, n=1):
     m = len(cats)
     n = n % m
     cats = cats_extended[n:m] + cats_extended[:n]
-    c.reorder_categories(cats, inplace=True)
+    c = c.reorder_categories(cats)
     return c
 
 
@@ -529,7 +529,7 @@ def cat_shuffle(c, random_state=None):
 
     cats = c.categories.to_list()
     random_state.shuffle(cats)
-    c.reorder_categories(cats, inplace=True)
+    c = c.reorder_categories(cats)
     return c
 
 
@@ -585,10 +585,10 @@ def cat_anon(c, prefix='', random_state=None):
     fmt = '{}{}'.format
     cats = [fmt(prefix, i) for i in range(len(c.categories))]
     random_state.shuffle(cats)
-    c.rename_categories(cats, inplace=True)
+    c = c.rename_categories(cats)
     cats = c.categories.to_list()
     random_state.shuffle(cats)
-    c.reorder_categories(cats, inplace=True)
+    c = c.reorder_categories(cats)
     return c
 
 
@@ -1325,9 +1325,8 @@ def cat_rename(c, mapping=None, **kwargs):
     # Separately change values (inplace) and the categories (using an
     # array) old to the new names. Then reconcile the two lists.
     categories = c.categories.to_numpy().copy()
-    c.add_categories(
-        pd.Index(lookup.values()).difference(c.categories),
-        inplace=True
+    c = c.add_categories(
+        pd.Index(lookup.values()).difference(c.categories)
     )
     for old, new in lookup.items():
         if old not in c.categories:
@@ -1336,8 +1335,8 @@ def cat_rename(c, mapping=None, **kwargs):
         categories[categories == old] = new
 
     new_categories = pd.unique(categories)
-    c.remove_unused_categories(inplace=True)
-    c.set_categories(new_categories, inplace=True)
+    c = (c.remove_unused_categories()
+         .set_categories(new_categories))
     return c
 
 
@@ -1427,9 +1426,8 @@ def cat_expand(c, *args):
     Categories (6, object): ['a' < 'b' < 'c' < 'd' < 'e' < 'f']
     """
     c = as_categorical(c)
-    c.add_categories(
-        pd.Index(args).difference(c.categories),
-        inplace=True
+    c = c.add_categories(
+        pd.Index(args).difference(c.categories)
     )
     return c
 
@@ -1461,7 +1459,7 @@ def cat_explicit_na(c, na_category='(missing)'):
     c = as_categorical(c)
     bool_idx = pd.isnull(c)
     if any(bool_idx):
-        c.add_categories([na_category], inplace=True)
+        c = c.add_categories([na_category])
         c[bool_idx] = na_category
     return c
 
@@ -1622,7 +1620,7 @@ def cat_zip(*args, sep=':', keep_empty=False):
     c = pd.Categorical(values, categories=categories)
 
     if not keep_empty:
-        c.remove_unused_categories(inplace=True)
+        c = c.remove_unused_categories()
 
     return c
 
