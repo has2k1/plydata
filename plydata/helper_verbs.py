@@ -69,8 +69,8 @@ class call(DataOperator):
     3        B     1
     4        B     3
     5        B     5
-    6        C     2
-    7        C     4
+    6        C   2.0
+    7        C   4.0
     8        C   NaN
 
     An external function with arguments
@@ -98,8 +98,8 @@ class call(DataOperator):
     0        A     a
     1        A     b
     2        A     c
-    3        C     2
-    4        C     4
+    3        C   2.0
+    4        C   4.0
     5        C   NaN
     """
 

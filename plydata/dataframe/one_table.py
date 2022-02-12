@@ -9,7 +9,7 @@ import pandas as pd
 from ..types import GroupedDataFrame
 from ..options import get_option
 from ..operators import register_implementations
-from ..utils import Q, get_empty_env, regular_index, unique
+from ..utils import Q, get_empty_env, regular_index
 from .common import Evaluator, Selector
 from .common import _get_groups, _get_base_dataframe
 
@@ -17,7 +17,7 @@ __all__ = ['arrange', 'create', 'define', 'distinct', 'do',
            'group_by', 'group_indices', 'head',  'mutate',
            'pull', 'query', 'rename', 'sample_frac', 'sample_n',
            'select', 'slice_rows', 'summarize', 'tail',
-           'ungroup', 'unique']
+           'ungroup']
 
 
 def _check_modify_groups(verb):

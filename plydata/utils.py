@@ -217,50 +217,6 @@ def regular_index(*dfs):
                 df.index = idx
 
 
-def unique(lst):
-    """
-    Return unique elements
-
-    :class:`pandas.unique` and :class:`numpy.unique` cast
-    mixed type lists to the same type. They are faster, but
-    some times we want to maintain the type.
-
-    Parameters
-    ----------
-    lst : list-like
-        List of items
-
-    Returns
-    -------
-    out : list
-        Unique items in the order that they appear in the
-        input.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> lst = ['one', 'two', 123, 'three']
-    >>> pd.unique(lst)
-    array(['one', 'two', '123', 'three'], dtype='<U5')
-    >>> np.unique(lst)
-    array(['123', 'one', 'three', 'two'],
-          dtype='<U5')
-    >>> unique(lst)
-    ['one', 'two', 123, 'three']
-
-    pandas and numpy cast 123 to a string!, and numpy does not
-    even maintain the order.
-    """
-    seen = set()
-
-    def make_seen(x):
-        seen.add(x)
-        return x
-
-    return [make_seen(x) for x in lst if x not in seen]
-
-
 def identity(*args):
     """
     Return whatever is passed in
