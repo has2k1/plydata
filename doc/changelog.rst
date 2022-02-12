@@ -14,14 +14,7 @@ Bug Fixes
 API Changes
 ***********
 
-- :class:`~plydata.one_table_verbs.arrange`,
- :class:`~plydata.one_table_verbs.query`,
- :class:`~plydata.helpers.query_all`,
- :class:`~plydata.helpers.query_at`,
- :class:`~plydata.helpers.query_if`,
- :class:`~plydata.helpers.arrange_all`,
- :class:`~plydata.helpers.arrange_at` and
- :class:`~plydata.helpers.arrange_if` now return dataframe with the indices reset.
+- :class:`~plydata.one_table_verbs.arrange`, :class:`~plydata.one_table_verbs.query`, :class:`~plydata.helpers.query_all`, :class:`~plydata.helpers.query_at`, :class:`~plydata.helpers.query_if`, :class:`~plydata.helpers.arrange_all`, :class:`~plydata.helpers.arrange_at` and :class:`~plydata.helpers.arrange_if` now return dataframe with the indices reset.
 
 v0.4.3
 ------
@@ -37,7 +30,7 @@ v0.4.2
 *(2020-09-12)*
 
 - This is release makes Plydata depend on pandas < 1.1.0. See
-  `Issue 23 <https://github.com/has2k1/plydata/issues/23>`_ for details.
+  :issue:`23` for details.
 
 
 v0.4.1
