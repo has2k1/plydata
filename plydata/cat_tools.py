@@ -776,7 +776,7 @@ def _lump(lump_it, c, other_category):
     new_cats = (
         c.categories
         .intersection(lookup.values())
-        .insert(len(c), other_category)
+        .append(pd.Index([other_category]))
     )
 
     c = pd.Categorical(
@@ -1253,7 +1253,7 @@ def cat_lump_min(
     new_cats = (
         c.categories
         .intersection(lookup.values())
-        .insert(len(c), other_category)
+        .append(pd.Index([other_category]))
     )
 
     c = pd.Categorical(
