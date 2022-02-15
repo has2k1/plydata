@@ -523,10 +523,6 @@ def mean_if_many(x):
     5.5
     >>> mean_if_many(['string_1'])
     'string_1'
-    >>> mean_if_many(['string_1', 'string_2'])
-    Traceback (most recent call last):
-        ...
-    TypeError: cannot perform reduce with flexible type
     """
     return list(x)[0] if len(x) == 1 else np.mean(x)
 

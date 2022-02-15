@@ -1,6 +1,7 @@
 import pytest
 
 from plydata.utils import hasattrs, temporary_key, temporary_attr, Q
+from plydata.utils import mean_if_many
 
 
 def test_hasattrs():
@@ -56,3 +57,10 @@ def test_Q():
 
     with pytest.raises(NameError):
         Q('asdf')
+
+
+def test_mean_if_many():
+    # Catch the general exception since the specific type
+    # thrown by the inner np.mean function changed
+    with pytest.raises(Exception):
+        mean_if_many(['string_1', 'string_2'])
