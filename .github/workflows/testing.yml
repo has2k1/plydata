@@ -43,7 +43,7 @@ jobs:
       - name: Install Packages
         shell: bash -l {0}
         run: |
-          conda install "pandas>=1.1.5"
+          conda install "pandas>=1.4.0"
           conda install pytest-cov
 
       - name: Environment Information
