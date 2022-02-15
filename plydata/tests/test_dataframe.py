@@ -459,7 +459,7 @@ def test_summarize():
     df1 = df.copy()
     df1['z'] = pd.Categorical(df1['z'])
     result = df1 >> group_by('y', 'z') >> summarize(mean_x='np.mean(x)')
-    assert result['y'].dtype == np.int
+    assert result['y'].dtype == int
     assert pdtypes.is_categorical_dtype(result['z'])
 
 
