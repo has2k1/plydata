@@ -73,7 +73,7 @@ if __name__ == '__main__':
           version=versioneer.get_version(),
           cmdclass=versioneer.get_cmdclass(),
           url=__url__,
-          python_requires='>=3.7',
+          python_requires='>=3.8',
           install_requires=get_required_packages(),
           packages=find_packages(),
           package_data=get_package_data(),
