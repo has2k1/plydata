@@ -93,6 +93,22 @@ Example
     """
 
 
+    # The >>= operator can be used to modify the dataframe
+    # if there is a single operation
+    df >>= define(two_x='2*x')
+    df
+    """
+        x      y  two_x
+     0  0   zero      0
+     1  1    one      2
+     2  2    two      4
+     3  3  three      6
+    """
+
+    # df >>= define(two_x='2*x') >> define(three_x='3*x')
+    # is two operations and does not work
+
+
 plydata piping works with `plotnine`_.
 
 .. code-block:: python
