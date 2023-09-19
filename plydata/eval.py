@@ -14,8 +14,9 @@ def _all_future_flags():
     flags = 0
     for feature_name in __future__.all_feature_names:
         feature = getattr(__future__, feature_name)
-        if feature.getMandatoryRelease() > sys.version_info:
-            flags |= feature.compiler_flag
+        if feature.getMandatoryRelease() is not None:
+            if feature.getMandatoryRelease() > sys.version_info:
+                flags |= feature.compiler_flag
     return flags
 
 
