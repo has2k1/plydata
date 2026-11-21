@@ -144,6 +144,40 @@ def test_separate():
     assert np.isnan(result.loc[1, 'B'])
 
 
+@pytest.mark.parametrize('index', [
+    pd.Index([1, 2, 3], name='row'),
+    pd.Index([2, 0, 1]),
+    pd.Index(['b', 'a', 'a'], name='row'),
+    pd.MultiIndex.from_tuples(
+        [('b', 2), ('a', 1), ('a', 1)], names=['group', 'row'])
+])
+@pytest.mark.parametrize('sep, into', [
+    (',', ['A', 'B']),
+    ((1, 2), ['A', None, 'B'])
+])
+@pytest.mark.parametrize('remove', [True, False])
+def test_separate_preserves_index(index, sep, into, remove):
+    df = pd.DataFrame({
+        'alpha': [10, 20, 30],
+        'x': ['a,1', 'b,2', 'c,3'],
+        'zeta': [40, 50, 60]
+    }, index=index)
+    original = df.copy(deep=True)
+    expected = pd.DataFrame({
+        'alpha': [10, 20, 30],
+        **({'x': ['a,1', 'b,2', 'c,3']} if not remove else {}),
+        'A': ['a', 'b', 'c'],
+        'B': [1, 2, 3],
+        'zeta': [40, 50, 60]
+    }, index=index)
+
+    result = df >> separate(
+        'x', into=into, sep=sep, remove=remove, convert=True)
+
+    pd.testing.assert_frame_equal(result, expected)
+    pd.testing.assert_frame_equal(df, original)
+
+
 def test_separate_rows():
     df = pd.DataFrame({
         'parent': ['martha', 'james', 'alice'],
