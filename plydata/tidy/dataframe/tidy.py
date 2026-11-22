@@ -108,7 +108,7 @@ def separate(verb):
     else:
         splits = [split_at_positions(s) for s in col]
 
-    split_df = pd.DataFrame(splits, columns=verb.into)
+    split_df = pd.DataFrame(splits, index=data.index, columns=verb.into)
     if exclude_columns.any():
         split_df = split_df.loc[:, ~exclude_columns]
 
